@@ -4,4 +4,7 @@ flask-wtf
 flask-login
 flask-migrate
 python-dotenv
+flask_restplus
 flask-sqlalchemy
+flask-jwt-extended
+flask_debugtoolbar #Can remove once done.

@@ -3,11 +3,13 @@ from app.models import User, Group
 from wtforms.validators import DataRequired, ValidationError, Email, EqualTo
 from wtforms import StringField, PasswordField, BooleanField, SubmitField, SelectField
 
+
 class LoginForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
     password = PasswordField('Password', validators=[DataRequired()])
     remember_me = BooleanField('Remember Me')
     submit = SubmitField('Sign In')
+
 
 class CreateUser(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
@@ -25,6 +27,7 @@ class CreateUser(FlaskForm):
         if user is not None:
             raise ValidationError('Please use a different email address.')
 
+
 class CreateGroup(FlaskForm):
     name = StringField('Name', validators=[DataRequired()])
     view_all_incidents = BooleanField("View All Incidents", default=False)
@@ -41,6 +44,7 @@ class CreateGroup(FlaskForm):
         group = Group.query.filter_by(name=name.data).first()
         if group is not None:
             raise ValidationError('Please choose a different group name.')
+
 
 class SetPassword(FlaskForm):
     password = PasswordField('Password', validators=[DataRequired()])
