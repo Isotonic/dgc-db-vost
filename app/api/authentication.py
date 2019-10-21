@@ -30,6 +30,7 @@ class Login(Resource):
 
         ns_auth.abort(401, 'Incorrect credentials')
 
+
 @ns_auth.route('/refresh_access')
 class RefreshToken(Resource):
     @jwt_refresh_token_required
@@ -37,13 +38,14 @@ class RefreshToken(Resource):
     @ns_auth.response(200, 'Success')
     @ns_auth.response(401, 'Incorrect credentials')
     @ns_auth.param(name='Authorization', description='Requires your refresh_token.', _in="header")
-    def post(self):
+    def get(self):
         """
                 Returns a new access_token.
         """
         current_user = get_jwt_identity()
-        access_token = create_access_token(identity = current_user)
+        access_token = create_access_token(identity=current_user)
         return {'access_token': access_token}
+
 
 @ns_auth.route('/revoke_access')
 class UserLogoutAccess(Resource):
@@ -52,17 +54,18 @@ class UserLogoutAccess(Resource):
     @ns_auth.response(200, 'Success')
     @ns_auth.response(401, 'Incorrect credentials')
     @ns_auth.param(name='Authorization', description='Requires your access_token.', _in="header")
-    def post(self):
+    def delete(self):
         """
                 Revokes access to an access_token
         """
         jti = get_raw_jwt()['jti']
         try:
-            revoked_token = RevokedToken(jti = jti)
+            revoked_token = RevokedToken(jti=jti)
             revoked_token.add()
             return {'message': 'Access token has been revoked'}
         except:
             return {'message': 'Something went wrong'}, 500
+
 
 @ns_auth.route('/revoke_refresh')
 class UserLogoutRefresh(Resource):
@@ -71,13 +74,13 @@ class UserLogoutRefresh(Resource):
     @ns_auth.response(200, 'Success')
     @ns_auth.response(401, 'Incorrect credentials')
     @ns_auth.param(name='Authorization', description='Requires your refresh_token.', _in="header")
-    def post(self):
+    def delete(self):
         """
                 Revokes access to a refresh_token
         """
         jti = get_raw_jwt()['jti']
         try:
-            revoked_token = RevokedToken(jti = jti)
+            revoked_token = RevokedToken(jti=jti)
             revoked_token.add()
             return {'message': 'Refresh token has been revoked'}
         except:

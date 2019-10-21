@@ -1,9 +1,10 @@
 from app import app, db
-from app.utils.create import new_user, new_group
-from app.models import User, Group, EmailLink, ActionLog
+from sqlalchemy import func
 from flask import render_template, flash, redirect, url_for
 from flask_login import current_user, login_user, logout_user
-from app.forms import LoginForm, CreateUser, CreateGroup, SetPassword
+from app.models import User, Group, Deployment, EmailLink, AuditLog
+from app.utils.create import new_user, new_group, new_deployment, new_incident
+from app.forms import LoginForm, CreateUser, CreateGroup, SetPassword, CreateDeployment, CreateIncident
 
 
 @app.route('/')
@@ -34,7 +35,7 @@ def login():
 
 
 @app.route('/supervisor/create_user', methods=['GET', 'POST'])
-def create_new_user():
+def create_user():
     groups_list = [(i.id, i.name) for i in Group.query.all()]
     form = CreateUser()
     form.group.choices = groups_list
@@ -42,14 +43,31 @@ def create_new_user():
         group = None
         if form.group.data:
             group = Group.query.get(form.group.data)
-        email_link = new_user(form.username.data, form.email.data, group.id if group else None, current_user)
+        user = new_user(form.username.data, form.email.data, group.id if group else None, current_user)
         flash('Congratulations, you are now a registered user!')
-        return email_link.link
+        return user.email_link
     return render_template('new_user.html', title='Create New User', form=form)
 
 
+@app.route('/verify/<link>', methods=['GET', 'POST'])
+def verify_user(link):
+    email = EmailLink.query.filter_by(link=link).first()
+    if not email:
+        return "Invalid Link"
+    form = SetPassword()
+    if form.validate_on_submit():
+        email.user.set_password(form.password.data)
+        action = AuditLog(user=email.user, action_type=AuditLog.action_values["verify_user"])
+        db.session.add(action)
+        db.session.delete(email)
+        db.session.commit()
+        flash('Congratulations, you are now a registered user!')
+        return redirect(url_for('login'))
+    return render_template('verify.html', title='Set Password', form=form, username=email.user.username)
+
+
 @app.route('/supervisor/create_group', methods=['GET', 'POST'])
-def create_new_group():
+def create_group():
     form = CreateGroup()
     if form.validate_on_submit():
         permissions = {"view_all_incidents": form.view_all_incidents.data, "change_status": form.change_status.data,
@@ -63,19 +81,37 @@ def create_new_group():
     return render_template('new_group.html', title='Create New Group', form=form)
 
 
-@app.route('/verify/<link>', methods=['GET', 'POST'])
-def verify_user(link):
-    email = EmailLink.query.filter_by(link=link).first()
-    if not email:
-        return "Invalid Link"
-    form = SetPassword()
+@app.route('/create_deployment', methods=['GET', 'POST'])
+def create_deployment():
+    groups_list = [(i.id, i.name) for i in Group.query.all()]
+    users_list = [(i.id, i.username) for i in User.query.all()]
+    form = CreateDeployment()
+    form.groups.choices = groups_list
+    form.users.choices = users_list
     if form.validate_on_submit():
-        email.user.set_password(form.password.data)
-        action = ActionLog(user=email.user, action_type=ActionLog.action_values["verify_user"])
-        db.session.add(action)
-        db.session.delete(email)
-        db.session.commit()
+        deployment = new_deployment(form.name.data, form.description.data, form.groups.data, form.users.data,
+                                    current_user)
         flash('Congratulations, you are now a registered user!')
-        return redirect(url_for('login'))
-    print(form.errors)
-    return render_template('verify.html', title='Set Password', form=form, username=email.user.username)
+        return deployment.name
+    return render_template('new_user.html', title='Create New User', form=form)
+
+
+@app.route('/deployment/<deployment_name>', methods=['GET'])
+def deployment(deployment_name):
+    deployment = Deployment.query.filter(func.lower(Deployment.name) == func.lower(deployment_name)).first()
+    if not deployment:
+        return render_template('index.base', title='No deployment found')
+    return render_template('base.html', title=f'{deployment.name}')
+
+
+@app.route('/deployment/<deployment_name>/create_incident', methods=['GET', 'POST'])
+def create_incident(deployment_name):
+    deployment = Deployment.query.filter(func.lower(Deployment.name) == func.lower(deployment_name)).first()
+    if not deployment:
+        return render_template('index.base', title='No deployment found')
+    form = CreateIncident()
+    if form.validate_on_submit():
+        incident = new_incident(form.name.data, form.description.data, form.location.data, current_user)
+        flash('Congratulations, you are now a registered user!')
+        return incident.name
+    return render_template('new_user.html', title=f'{deployment.name}', form=form)

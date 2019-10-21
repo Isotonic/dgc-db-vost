@@ -3,17 +3,41 @@ from datetime import datetime
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 
+deployment_user_junction = db.Table('deployment_users',
+                                    db.Column('user_id', db.Integer, db.ForeignKey('user.id')),
+                                    db.Column('deployment_id', db.Integer, db.ForeignKey('deployment.id')),
+                                    )
+
+deployment_group_junction = db.Table('deployment_groups',
+                                     db.Column('group_id', db.Integer, db.ForeignKey('group.id')),
+                                     db.Column('deployment_id', db.Integer, db.ForeignKey('deployment.id')),
+                                     )
+
+incident_user_junction = db.Table('incident_users',
+                                  db.Column('user_id', db.Integer, db.ForeignKey('user.id')),
+                                  db.Column('incident_id', db.Integer, db.ForeignKey('incident.id')),
+                                  )
+
+incidenttask_user_junction = db.Table('incident_tasks',
+                                      db.Column('user_id', db.Integer, db.ForeignKey('user.id')),
+                                      db.Column('id', db.Integer, db.ForeignKey('incident_task.id')),
+                                      )
+
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), index=True, unique=True)
     email = db.Column(db.String(120), index=True, unique=True)
-    email_link = db.relationship("EmailLink", back_populates="user")
-    group_id = db.Column(db.Integer, db.ForeignKey('group.id'))
-    group = db.relationship('Group', back_populates='users')
-    admin = db.Column(db.Boolean(), default=False)
-    actions = db.relationship('ActionLog', backref='user', lazy=True)
     password_hash = db.Column(db.String(128))
+    admin = db.Column(db.Boolean(), default=False)
+    group_id = db.Column(db.Integer, db.ForeignKey('group.id'))
+    deployments = db.relationship('Deployment', secondary=deployment_user_junction)
+    incidents = db.relationship('Incident', secondary=incident_user_junction)
+    tasks = db.relationship('IncidentTask', secondary=incidenttask_user_junction)
+    audit_actions = db.relationship('AuditLog', backref='user', lazy=True)
+    incident_actions = db.relationship('IncidentLog', backref='user', lazy=True)
+    incident_updates = db.relationship('IncidentUpdate', backref='user')
+    media_uploads = db.relationship('IncidentMedia', backref='uploaded_by')
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -25,6 +49,11 @@ class User(db.Model, UserMixin):
         return f'<User {self.username}>'
 
 
+@login.user_loader
+def load_user(id):
+    return User.query.get(int(id))
+
+
 class Group(db.Model):
     permission_values = {"view_all_incidents": 0x1, "change_status": 0x2, "change_allocations": 0x4,
                          "mark_as_public": 0x8,
@@ -33,7 +62,8 @@ class Group(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64), index=True, unique=True)
-    users = db.relationship('User', back_populates='group')
+    users = db.relationship('User', backref='group')
+    deployments = db.relationship('Deployment', secondary=deployment_group_junction)
     permissions = db.Column(db.Integer)
 
     def set_permissions(self, permission_list):
@@ -57,21 +87,94 @@ class Group(db.Model):
         return f'<Group {self.name}>'
 
 
-class EmailLink(db.Model):
+class Deployment(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(64), index=True)
+    description = db.Column(db.String(256))
+    open_status = db.Column(db.Boolean(), default=True)
+    groups = db.relationship('Group', secondary=deployment_group_junction)
+    users = db.relationship('User', secondary=deployment_user_junction)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class Incident(db.Model):
+    priorities = {1: "standard", 2: "prompt", 3: "immediate"}
+    incident_types = {}  ##TODO Get incident types.
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(64), index=True)
+    description = db.Column(db.String(256))
+    incident_type = db.Column(db.Integer)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    public = db.Column(db.Boolean(), default=False)
+    flagged = db.Column(db.Boolean(), default=False)
+    open_status = db.Column(db.Boolean(), default=True)
+    location = db.Column(db.String(128), index=True)
+    priority = db.Column(db.Integer())
+    xcoord = db.Column(db.Float())
+    ycoord = db.Column(db.Float())
+    users = db.relationship('User', secondary=incident_user_junction)
+    tasks = db.relationship('IncidentTask', backref='incident')
+    updates = db.relationship('IncidentUpdate', backref='incident')
+    medias = db.relationship('IncidentMedia', backref='incident')
+    actions = db.relationship('IncidentLog', backref='incident')
+
+
+class IncidentTask(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    incident_id = db.Column(db.Integer, db.ForeignKey('incident.id'))
+    details = db.Column(db.String(256))
+    completed = db.Column(db.Boolean(), default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    completed_at = db.Column(db.DateTime)
+    allocated_to = db.relationship('User', secondary=incidenttask_user_junction)
+
+
+class IncidentUpdate(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    incident_id = db.Column(db.Integer, db.ForeignKey('incident.id'))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
-    user = db.relationship('User', back_populates='email_link')
+    details = db.Column(db.String(1024))
+    highlight = db.Column(db.Boolean(), default=False)
+    sent_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class IncidentMedia(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    incident_id = db.Column(db.Integer, db.ForeignKey('incident.id'))
+    uploaded_by_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
+    saved_as = db.Column(db.String(64))
+    uploaded_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class EmailLink(db.Model):  ##TODO Cascade
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
+    user = db.relationship('User', backref='email_link')  ##Maybe unused so not needed.
     link = db.Column(db.String(128), unique=True)
     verify = db.Column(db.Boolean(), default=False)
     forgot_password = db.Column(db.Boolean(), default=False)
 
 
-class ActionLog(db.Model):
-    action_values = {"create_user": 1, "verify_user": 2, "delete_user": 3, "create_group": 4, "delete_group": 5}
+class AuditLog(db.Model):
+    action_values = {'create_user': 1, 'verify_user': 2, 'edit_user': 3, 'delete_user': 4, 'create_group': 5,
+                     'edit_group': 6, 'delete_group': 7, 'create_deployment': 8, 'edit_deployment': 9,
+                     'delete_deployment': 10}
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     action_type = db.Column(db.Integer())
     target_id = db.Column(db.Integer)
+    reason = db.Column(db.String(256))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class IncidentLog(db.Model):
+    action_values = {'create_incident': 1}
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    incident_id = db.Column(db.Integer, db.ForeignKey('incident.id'))
+    action_type = db.Column(db.Integer())
     reason = db.Column(db.String(256))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -88,8 +191,3 @@ class RevokedToken(db.Model):
     def is_jti_blacklisted(cls, jti):
         query = cls.query.filter_by(jti=jti).first()
         return bool(query)
-
-
-@login.user_loader
-def load_user(id):
-    return User.query.get(int(id))
