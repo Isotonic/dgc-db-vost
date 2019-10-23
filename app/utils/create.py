@@ -1,6 +1,6 @@
 import secrets
 from app import db
-from app.models import User, Group, Deployment, Incident, EmailLink, AuditLog, IncidentLog
+from app.models import User, Group, Deployment, Incident, IncidentTask, IncidentComment, EmailLink, AuditLog, IncidentLog
 
 
 def new_user(username, email, groupid, created_by):
@@ -40,8 +40,8 @@ def new_deployment(name, description, group_ids, user_ids, created_by):
     return deployment
 
 
-def new_incident(name, description, location, created_by):
-    incident = Incident(name=name, description=description, location=location)
+def new_incident(name, description, location, deployment, created_by):
+    incident = Incident(name=name, description=description, location=location, deployment=deployment)
     db.session.add(incident)
     db.session.commit()
     action = IncidentLog(user=created_by, action_type=IncidentLog.action_values['create_incident'],
@@ -49,3 +49,24 @@ def new_incident(name, description, location, created_by):
     db.session.add(action)
     db.session.commit()
     return incident
+
+def new_task(name, details, user_ids, incident, created_by):
+    users = User.query.filter(User.id.in_(user_ids)).all()
+    task = IncidentTask(name=name, details=details, allocated_to=users, incident=incident)
+    db.session.add(task)
+    db.session.commit()
+    action = IncidentLog(user=created_by, action_type=IncidentLog.action_values['create_task'],
+                         incident_id=incident.id)
+    db.session.add(action)
+    db.session.commit()
+    return task
+
+def new_comment(text, highlight, incident, added_by):
+    comment = IncidentComment(text=text, highlight=highlight, user_id=added_by.id, incident=incident)
+    db.session.add(comment)
+    db.session.commit()
+    action = IncidentLog(user=added_by, action_type=IncidentLog.action_values['add_comment'],
+                         incident_id=incident.id)
+    db.session.add(action)
+    db.session.commit()
+    return comment

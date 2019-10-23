@@ -36,7 +36,7 @@ class User(db.Model, UserMixin):
     tasks = db.relationship('IncidentTask', secondary=incidenttask_user_junction)
     audit_actions = db.relationship('AuditLog', backref='user', lazy=True)
     incident_actions = db.relationship('IncidentLog', backref='user', lazy=True)
-    incident_updates = db.relationship('IncidentUpdate', backref='user')
+    incident_comments = db.relationship('IncidentComment', backref='user')
     media_uploads = db.relationship('IncidentMedia', backref='uploaded_by')
 
     def set_password(self, password):
@@ -92,16 +92,18 @@ class Deployment(db.Model):
     name = db.Column(db.String(64), index=True)
     description = db.Column(db.String(256))
     open_status = db.Column(db.Boolean(), default=True)
+    incidents = db.relationship('Incident', backref='deployment')
     groups = db.relationship('Group', secondary=deployment_group_junction)
     users = db.relationship('User', secondary=deployment_user_junction)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
 class Incident(db.Model):
-    priorities = {1: "standard", 2: "prompt", 3: "immediate"}
+    priorities = {1: 'standard', 2: 'prompt', 3: 'immediate'}
     incident_types = {}  ##TODO Get incident types.
-
-    id = db.Column(db.Integer, primary_key=True)
+    # TODO Add who has this pinned.
+    id = db.Column(db.Integer, primary_key=True, index=True)
+    deployment_id = db.Column(db.Integer, db.ForeignKey('deployment.id'))
     name = db.Column(db.String(64), index=True)
     description = db.Column(db.String(256))
     incident_type = db.Column(db.Integer)
@@ -115,7 +117,7 @@ class Incident(db.Model):
     ycoord = db.Column(db.Float())
     users = db.relationship('User', secondary=incident_user_junction)
     tasks = db.relationship('IncidentTask', backref='incident')
-    updates = db.relationship('IncidentUpdate', backref='incident')
+    comments = db.relationship('IncidentComment', backref='incident')
     medias = db.relationship('IncidentMedia', backref='incident')
     actions = db.relationship('IncidentLog', backref='incident')
 
@@ -123,18 +125,20 @@ class Incident(db.Model):
 class IncidentTask(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     incident_id = db.Column(db.Integer, db.ForeignKey('incident.id'))
-    details = db.Column(db.String(256))
+    name = db.Column(db.String(64))
+    details = db.Column(db.String(1024))
+    completed_details = db.Column(db.String(1024))
     completed = db.Column(db.Boolean(), default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     completed_at = db.Column(db.DateTime)
     allocated_to = db.relationship('User', secondary=incidenttask_user_junction)
 
 
-class IncidentUpdate(db.Model):
+class IncidentComment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     incident_id = db.Column(db.Integer, db.ForeignKey('incident.id'))
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
-    details = db.Column(db.String(1024))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    text = db.Column(db.String(1024))
     highlight = db.Column(db.Boolean(), default=False)
     sent_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -142,7 +146,7 @@ class IncidentUpdate(db.Model):
 class IncidentMedia(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     incident_id = db.Column(db.Integer, db.ForeignKey('incident.id'))
-    uploaded_by_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
+    uploaded_by_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     saved_as = db.Column(db.String(64))
     uploaded_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -169,7 +173,8 @@ class AuditLog(db.Model):
 
 
 class IncidentLog(db.Model):
-    action_values = {'create_incident': 1}
+    action_values = {'create_incident': 1, 'create_task': 2, 'complete_task': 3, 'delete_task': 4, 'add_comment': 5,
+                     'delete_comment': 6}
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))

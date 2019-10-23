@@ -2,9 +2,10 @@ from app import app, db
 from sqlalchemy import func
 from flask import render_template, flash, redirect, url_for
 from flask_login import current_user, login_user, logout_user
-from app.models import User, Group, Deployment, EmailLink, AuditLog
-from app.utils.create import new_user, new_group, new_deployment, new_incident
-from app.forms import LoginForm, CreateUser, CreateGroup, SetPassword, CreateDeployment, CreateIncident
+from app.models import User, Group, Deployment, Incident, EmailLink, AuditLog
+from app.utils.create import new_user, new_group, new_deployment, new_incident, new_task, new_comment
+from app.forms import LoginForm, CreateUser, CreateGroup, SetPassword, CreateDeployment, CreateIncident, CreateTask, \
+    AddComment
 
 
 @app.route('/')
@@ -44,7 +45,7 @@ def create_user():
         if form.group.data:
             group = Group.query.get(form.group.data)
         user = new_user(form.username.data, form.email.data, group.id if group else None, current_user)
-        flash('Congratulations, you are now a registered user!')
+        flash('Congratulations, you created a user!')
         return user.email_link
     return render_template('new_user.html', title='Create New User', form=form)
 
@@ -76,7 +77,6 @@ def create_group():
                        "decision_making_log": form.decision_making_log.data, "supervisor": form.supervisor.data}
         chosen_permissions = [k for k, v in permissions.items() if v]
         group = new_group(form.name.data, chosen_permissions, current_user)
-        flash('Congratulations, you created a group!')
         return redirect(url_for('create_new_user'))
     return render_template('new_group.html', title='Create New Group', form=form)
 
@@ -91,7 +91,6 @@ def create_deployment():
     if form.validate_on_submit():
         deployment = new_deployment(form.name.data, form.description.data, form.groups.data, form.users.data,
                                     current_user)
-        flash('Congratulations, you are now a registered user!')
         return deployment.name
     return render_template('new_user.html', title='Create New User', form=form)
 
@@ -100,7 +99,7 @@ def create_deployment():
 def deployment(deployment_name):
     deployment = Deployment.query.filter(func.lower(Deployment.name) == func.lower(deployment_name)).first()
     if not deployment:
-        return render_template('index.base', title='No deployment found')
+        return render_template('index.html', title='No deployment found')
     return render_template('base.html', title=f'{deployment.name}')
 
 
@@ -108,10 +107,37 @@ def deployment(deployment_name):
 def create_incident(deployment_name):
     deployment = Deployment.query.filter(func.lower(Deployment.name) == func.lower(deployment_name)).first()
     if not deployment:
-        return render_template('index.base', title='No deployment found')
+        return render_template('index.html', title='No deployment found')
     form = CreateIncident()
     if form.validate_on_submit():
-        incident = new_incident(form.name.data, form.description.data, form.location.data, current_user)
-        flash('Congratulations, you are now a registered user!')
+        incident = new_incident(form.name.data, form.description.data, form.location.data, deployment, current_user)
         return incident.name
     return render_template('new_user.html', title=f'{deployment.name}', form=form)
+
+
+@app.route('/deployment/<deployment_name>/<incident_name>-<int:incident_id>/create_task', methods=['GET', 'POST'])
+def create_incident_task(deployment_name, incident_name, incident_id):
+    incident = Incident.query.filter(func.lower(Incident.name) == func.lower(incident_name),
+                                     Incident.id == incident_id).first()
+    if not incident or incident.deployment.name.lower() != deployment_name.lower():
+        return render_template('index.html', title='No deployment found')
+    users_list = [(i.id, i.username) for i in User.query.all()]
+    form = CreateTask()
+    form.users.choices = users_list
+    if form.validate_on_submit():
+        task = new_task(form.name.data, form.details.data, form.users.data, incident, current_user)
+        return task.name
+    return render_template('new_user.html', title=f'{incident.name}', form=form)
+
+
+@app.route('/deployment/<deployment_name>/<incident_name>-<int:incident_id>/add_comment', methods=['GET', 'POST'])
+def add_incident_comment(deployment_name, incident_name, incident_id):
+    incident = Incident.query.filter(func.lower(Incident.name) == func.lower(incident_name),
+                                     Incident.id == incident_id).first()
+    if not incident or incident.deployment.name.lower() != deployment_name.lower():
+        return render_template('index.html', title='No deployment found')
+    form = AddComment()
+    if form.validate_on_submit():
+        comment = new_comment(form.text.data, form.highlight.data, incident, current_user)
+        return comment.text
+    return render_template('new_user.html', title=f'{incident.name}', form=form)

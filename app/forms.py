@@ -71,3 +71,16 @@ class CreateIncident(FlaskForm):
     description = StringField('Description', validators=[DataRequired()])
     location = StringField('Location', validators=[DataRequired()])
     submit = SubmitField('Submit')
+
+
+class CreateTask(FlaskForm):
+    name = StringField('Name', validators=[DataRequired()])
+    details = StringField('Details')
+    users = SelectMultipleField('Users', coerce=int)
+    submit = SubmitField('Submit')
+
+
+class AddComment(FlaskForm):
+    text = StringField('Comment', validators=[DataRequired()])
+    highlight = BooleanField("Highlight", default=False)
+    submit = SubmitField('Submit')
