@@ -15,16 +15,17 @@ class get_all_deployments(Resource):
     @jwt_required
     @ns_deployment.doc(security='access_token')
     @ns_deployment.response(200, 'Success', [deployment_model])
-    @ns_deployment.response(404, 'No deployments exist')
+    @ns_deployment.response(404, 'No deployments found')
     def get(self):
         """
-                Returns all deployment.
+                Returns all deployments the user has access to.
         """
+        current_user = User.query.filter_by(username=get_jwt_identity()).first()
         all_deployments = [{'id': m.id, 'name': m.name, 'description': m.description, 'open': m.open_status,
                             'created_at': m.created_at, 'groups': [x.id for x in m.groups],
-                            'users': [y.id for y in m.users]} for m in Deployment.query.all()]
+                            'users': [y.id for y in m.users]} for m in current_user.get_deployments()]
         if not all_deployments:
-            ns_deployment.abort(404, 'No groups exist')
+            ns_deployment.abort(404, 'No deployments found')
         return all_deployments, 200
 
 

@@ -1,8 +1,10 @@
 Flask
 gunicorn
 psycopg2
+pyavagen
 flask-wtf
 flask-login
+flask-moment
 flask-migrate
 python-dotenv
 flask_restplus

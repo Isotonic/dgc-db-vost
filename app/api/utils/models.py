@@ -32,6 +32,7 @@ deployment_model = c5_api.model('Deployment',
                                 {'id': fields.Integer(), 'name': fields.String(), 'description': fields.String(),
                                  'open': fields.Boolean(), 'created_at': fields.DateTime(dt_format='iso8601'),
                                  'groups': fields.List(fields.Integer), 'users': fields.List(fields.Integer)})
+
 new_incident_model = c5_api.model('New Incident',
                                   {'name': fields.String(required=True), 'description': fields.String(required=True),
                                    'location': fields.String(required=True)})
@@ -40,5 +41,5 @@ incident_model = c5_api.model('Incident',
                               {'id': fields.Integer(), 'name': fields.String(), 'description': fields.String(),
                                'location': fields.String(), 'open': fields.Boolean(), 'public': fields.Boolean(),
                                'flagged': fields.Boolean(), 'type': fields.Integer(), 'priority': fields.Integer(),
-                               'xcoord': fields.Float(), 'ycoord': fields.Float(),
+                               'longitude': fields.Float(), 'latitude': fields.Float(),
                                'created_at': fields.DateTime(dt_format='iso8601')})

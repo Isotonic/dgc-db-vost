@@ -1,6 +1,7 @@
 #Folders
 .idea/
 migrations/
+app/static/img/avatars/
 
 #File extensions
 .env

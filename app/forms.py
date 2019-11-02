@@ -19,12 +19,12 @@ class CreateUser(FlaskForm):
     submit = SubmitField('Create User')
 
     def validate_username(self, username):
-        user = User.query.filter(func.lower(User.username) == func.lower(username)).first()
+        user = User.query.filter(func.lower(User.username) == username.data.lower()).first()
         if user is not None:
             raise ValidationError('Please use a different username.')
 
     def validate_email(self, email):
-        user = User.query.filter(func.lower(User.email) == func.lower(email)).first()
+        user = User.query.filter(func.lower(User.email) == email.data.lower()).first()
         if user is not None:
             raise ValidationError('Please use a different email address.')
 
@@ -42,7 +42,7 @@ class CreateGroup(FlaskForm):
     submit = SubmitField('Create Group')
 
     def validate_name(self, name):
-        group = Group.query.filter(func.lower(Group.name) == func.lower(name)).first()
+        group = Group.query.filter(func.lower(Group.name) == name.data.lower()).first()
         if group is not None:
             raise ValidationError('Please choose a different group name.')
 
@@ -61,7 +61,7 @@ class CreateDeployment(FlaskForm):
     submit = SubmitField('Submit')
 
     def validate_name(self, name):
-        deployment = Deployment.query.filter(func.lower(Deployment.name) == func.lower(name)).first()
+        deployment = Deployment.query.filter(func.lower(Deployment.name) == name.data.lower()).first()
         if deployment is not None:
             raise ValidationError('Please choose a different deployment name.')
 

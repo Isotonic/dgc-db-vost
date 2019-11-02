@@ -1,3 +1,5 @@
+import pyavagen
+from os import path
 from app import db, login
 from datetime import datetime
 from flask_login import UserMixin
@@ -45,6 +47,42 @@ class User(db.Model, UserMixin):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
+    def create_avatar(self):
+        avatar = pyavagen.Avatar(pyavagen.CHAR_SQUARE_AVATAR, size=500, string=self.username)
+        avatar.generate().save(f'./app/static/img/avatars/{self.username.replace(" ", "_")}.png')
+
+    def get_avatar(self):
+        avatar_path = f'/static/img/avatars/{self.username.replace(" ", "_")}.png'
+        if path.exists(avatar_path):
+            return avatar_path
+        self.create_avatar()
+        return avatar_path
+
+    def get_deployments(self):
+        deployments = []
+        for x in Deployment.query.all():
+            if not x.groups and not x.users:
+                deployments.append(x)
+            else:
+                if self in x.users:
+                    deployments.append(x)
+                for y in x.groups:
+                    if y.id == self.group_id:
+                        deployments.append(x)
+                        continue
+        return deployments
+
+    def get_incidents(self, deployment_id):
+        incidents = []
+        deployment = Deployment.query.filter_by(id=deployment_id).first()
+        if self.group_id and Group.query.filter_by(id=self.group_id).first().has_permission('view_all_incidents'):
+            return deployment.incidents
+        for x in deployment.incidents:
+            if self.id in x.users:
+                incidents.append(x)
+        return incidents
+
+
     def __repr__(self):
         return f'<User {self.username}>'
 
@@ -55,10 +93,10 @@ def load_user(id):
 
 
 class Group(db.Model):
-    permission_values = {"view_all_incidents": 0x1, "change_status": 0x2, "change_allocations": 0x4,
-                         "mark_as_public": 0x8,
-                         "new_reports": 0x16, "create_deployments": 0x32, "decision_making_log": 0x64,
-                         "supervisor": 0x128}
+    permission_values = {'view_all_incidents': 0x1, 'change_status': 0x2, 'change_allocations': 0x4,
+                         'mark_as_public': 0x8,
+                         'new_reports': 0x16, 'create_deployments': 0x32, 'decision_making_log': 0x64,
+                         'supervisor': 0x128}
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64), index=True, unique=True)
@@ -76,6 +114,8 @@ class Group(db.Model):
         self.permissions = int(permission_value)
 
     def has_permission(self, permission):
+        if self.permission_values['supervisor']:
+            return True
         try:
             if self.permissions & self.permission_values[permission.lower()] > 0:
                 return True
@@ -108,19 +148,26 @@ class Incident(db.Model):
     description = db.Column(db.String(256))
     incident_type = db.Column(db.Integer)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    last_updated = db.Column(db.DateTime, default=datetime.utcnow)
     public = db.Column(db.Boolean(), default=False)
     flagged = db.Column(db.Boolean(), default=False)
     open_status = db.Column(db.Boolean(), default=True)
     location = db.Column(db.String(128), index=True)
     priority = db.Column(db.Integer())
-    xcoord = db.Column(db.Float())
-    ycoord = db.Column(db.Float())
+    longitude = db.Column(db.Float())
+    latitude = db.Column(db.Float())
     users = db.relationship('User', secondary=incident_user_junction)
     tasks = db.relationship('IncidentTask', backref='incident')
     comments = db.relationship('IncidentComment', backref='incident')
     medias = db.relationship('IncidentMedia', backref='incident')
     actions = db.relationship('IncidentLog', backref='incident')
 
+    def get_priority(self):
+        return self.priorities[1].title() ##TODO REMOVE
+        return self.priorities[self.priority].title()
+
+    def calculate_task_percentage(self):
+        return int(sum([1 for m in self.tasks if m.completed])/len(self.tasks))
 
 class IncidentTask(db.Model):
     id = db.Column(db.Integer, primary_key=True)

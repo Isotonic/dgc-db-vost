@@ -7,6 +7,7 @@ def new_user(username, email, groupid, created_by):
     user = User(username=username, email=email, group_id=groupid)
     db.session.add(user)
     db.session.commit()
+    user.create_avatar()
     email_link = EmailLink(user_id=user.id, link=secrets.token_urlsafe(20), verify=True)
     db.session.add(email_link)
     action = AuditLog(user=created_by, action_type=AuditLog.action_values['create_user'], target_id=user.id)

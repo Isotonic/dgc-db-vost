@@ -1,7 +1,7 @@
 from app.api import c5_api
-from app.models import User, Incident
 from app.utils.create import new_incident
 from flask_restplus import Resource, Namespace
+from app.models import User, Incident, Deployment
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.api.utils.models import new_incident_model, incident_model
 
@@ -9,23 +9,27 @@ ns_incident = Namespace('Incident', description='Used to carry out operations re
                         path='/incident')
 
 
-@ns_incident.route('/list')
+@ns_incident.route('/<int:deployment_id>/list')
 class get_all_incidents(Resource):
     @jwt_required
     @ns_incident.doc(security='access_token')
     @ns_incident.response(200, 'Success', [incident_model])
-    @ns_incident.response(404, 'No incidents exist')
-    def get(self):
+    @ns_incident.response(404, 'No incidents found')
+    @ns_incident.response(404, "Deployment doesn't exist")
+    def get(self, deployment_id):
         """
-                Returns all incidents.
+                Returns all incidents the user has access to.
         """
+        if not Deployment.query.filter_by(id=deployment_id).first():
+            ns_incident.abort(404, "Deployment doesn't exist")
+        current_user = User.query.filter_by(username=get_jwt_identity()).first()
         all_incidents = [{'id': m.id, 'name': m.name, 'description': m.description,
                           'location': m.location, 'open': m.open_status, 'public': m.public,
                           'flagged': m.flagged, 'type': m.incident_type, 'priority': m.priority,
-                          'xcoord': m.xcoord, 'ycoord': m.ycoord,
-                          'created_at': m.created_at} for m in Incident.query.all()]
+                          'longitude': m.longitude, 'latitude': m.latitude,
+                          'created_at': m.created_at} for m in current_user.get_incidents(deployment_id)]
         if not all_incidents:
-            ns_incident.abort(404, 'No users exist')
+            ns_incident.abort(404, 'No incidents found')
         return all_incidents, 200
 
 
@@ -39,7 +43,6 @@ class get_incident(Resource):
         """
                 Returns incident info.
         """
-        payload = c5_api.payload
         incident = Incident.query.filter_by(id=id).first()
         if not incident:
             ns_incident.abort(401, "Incident doesn't exist")
