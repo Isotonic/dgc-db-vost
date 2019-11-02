@@ -82,7 +82,6 @@ class User(db.Model, UserMixin):
                 incidents.append(x)
         return incidents
 
-
     def __repr__(self):
         return f'<User {self.username}>'
 
@@ -163,13 +162,14 @@ class Incident(db.Model):
     actions = db.relationship('IncidentLog', backref='incident')
 
     def get_priority(self):
-        return self.priorities[1].title() ##TODO REMOVE
+        return self.priorities[1].title()  ##TODO REMOVE
         return self.priorities[self.priority].title()
 
     def calculate_task_percentage(self):
         if not self.tasks:
             return None
-        return int(sum([1 for m in self.tasks if m.completed])/len(self.tasks))
+        return int(sum([1 for m in self.tasks if m.completed]) / len(self.tasks))
+
 
 class IncidentTask(db.Model):
     id = db.Column(db.Integer, primary_key=True)

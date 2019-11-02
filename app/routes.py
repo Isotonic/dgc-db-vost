@@ -7,6 +7,7 @@ from app.utils.create import new_user, new_group, new_deployment, new_incident, 
 from app.forms import LoginForm, CreateUser, CreateGroup, SetPassword, CreateDeployment, CreateIncident, CreateTask, \
     AddComment
 
+
 @app.route('/logout/')
 @login_required
 def logout():
@@ -65,6 +66,7 @@ def verify_user(link):
         return redirect(url_for('login'))
     return render_template('verify.html', title='Set Password', form=form, username=email.user.username)
 
+
 @app.route('/supervisor/create_group/', methods=['GET', 'POST'])
 @login_required
 def create_group():
@@ -79,11 +81,13 @@ def create_group():
         return redirect(url_for('create_new_user'))
     return render_template('new_group.html', title='Create New Group', form=form)
 
+
 @app.route('/')
 @app.route('/deployments/', methods=['GET'])
 @login_required
 def view_deployments():
     return render_template('deployments.html', title='Deployments', deployments=current_user.get_deployments())
+
 
 @app.route('/create_deployment/', methods=['GET', 'POST'])
 @login_required
@@ -99,7 +103,8 @@ def create_deployment():
         return deployment.name
     return render_template('new_user.html', title='Create New User', form=form)
 
-@app.route('/deployments/<deployment_name>/incidents/', methods=['POST', 'GET'])
+
+@app.route('/deployments/<deployment_name>/incidents/', methods=['POST', 'GET']) ##TODO Use AJAX
 @login_required
 def view_incidents(deployment_name):
     deployment_name = deployment_name.replace("-", " ")
@@ -109,8 +114,21 @@ def view_incidents(deployment_name):
     form = CreateIncident()
     if form.validate_on_submit():
         new_incident(form.name.data, form.description.data, form.location.data, deployment, current_user)
+        return redirect(url_for("view_incidents", deployment_name=deployment_name))
     return render_template('incidents.html', title=f'{deployment.name}', deployment_name=deployment.name,
                            incidents=current_user.get_incidents(deployment.id), form=form)
+
+
+@app.route('/deployments/<deployment_name>/incidents/<incident_name>-<int:incident_id>', methods=['GET', 'POST'])
+@login_required
+def view_incident(deployment_name, incident_name, incident_id):
+    deployment_name = deployment_name.replace("-", " ")
+    incident = Incident.query.filter(func.lower(Incident.name) == func.lower(incident_name),
+                                     Incident.id == incident_id).first()
+    print(1)
+    if not incident or incident.deployment.name.lower() != deployment_name.lower():
+        return render_template('incidents.html', title='No deployment found')
+    return render_template('incidents.html', title=f'{incident.name}')
 
 @app.route('/deployments/<deployment_name>/incidents/<incident_name>-<int:incident_id>/create_task/', methods=['GET', 'POST'])
 @login_required
@@ -128,6 +146,7 @@ def create_incident_task(deployment_name, incident_name, incident_id):
         return task.name
     return render_template('new_user.html', title=f'{incident.name}', form=form)
 
+
 @app.route('/deployments/<deployment_name>/incidents/<incident_name>-<int:incident_id>/add_comment/', methods=['GET', 'POST'])
 @login_required
 def add_incident_comment(deployment_name, incident_name, incident_id):
@@ -142,20 +161,24 @@ def add_incident_comment(deployment_name, incident_name, incident_id):
         return comment.text
     return render_template('new_user.html', title=f'{incident.name}', form=form)
 
+
 @app.route('/notification/', methods=['GET'])
 @login_required
 def view_notifications():
     pass
+
 
 @app.route('/map/', methods=['GET'])
 @login_required
 def view_map():
     pass
 
+
 @app.route('/live-feed/', methods=['GET'])
 @login_required
 def view_live_feed():
     pass
+
 
 @app.route('/decision-making-log/', methods=['GET'])
 @login_required
