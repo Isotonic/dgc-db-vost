@@ -135,11 +135,15 @@
                         {% for incident in incidents %}
                         <tr data-href="{{ url_for('view_incident', deployment_name=deployment_name, incident_name=incident.name, incident_id=incident.id) }}">
                             <th scope="row">
+                                {% if current_user in incident.pinned %}
+                                Beep
+                                {% else %}
                                 Boop
+                                {% endif %}
                             </th>
-                            <th scope="row">
+                            <td scope="row">
                                 {{ incident.name }}
-                            </th>
+                            </td>
                             <td scope="row">
                                 {{ incident.location }}
                             </td>
@@ -214,7 +218,7 @@
     ]
     } );
 
-    $(document).on('click', 'td, th', function () {
+    $(document).on('click', 'td', function () {
         if (!$(this).hasClass('text-right')){
             window.location = $(this).parent().data("href");
         }

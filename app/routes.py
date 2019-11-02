@@ -110,7 +110,7 @@ def view_incidents(deployment_name):
     deployment_name = deployment_name.replace("-", " ")
     deployment = Deployment.query.filter(func.lower(Deployment.name) == func.lower(deployment_name)).first()
     if not deployment:
-        return render_template('index.html', title='No deployment found')
+        return render_template('404.html')
     form = CreateIncident()
     if form.validate_on_submit():
         new_incident(form.name.data, form.description.data, form.location.data, deployment, current_user)
@@ -125,10 +125,9 @@ def view_incident(deployment_name, incident_name, incident_id):
     deployment_name = deployment_name.replace("-", " ")
     incident = Incident.query.filter(func.lower(Incident.name) == func.lower(incident_name),
                                      Incident.id == incident_id).first()
-    print(1)
     if not incident or incident.deployment.name.lower() != deployment_name.lower():
-        return render_template('incidents.html', title='No deployment found')
-    return render_template('incidents.html', title=f'{incident.name}')
+        return render_template('404.html')
+    return render_template('incident.html', incident=incident)
 
 @app.route('/deployments/<deployment_name>/incidents/<incident_name>-<int:incident_id>/create_task/', methods=['GET', 'POST'])
 @login_required
@@ -137,7 +136,7 @@ def create_incident_task(deployment_name, incident_name, incident_id):
     incident = Incident.query.filter(func.lower(Incident.name) == func.lower(incident_name),
                                      Incident.id == incident_id).first()
     if not incident or incident.deployment.name.lower() != deployment_name.lower():
-        return render_template('index.html', title='No deployment found')
+        return render_template('404.html')
     users_list = [(i.id, i.username) for i in User.query.all()]
     form = CreateTask()
     form.users.choices = users_list

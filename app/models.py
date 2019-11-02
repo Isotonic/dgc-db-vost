@@ -20,6 +20,11 @@ incident_user_junction = db.Table('incident_users',
                                   db.Column('incident_id', db.Integer, db.ForeignKey('incident.id')),
                                   )
 
+incident_pinned_junction = db.Table('incident_pinned',
+                                  db.Column('user_id', db.Integer, db.ForeignKey('user.id')),
+                                  db.Column('incident_id', db.Integer, db.ForeignKey('incident.id')),
+                                  )
+
 incidenttask_user_junction = db.Table('incident_tasks',
                                       db.Column('user_id', db.Integer, db.ForeignKey('user.id')),
                                       db.Column('id', db.Integer, db.ForeignKey('incident_task.id')),
@@ -35,6 +40,7 @@ class User(db.Model, UserMixin):
     group_id = db.Column(db.Integer, db.ForeignKey('group.id'))
     deployments = db.relationship('Deployment', secondary=deployment_user_junction)
     incidents = db.relationship('Incident', secondary=incident_user_junction)
+    pinned = db.relationship('Incident', secondary=incident_pinned_junction)
     tasks = db.relationship('IncidentTask', secondary=incidenttask_user_junction)
     audit_actions = db.relationship('AuditLog', backref='user', lazy=True)
     incident_actions = db.relationship('IncidentLog', backref='user', lazy=True)
@@ -156,6 +162,7 @@ class Incident(db.Model):
     longitude = db.Column(db.Float())
     latitude = db.Column(db.Float())
     users = db.relationship('User', secondary=incident_user_junction)
+    users_pinned = db.relationship('User', secondary=incident_pinned_junction)
     tasks = db.relationship('IncidentTask', backref='incident')
     comments = db.relationship('IncidentComment', backref='incident')
     medias = db.relationship('IncidentMedia', backref='incident')
