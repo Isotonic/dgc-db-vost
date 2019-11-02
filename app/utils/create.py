@@ -3,8 +3,8 @@ from app import db
 from app.models import User, Group, Deployment, Incident, IncidentTask, IncidentComment, EmailLink, AuditLog, IncidentLog
 
 
-def new_user(username, email, groupid, created_by):
-    user = User(username=username, email=email, group_id=groupid)
+def new_user(firstname, surname, email, groupid, created_by):
+    user = User(firstname=firstname, surname=surname, email=email, group_id=groupid)
     db.session.add(user)
     db.session.commit()
     user.create_avatar()

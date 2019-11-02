@@ -13,15 +13,11 @@ class LoginForm(FlaskForm):
 
 
 class CreateUser(FlaskForm):
-    username = StringField('Username', validators=[DataRequired()])
+    firstname = StringField('Firstname', validators=[DataRequired()])
+    surname = StringField('Surname', validators=[DataRequired()])
     email = StringField('Email', validators=[DataRequired(), Email()])
     group = SelectField('Group', coerce=int)
     submit = SubmitField('Create User')
-
-    def validate_username(self, username):
-        user = User.query.filter(func.lower(User.username) == username.data.lower()).first()
-        if user is not None:
-            raise ValidationError('Please use a different username.')
 
     def validate_email(self, email):
         user = User.query.filter(func.lower(User.email) == email.data.lower()).first()

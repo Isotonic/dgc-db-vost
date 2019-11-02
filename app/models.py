@@ -33,7 +33,8 @@ incidenttask_user_junction = db.Table('incident_tasks',
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(64), index=True, unique=True)
+    firstname = db.Column(db.String(64))
+    surname = db.Column(db.String(64))
     email = db.Column(db.String(120), index=True, unique=True)
     password_hash = db.Column(db.String(128))
     admin = db.Column(db.Boolean(), default=False)
@@ -54,7 +55,7 @@ class User(db.Model, UserMixin):
         return check_password_hash(self.password_hash, password)
 
     def create_avatar(self):
-        avatar = pyavagen.Avatar(pyavagen.CHAR_AVATAR, size=128, string=self.username)
+        avatar = pyavagen.Avatar(pyavagen.CHAR_AVATAR, size=128, string=f'{self.firstname} {self.surname}')
         avatar.generate().save(f'./app/static/img/avatars/{self.username.replace(" ", "_")}.png')
 
     def get_avatar(self):

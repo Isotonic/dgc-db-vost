@@ -43,7 +43,7 @@ def create_user():
         group = None
         if form.group.data:
             group = Group.query.get(form.group.data)
-        user = new_user(form.username.data, form.email.data, group.id if group else None, current_user)
+        user = new_user(form.firstname.data, form.surname.data, form.email.data, group.id if group else None, current_user)
         flash('Congratulations, you created a user!')
         return user.email_link
     return render_template('new_user.html', title='Create New User', form=form)

@@ -19,7 +19,7 @@ class Login(Resource):
                 'access_token' is needed for all other endpoints and has a lifetime of 15 mins.
                 'refresh_token' is needed to refresh your access token once it has expired, it has a lifetime of 30 days.
         """
-        user = User.query.filter(func.lower(User.username) == func.lower(c5_api.payload['username'])).first()
+        user = User.query.filter(func.lower(User.email) == func.lower(c5_api.payload['email'])).first()
         if not user:
             ns_auth.abort(401, 'Incorrect credentials')
 
