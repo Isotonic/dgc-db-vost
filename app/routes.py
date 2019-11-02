@@ -99,28 +99,18 @@ def create_deployment():
         return deployment.name
     return render_template('new_user.html', title='Create New User', form=form)
 
-@app.route('/deployments/<deployment_name>/create_incident', methods=['GET', 'POST'])
-@login_required
-def create_incident(deployment_name):
-    deployment_name = deployment_name.replace("-", " ")
-    deployment = Deployment.query.filter(func.lower(Deployment.name) == func.lower(deployment_name)).first()
-    if not deployment:
-        return render_template('index.html', title='No deployment found')
-    form = CreateIncident()
-    if form.validate_on_submit():
-        incident = new_incident(form.name.data, form.description.data, form.location.data, deployment, current_user)
-        return incident.name
-    return render_template('new_user.html', title=f'{deployment.name}', form=form)
-
-@app.route('/deployments/<deployment_name>/incidents/', methods=['GET'])
+@app.route('/deployments/<deployment_name>/incidents/', methods=['POST', 'GET'])
 @login_required
 def view_incidents(deployment_name):
     deployment_name = deployment_name.replace("-", " ")
     deployment = Deployment.query.filter(func.lower(Deployment.name) == func.lower(deployment_name)).first()
     if not deployment:
         return render_template('index.html', title='No deployment found')
+    form = CreateIncident()
+    if form.validate_on_submit():
+        new_incident(form.name.data, form.description.data, form.location.data, deployment, current_user)
     return render_template('incidents.html', title=f'{deployment.name}', deployment_name=deployment.name,
-                           incidents=current_user.get_incidents(deployment.id))
+                           incidents=current_user.get_incidents(deployment.id), form=form)
 
 @app.route('/deployments/<deployment_name>/incidents/<incident_name>-<int:incident_id>/create_task/', methods=['GET', 'POST'])
 @login_required

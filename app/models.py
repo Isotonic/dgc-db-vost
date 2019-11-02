@@ -167,6 +167,8 @@ class Incident(db.Model):
         return self.priorities[self.priority].title()
 
     def calculate_task_percentage(self):
+        if not self.tasks:
+            return None
         return int(sum([1 for m in self.tasks if m.completed])/len(self.tasks))
 
 class IncidentTask(db.Model):
