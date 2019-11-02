@@ -48,6 +48,9 @@
             </div>
         </div>
     </div>
+    <div>
+        <h1 class="clock text-white" style="font-size:3.5rem"></h1>
+    </div>
 </div>
 <div style="float:right">
     <button class="btn btn-secondary" data-toggle="modal" data-target="#new-incident-form">New Incident</button>
@@ -212,6 +215,8 @@
 <script src="https://cdn.datatables.net/1.10.20/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.10.20/js/dataTables.bootstrap4.min.js "></script>
 <script>
+    clock();
+
     $('#incidentTable').dataTable( {
     "columnDefs": [
         { "orderable": false, "targets": [0,7] }
@@ -224,5 +229,13 @@
         }
     } );
 
+
+    function clock() {
+        setInterval(function() {
+            var date = new Date(),
+                time = date.toLocaleTimeString();
+            $(".clock").html(time);
+        }, 1000);
+    };
 </script>
 {% endblock %}

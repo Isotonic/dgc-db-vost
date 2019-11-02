@@ -54,7 +54,7 @@ class User(db.Model, UserMixin):
         return check_password_hash(self.password_hash, password)
 
     def create_avatar(self):
-        avatar = pyavagen.Avatar(pyavagen.CHAR_SQUARE_AVATAR, size=500, string=self.username)
+        avatar = pyavagen.Avatar(pyavagen.CHAR_AVATAR, size=128, string=self.username)
         avatar.generate().save(f'./app/static/img/avatars/{self.username.replace(" ", "_")}.png')
 
     def get_avatar(self):
