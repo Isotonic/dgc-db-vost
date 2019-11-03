@@ -21,7 +21,7 @@ def login():
         return redirect(url_for('view_deployments'))
     form = LoginForm()
     if form.validate_on_submit():
-        user = User.query.filter(func.lower(User.username) == func.lower(form.username.data)).first()
+        user = User.query.filter(func.lower(User.email) == func.lower(form.email.data)).first()
         if user is None or not user.check_password(form.password.data):
             return render_template('login.html', title='Sign In', form=form, invalid=True)
         login_user(user, remember=form.remember_me.data)
