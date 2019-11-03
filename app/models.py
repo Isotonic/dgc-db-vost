@@ -1,7 +1,7 @@
 import pyavagen
-from os import path
 from app import db, login
 from datetime import datetime
+from os import path, makedirs
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -55,6 +55,8 @@ class User(db.Model, UserMixin):
         return check_password_hash(self.password_hash, password)
 
     def create_avatar(self):
+        if not path.exists(f'./app/static/img/avatars'):
+            makedirs(f'./app/static/img/avatars')
         avatar = pyavagen.Avatar(pyavagen.CHAR_AVATAR, size=128, string=f'{self.firstname} {self.surname}', color_list=pyavagen.COLOR_LIST_MATERIAL)
         avatar.generate().save(f'./app/static/img/avatars/{self.id}_{self.firstname}_{self.surname}.png')
 
