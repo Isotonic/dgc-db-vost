@@ -2,3 +2,7 @@ tr:hover {
     cursor: pointer;
     background-color: #0d203e !important;
 }
+
+.bg-dark-blue {
+    background: #1c1e2f;
+}

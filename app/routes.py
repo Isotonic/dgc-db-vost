@@ -86,7 +86,7 @@ def create_group():
 @app.route('/deployments/', methods=['GET'])
 @login_required
 def view_deployments():
-    return render_template('deployments.html', title='Deployments', deployments=current_user.get_deployments())
+    return render_template('deployments.html', title='Deployments', back_url=url_for('view_deployments'), deployments=current_user.get_deployments())
 
 
 @app.route('/create_deployment/', methods=['GET', 'POST'])
@@ -116,7 +116,7 @@ def view_incidents(deployment_name):
         new_incident(form.name.data, form.description.data, form.location.data, deployment, current_user)
         return redirect(url_for("view_incidents", deployment_name=deployment_name))
     return render_template('incidents.html', title=f'{deployment.name}', deployment_name=deployment.name,
-                           incidents=current_user.get_incidents(deployment.id), form=form)
+                           incidents=current_user.get_incidents(deployment.id), back_url=url_for('view_deployments'), form=form)
 
 
 @app.route('/deployments/<deployment_name>/incidents/<incident_name>-<int:incident_id>', methods=['GET', 'POST'])
@@ -127,7 +127,7 @@ def view_incident(deployment_name, incident_name, incident_id):
                                      Incident.id == incident_id).first()
     if not incident or incident.deployment.name.lower() != deployment_name.lower():
         return render_template('404.html')
-    return render_template('incident.html', incident=incident, deployment_name=deployment_name, title=f'{deployment_name} - Incident {incident_id}')
+    return render_template('incident.html', incident=incident, deployment_name=deployment_name, back_url=url_for('view_incidents', deployment_name=deployment_name), title=f'{deployment_name} - Incident {incident_id}')
 
 @app.route('/deployments/<deployment_name>/incidents/<incident_name>-<int:incident_id>/create_task/', methods=['GET', 'POST'])
 @login_required
