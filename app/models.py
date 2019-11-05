@@ -44,7 +44,6 @@ class User(db.Model, UserMixin):
     pinned = db.relationship('Incident', secondary=incident_pinned_junction)
     tasks = db.relationship('IncidentTask', secondary=incidenttask_user_junction)
     audit_actions = db.relationship('AuditLog', backref='user', lazy=True)
-    incident_actions = db.relationship('IncidentLog', backref='user', lazy=True)
     incident_comments = db.relationship('IncidentComment', backref='user')
     media_uploads = db.relationship('IncidentMedia', backref='uploaded_by')
 
@@ -57,7 +56,7 @@ class User(db.Model, UserMixin):
     def create_avatar(self):
         if not path.exists(f'./app/static/img/avatars'):
             makedirs(f'./app/static/img/avatars')
-        avatar = pyavagen.Avatar(pyavagen.CHAR_AVATAR, size=128, string=f'{self.firstname} {self.surname}', color_list=pyavagen.COLOR_LIST_MATERIAL)
+        avatar = pyavagen.Avatar(pyavagen.CHAR_AVATAR, size=128, string=f'{self.firstname} {self.surname}')
         avatar.generate().save(f'./app/static/img/avatars/{self.id}_{self.firstname}_{self.surname}.png')
 
     def get_avatar(self):
@@ -234,13 +233,18 @@ class AuditLog(db.Model):
 class IncidentLog(db.Model):
     action_values = {'create_incident': 1, 'create_task': 2, 'complete_task': 3, 'delete_task': 4, 'add_comment': 5,
                      'delete_comment': 6}
+    action_strings = {1: 'created incident', 2: 'created task', 3: 'completed task', 4: 'deleted task', 5: 'added comment', 6: 'deleted comment'}
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    user = db.relationship('User', backref='incident_actions', lazy=True)
     incident_id = db.Column(db.Integer, db.ForeignKey('incident.id'))
     action_type = db.Column(db.Integer())
     reason = db.Column(db.String(256))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    occurred_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f'{self.user.firstname} {self.user.surname} {self.action_strings[self.action_type]}'
 
 
 class RevokedToken(db.Model):

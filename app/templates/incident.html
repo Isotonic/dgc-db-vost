@@ -40,24 +40,29 @@
             <div class="card-body">
                 <div class="row">
                     <div class="col">
-                        <h3 class="card-title text-uppercase mb-4">{% if percentage == 100 %}Completed{% else %}Completion - {{ percentage }}%{% endif %}</h3>
+                        <h3 class="card-title text-uppercase mb-4">Completion - {{ percentage }}%</h3>
                         <div>
                             <div class="progress">
-                                <div class="progress-bar bg-warning" role="progressbar" aria-valuenow="60"
+                                {% if percentage == 100 %}
+                                <div class="progress-label">
+                                  <span>Tasks completed</span>
+                                </div>
+                                {% endif %}
+                                <div class="progress-bar bg-warning" role="progressbar" aria-valuenow="{{ percentage }}"
                                      aria-valuemin="0" aria-valuemax="100"
                                      style="width: {{ percentage }}%;"></div>
                             </div>
                         </div>
                     </div>
                     <div class="col-auto">
-                        <div class="icon icon-shape bg-warning text-white rounded-circle shadow">
+                        <div class="icon icon-shape bg-red text-white rounded-circle shadow">
                             <i class="fas fa-tasks"></i>
                         </div>
                     </div>
                 </div>
                 <p class="mt-3 mb-0 text-muted text-sm">
-                        <span class="text-nowrap">Last updated {{ moment(incident.created_at).fromNow() }}</span>
-                    </p>
+                    <span class="text-nowrap">Last updated {{ moment(incident.created_at).fromNow() }}</span>
+                </p>
             </div>
         </div>
     </div>
@@ -71,7 +76,7 @@
                         <span class="h5 font-weight-bold mb-0">{{ incident.get_priority() }}</span>
                     </div>
                     <div class="col-auto">
-                        <div class="icon icon-shape bg-warning text-white rounded-circle shadow">
+                        <div class="icon icon-shape bg-{% if incident.priority == 3 %}red{% elif incident.priority == 2 %}orange{% else %}yellow{% endif %} text-white rounded-circle shadow">
                             <i class="fas fa-car-crash"></i>
                         </div>
                     </div>
@@ -87,7 +92,7 @@
 {% endblock %}
 
 {% block body %}
-<hr class="my-" style="background-color:white">
+<hr class="my-4 bg-white">
 <div class="row mt-5">
     <div class="col-xl-6 col-lg-6">
         <div class="card">
@@ -105,15 +110,15 @@
     </div>
     <div class="col-xl-6 col-lg-6">
         <div class="card">
-            <div class="card-header bg-danger"><h3 class="text-white text-uppercase">Tasks</h3></div>
+            <div class="card-header bg-red"><h3 class="text-white text-uppercase">Tasks</h3></div>
             <div class="card-body">
                 <div class="row">
                     <div class="col">
                         {% if incident.tasks %}
                         {% for task in incident.tasks %}
                         <div class="custom-control custom-checkbox mb-3">
-                          <input class="custom-control-input" id="customCheck2" type="checkbox"{% if task.completed %} checked{% endif %}{% if current_user not in task.allocated_to %} disabled{% endif %}>
-                          <label class="custom-control-label" for="customCheck2">{{ task.name }}</label>
+                            <input class="custom-control-input" id="customCheck2" type="checkbox"{% if task.completed %} checked{% endif %}{% if current_user not in task.allocated_to %} disabled{% endif %}>
+                            <label class="custom-control-label" for="customCheck2">{{ task.name }}</label>
                         </div>
                         {% endfor %}
                         {% else %}
@@ -121,6 +126,22 @@
                         {% endif %}
                     </div>
 
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row mt-5">
+    <div class="col-xl-6 col-lg-6">
+        <div class="card">
+            <div class="card-header bg-green"><h3 class="text-white text-uppercase">Updates</h3></div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col">
+                        {% for action in incident.actions %}
+                        <p class="card-text">{{ action }} {{ moment(action.occurred_at).fromNow() }}.</p>
+                        {% endfor %}
+                    </div>
                 </div>
             </div>
         </div>
