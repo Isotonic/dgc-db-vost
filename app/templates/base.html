@@ -6,12 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link type="text/css" href="/static/css/argon.css" rel="stylesheet">
     <link type="text/css" href="/static/js/plugins/nucleo/css/nucleo.css" rel="stylesheet" />
-    <link type="text/css" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" />
+    <link type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.min.css" rel="stylesheet" />
     {% block css %}
     {% endblock %}
 </head>
 
-<body class="">
+<body class="bg-gradient-dark">
 <nav class="navbar navbar-vertical fixed-left navbar-expand-md navbar-light bg-white" id="sidenav-main">
     <div class="container-fluid">
         <!-- Toggler -->
@@ -38,9 +38,12 @@
             <li class="nav-item dropdown">
                 <a class="nav-link" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     <div class="media align-items-center">
-                  <span class="avatar avatar-sm rounded-circle">
-                    <img alt="Avatar" src="{{ current_user.avatar }}">
-                  </span>
+                      <span class="avatar avatar-sm rounded-circle">
+                        <img alt="Avatar" src="{{ current_user.get_avatar() }}">
+                      </span>
+                        <div class="media-body ml-2 d-none d-lg-block">
+                            <span class="mb-0 text-sm font-weight-bold">{{ current_user.firstname }} {{ current_user.surname }}</span>
+                        </div>
                     </div>
                 </a>
                 <div class="dropdown-menu dropdown-menu-arrow dropdown-menu-right">
@@ -117,7 +120,7 @@
     <nav class="navbar navbar-top navbar-expand-md navbar-dark" id="navbar-main">
         <div class="container-fluid">
             <!-- Brand -->
-            <a class="h4 mb-0 text-white text-uppercase d-none d-lg-inline-block" href="{{ url_for('view_deployments') }}">{{ title }}</a>
+            <a class="h2 mb-0 text-white text-uppercase d-none d-lg-inline-block" href="{{ url_for('view_deployments') }}">{{ title }}</a>
             <!-- Form -->
             <form class="navbar-search navbar-search-dark form-inline mr-3 d-none d-md-flex ml-lg-auto">
                 <div class="form-group mb-0">
@@ -132,13 +135,13 @@
                       <img alt="Avatar" src="{{ current_user.get_avatar() }}">
                     </span>
                             <div class="media-body ml-2 d-none d-lg-block">
-                                <span class="mb-0 text-sm  font-weight-bold">{{ current_user.username }}</span>
+                                <span class="mb-0 text-sm font-weight-bold">{{ current_user.firstname }} {{ current_user.surname }}</span>
                             </div>
                         </div>
                     </a>
                     <div class="dropdown-menu dropdown-menu-arrow dropdown-menu-right">
                         <div class=" dropdown-header noti-title">
-                            <h6 class="text-overflow m-0">Welcome!</h6>
+                            <h6 class="text-overflow m-0">{{ current_user.firstname }} {{ current_user.surname }}</h6>
                         </div>
                         <a href="./profile.html" class="dropdown-item">
                             <i class="ni ni-single-02"></i>
@@ -156,7 +159,7 @@
     </nav>
     <!-- End Navbar -->
     <!-- Header -->
-    <div class="header bg-gradient-primary pb-8 pt-5 pt-md-8">
+    <div class="header pb-8 pt-5 pt-md-8">
         <div class="container-fluid">
             <div class="header-body">
                 {% block header %}

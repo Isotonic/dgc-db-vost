@@ -95,8 +95,8 @@
         </div>
     </div>
 </div>
-
 {% endblock %}
+
 {% block body %}
 <div class="row mt-5">
     <div class="col">
@@ -173,6 +173,8 @@
                                 <div class="d-flex align-items-center">
                                     {% if incident.calculate_task_percentage() == None %}
                                     None
+                                    {% elif incident.calculate_task_percentage() == 100 %}
+                                    Completed
                                     {% else %}
                                     <span class="mr-2">{{ incident.calculate_task_percentage() }}%</span>
                                     <div>

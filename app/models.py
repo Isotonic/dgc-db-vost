@@ -62,7 +62,7 @@ class User(db.Model, UserMixin):
 
     def get_avatar(self):
         avatar_path = f'/static/img/avatars/{self.id}_{self.firstname}_{self.surname}.png'
-        if path.exists(avatar_path):
+        if path.exists(f'./app{avatar_path}'):
             return avatar_path
         self.create_avatar()
         return avatar_path
@@ -92,7 +92,7 @@ class User(db.Model, UserMixin):
         return incidents
 
     def __repr__(self):
-        return f'<User {self.username}>'
+        return f'<User {self.firstname} {self.surname}>'
 
 
 @login.user_loader
@@ -164,7 +164,7 @@ class Incident(db.Model):
     priority = db.Column(db.Integer())
     longitude = db.Column(db.Float())
     latitude = db.Column(db.Float())
-    users = db.relationship('User', secondary=incident_user_junction)
+    assigned_to = db.relationship('User', secondary=incident_user_junction)
     users_pinned = db.relationship('User', secondary=incident_pinned_junction)
     tasks = db.relationship('IncidentTask', backref='incident')
     comments = db.relationship('IncidentComment', backref='incident')

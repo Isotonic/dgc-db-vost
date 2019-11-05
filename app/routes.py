@@ -127,7 +127,7 @@ def view_incident(deployment_name, incident_name, incident_id):
                                      Incident.id == incident_id).first()
     if not incident or incident.deployment.name.lower() != deployment_name.lower():
         return render_template('404.html')
-    return render_template('incident.html', incident=incident)
+    return render_template('incident.html', incident=incident, deployment_name=deployment_name, title=f'{deployment_name} - Incident {incident_id}')
 
 @app.route('/deployments/<deployment_name>/incidents/<incident_name>-<int:incident_id>/create_task/', methods=['GET', 'POST'])
 @login_required
