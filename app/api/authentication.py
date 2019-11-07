@@ -24,8 +24,8 @@ class Login(Resource):
             ns_auth.abort(401, 'Incorrect credentials')
 
         if user.check_password(c5_api.payload['password']):
-            access_token = create_access_token(identity=user.username)
-            refresh_token = create_refresh_token(identity=user.username)
+            access_token = create_access_token(identity=f'{user.firstname}{user.surname}')
+            refresh_token = create_refresh_token(identity=f'{user.firstname}{user.surname}')
 
             return {'access_token': access_token, 'refresh_token': refresh_token}, 200
 
