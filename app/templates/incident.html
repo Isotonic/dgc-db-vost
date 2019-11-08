@@ -5,13 +5,13 @@
 
 {% block heading %}
 <div>
-    <a href="#flagModal" data-toggle="modal" data-target="#flagModal" class="btn btn-icon-split btn-warning mb-1">
+    <a href="#flagModal" data-toggle="modal" data-target="#flagModal" class="btn btn-icon-split btn-warning mb-1 mt-2">
         <span class="btn-icon">
             <i class="fas fa-flag"></i>
         </span>
         <span class="text">Flag To Supervisor</span>
     </a>
-    <a href="#markCompleteModal" data-toggle="modal" data-target="#markCompleteModal" class="btn btn-icon-split btn-success mb-1">
+    <a href="#markCompleteModal" data-toggle="modal" data-target="#markCompleteModal" class="btn btn-icon-split btn-success mb-1 mt-2">
         <span class="btn-icon">
             <i class="fas fa-check"></i>
         </span>
@@ -198,67 +198,6 @@
                     <p class="card-text">No tasks currently.</p>
                 </div>
                     {% endif %}
-        </div>
-    </div>
-</div>
-<div class="row mt-5">
-    <div class="col-xl-6 col-lg-6">
-        <div class="card">
-            <div class="card-header bg-primary"><h3 class="text-white text-uppercase">Incident Overview</h3></div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col">
-                        <h3 class="card-title">{{ incident.name }}</h3>
-                        <p class="card-text"><b>Location:</b> {{ incident.location }}</p>
-                        <p class="card-text"><b>Description:</b> {{ incident.description }}</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-xl-6 col-lg-6">
-        <div class="card">
-            <div class="card-header bg-red"><h3 class="text-white text-uppercase">Tasks</h3></div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col">
-                        {% if incident.tasks %}
-                        {% for task in incident.tasks %}
-                        <div class="custom-control custom-checkbox mb-3">
-                            <input class="custom-control-input" id="customCheck2" type="checkbox" {% if task.completed %} checked{% endif %}{% if current_user not in task.allocated_to %} disabled{% endif %}>
-                            <label class="custom-control-label" for="customCheck2">{{ task.name }}</label>
-                        </div>
-                        {% endfor %}
-                        {% else %}
-                        <p class="card-text">None</p>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-<div class="row mt-5">
-    <div class="col-xl-6 col-lg-6">
-        <div class="card">
-            <div class="card-header bg-green"><h3 class="text-white text-uppercase">Updates</h3></div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col">
-                        {% for action in incident.actions %}
-                        <p class="card-text">{{ action }} {{ moment(action.occurred_at).fromNow() }}.</p>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-xl-6 col-lg-6">
-        <div class="card">
-            <div class="card-header bg-green"><h3 class="text-white text-uppercase">Updates</h3></div>
-            <div class="card-body">
-                <div id="mapid" style="height: 180px;"></div>
-            </div>
         </div>
     </div>
 </div>
