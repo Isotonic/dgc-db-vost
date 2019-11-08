@@ -30,7 +30,7 @@
       <hr class="sidebar-divider my-0">
 
       <!-- Nav Item - Deployments -->
-      <li class="nav-item active">
+      <li class="nav-item">
         <a class="nav-link" href="{{ url_for('view_deployments') }}">
           <i class="fas fa-fw fa-tv"></i>
           <span>Deployments</span></a>
@@ -44,31 +44,31 @@
         {{ deployment_name }}
       </div>
 
-      <li class="nav-item">
+      <li class="nav-item{% if incidents_active is defined %} active{% endif %}">
         <a class="nav-link" href="{{ url_for('view_incidents', deployment_name=deployment_name) }}">
           <i class="far fa-fw fa-file"></i>
           <span>Incidents</span></a>
       </li>
 
-      <li class="nav-item">
+      <li class="nav-item{% if notifications_active is defined %} active{% endif %}">
         <a class="nav-link" href="{{ url_for('view_notifications') }}">
           <i class="fas fa-fw fa-bell"></i>
           <span>Notifications</span></a>
       </li>
 
-        <li class="nav-item">
+        <li class="nav-item{% if map_active is defined %} active{% endif %}">
         <a class="nav-link" href="{{ url_for('view_map', deployment_name=deployment_name) }}">
           <i class="fas fa-fw fa-map-marker-alt"></i>
           <span>Map</span></a>
       </li>
 
-        <li class="nav-item">
+        <li class="nav-item{% if live_feed_active is defined %} active{% endif %}">
         <a class="nav-link" href="{{ url_for('view_live_feed', deployment_name=deployment_name) }}">
           <i class="fas fa-fw fa-rss"></i>
           <span>Live Feed</span></a>
       </li>
 
-        <li class="nav-item">
+        <li class="nav-item{% if decision_making_log_active is defined %} active{% endif %}">
         <a class="nav-link" href="{{ url_for('view_decision_making_log', deployment_name=deployment_name) }}">
           <i class="fas fa-fw fa-pen"></i>
           <span>Decision-Making Log</span></a>

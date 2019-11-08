@@ -116,7 +116,7 @@ def view_incidents(deployment_name):
         new_incident(form.name.data, form.description.data, form.location.data, deployment, current_user)
         return redirect(url_for("view_incidents", deployment_name=deployment.name))
     return render_template('incidents.html', title=f'{deployment.name}', deployment=deployment, deployment_name=deployment.name,
-                           incidents=current_user.get_incidents(deployment.id), back_url=url_for('view_deployments'), form=form)
+                           incidents_active=True, incidents=current_user.get_incidents(deployment.id), back_url=url_for('view_deployments'), form=form)
 
 
 @app.route('/deployments/<deployment_name>/incidents/<incident_name>-<int:incident_id>', methods=['GET', 'POST'])
