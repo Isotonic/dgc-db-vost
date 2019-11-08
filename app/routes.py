@@ -1,12 +1,24 @@
 from app import app, db
 from sqlalchemy import func
+from datetime import datetime, timedelta
 from flask import render_template, flash, redirect, url_for, request, jsonify
 from flask_login import current_user, login_user, logout_user, login_required
 from app.models import User, Group, Deployment, Incident, EmailLink, AuditLog
 from app.utils.create import new_user, new_group, new_deployment, new_incident, new_task, new_comment
-from app.forms import LoginForm, CreateUser, CreateGroup, SetPassword, CreateDeployment, CreateIncident, CreateTask, \
-    AddComment
+from app.forms import LoginForm, CreateUser, CreateGroup, SetPassword, CreateDeployment, CreateIncident, CreateTask, AddComment
 
+
+def calculate_incidents_percentage(incidents): ##TODO Ask Adam if he prefers this or just a number of the increase.
+    two_hours = len([m for m in incidents if m.created_at >= (datetime.utcnow() - timedelta(hours=2)) and m.created_at < (datetime.utcnow() - timedelta(hours=1))])
+    one_hour = len([m for m in incidents if m.created_at >= (datetime.utcnow() - timedelta(hours=1))])
+    if two_hours == one_hour:
+        return ["info", "minus", 0]
+    elif two_hours == 0:
+        return ["danger", "arrow-up", 100]
+    elif one_hour > two_hours:
+        return ["danger", "arrow-up", ((one_hour-two_hours)/two_hours)*100]
+    else:
+        return ["success", "arrow-down", ((two_hours-one_hour)/two_hours)*100]
 
 @app.route('/logout/')
 @login_required
@@ -46,7 +58,7 @@ def create_user():
         user = new_user(form.firstname.data, form.surname.data, form.email.data, group.id if group else None, current_user)
         flash('Congratulations, you created a user!')
         return user.email_link
-    return render_template('new_user.html', title='Create New User', form=form)
+    return render_template('base.html', title='Create New User', form=form)
 
 
 @app.route('/verify/<link>/', methods=['GET', 'POST'])
@@ -64,7 +76,7 @@ def verify_user(link):
         db.session.commit()
         flash('Congratulations, you are now a registered user!')
         return redirect(url_for('login'))
-    return render_template('verify.html', title='Set Password', form=form, username=email.user.username)
+    return render_template('base.html', title='Set Password', form=form, username=email.user.username)
 
 
 @app.route('/supervisor/create_group/', methods=['GET', 'POST'])
@@ -79,7 +91,7 @@ def create_group():
         chosen_permissions = [k for k, v in permissions.items() if v]
         group = new_group(form.name.data, chosen_permissions, current_user)
         return redirect(url_for('create_new_user'))
-    return render_template('new_group.html', title='Create New Group', form=form)
+    return render_template('base.html', title='Create New Group', form=form)
 
 
 @app.route('/')
@@ -101,7 +113,7 @@ def create_deployment():
         deployment = new_deployment(form.name.data, form.description.data, form.groups.data, form.users.data,
                                     current_user)
         return deployment.name
-    return render_template('new_user.html', title='Create New User', form=form)
+    return render_template('base.html', title='Create New User', form=form)
 
 
 @app.route('/deployments/<deployment_name>/incidents/', methods=['GET'])
@@ -112,8 +124,10 @@ def view_incidents(deployment_name):
     if not deployment:
         return render_template('404.html', nosidebar=True)
     form = CreateIncident()
+    incidents_percentage = calculate_incidents_percentage(deployment.incidents)
+
     return render_template('incidents.html', title=f'{deployment.name}', deployment=deployment, deployment_name=deployment.name,
-                           incidents_active=True, incidents=current_user.get_incidents(deployment.id), back_url=url_for('view_deployments'), form=form)
+                           incidents_active=True, incidents_percentage=incidents_percentage, incidents=current_user.get_incidents(deployment.id), back_url=url_for('view_deployments'), form=form)
 
 
 @app.route('/deployments/<deployment_name>/add_incident/', methods=['POST'])
@@ -153,7 +167,7 @@ def create_incident_task(deployment_name, incident_name, incident_id):
     if form.validate_on_submit():
         task = new_task(form.name.data, form.details.data, form.users.data, incident, current_user)
         return task.name
-    return render_template('new_user.html', title=f'{incident.name}', form=form)
+    return render_template('base.html', title=f'{incident.name}', form=form)
 
 
 @app.route('/deployments/<deployment_name>/incidents/<incident_name>-<int:incident_id>/add_comment/', methods=['GET', 'POST'])
@@ -163,12 +177,12 @@ def add_incident_comment(deployment_name, incident_name, incident_id):
     incident = Incident.query.filter(func.lower(Incident.name) == func.lower(incident_name),
                                      Incident.id == incident_id).first()
     if not incident or incident.deployment.name.lower() != deployment_name.lower():
-        return render_template('index.html', title='No deployment found')
+        return render_template('404.html', nosidebar=True)
     form = AddComment()
     if form.validate_on_submit():
         comment = new_comment(form.text.data, form.highlight.data, incident, current_user)
         return comment.text
-    return render_template('new_user.html', title=f'{incident.name}', form=form)
+    return render_template('base.html', title=f'{incident.name}', form=form)
 
 
 @app.route('/notifications/', methods=['GET'])

@@ -1,12 +1,14 @@
 {% extends "base.html" %}
 
 {% block heading %}
+{% if current_user.has_permission('supervisor') %}
 <a href="#newDeploymentModal" data-toggle="modal" data-target="newDeploymentModal" class="btn btn-icon-split btn-success mb-1 mt-2">
     <span class="btn-icon">
         <i class="fas fa-plus"></i>
     </span>
     <span class="text">New Deployment</span>
 </a>
+{% endif %}
 {% endblock %}
 
 {% block body %}

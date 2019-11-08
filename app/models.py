@@ -39,6 +39,7 @@ class User(db.Model, UserMixin):
     password_hash = db.Column(db.String(128))
     admin = db.Column(db.Boolean(), default=False)
     group_id = db.Column(db.Integer, db.ForeignKey('group.id'))
+    group = db.relationship('Group', backref='users')
     deployments = db.relationship('Deployment', secondary=deployment_user_junction)
     incidents = db.relationship('Incident', secondary=incident_user_junction)
     pinned = db.relationship('Incident', secondary=incident_pinned_junction)
@@ -90,6 +91,12 @@ class User(db.Model, UserMixin):
                 incidents.append(x)
         return incidents
 
+    def has_permission(self, permission):
+        if not self.group:
+            return False
+        return self.group.has_permission(permission)
+
+
     def __repr__(self):
         return f'{self.firstname} {self.surname}'
 
@@ -107,7 +114,6 @@ class Group(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64), index=True, unique=True)
-    users = db.relationship('User', backref='group')
     deployments = db.relationship('Deployment', secondary=deployment_group_junction)
     permissions = db.Column(db.Integer)
 
@@ -155,6 +161,7 @@ class Incident(db.Model):
     description = db.Column(db.String(256))
     incident_type = db.Column(db.Integer)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    closed_at = db.Column(db.DateTime)
     last_updated = db.Column(db.DateTime, default=datetime.utcnow)
     public = db.Column(db.Boolean(), default=False)
     flagged = db.Column(db.Boolean(), default=False)
