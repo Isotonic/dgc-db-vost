@@ -1,6 +1,6 @@
 from app import app, db
 from sqlalchemy import func
-from flask import render_template, flash, redirect, url_for, request
+from flask import render_template, flash, redirect, url_for, request, jsonify
 from flask_login import current_user, login_user, logout_user, login_required
 from app.models import User, Group, Deployment, Incident, EmailLink, AuditLog
 from app.utils.create import new_user, new_group, new_deployment, new_incident, new_task, new_comment
@@ -104,7 +104,7 @@ def create_deployment():
     return render_template('new_user.html', title='Create New User', form=form)
 
 
-@app.route('/deployments/<deployment_name>/incidents/', methods=['POST', 'GET']) ##TODO Use AJAX
+@app.route('/deployments/<deployment_name>/incidents/', methods=['GET'])
 @login_required
 def view_incidents(deployment_name):
     deployment_name = deployment_name.replace("-", " ")
@@ -112,12 +112,22 @@ def view_incidents(deployment_name):
     if not deployment:
         return render_template('404.html', nosidebar=True)
     form = CreateIncident()
-    if form.validate_on_submit():
-        new_incident(form.name.data, form.description.data, form.location.data, deployment, current_user)
-        return redirect(url_for("view_incidents", deployment_name=deployment.name))
     return render_template('incidents.html', title=f'{deployment.name}', deployment=deployment, deployment_name=deployment.name,
                            incidents_active=True, incidents=current_user.get_incidents(deployment.id), back_url=url_for('view_deployments'), form=form)
 
+
+@app.route('/deployments/<deployment_name>/add_incident/', methods=['POST'])
+@login_required
+def add_incident(deployment_name):
+    deployment_name = deployment_name.replace("-", " ")
+    deployment = Deployment.query.filter(func.lower(Deployment.name) == func.lower(deployment_name)).first()
+    if not deployment:
+        return 404
+    form = CreateIncident()
+    if form.validate_on_submit():
+        incident = new_incident(form.name.data, form.description.data, form.location.data, deployment, current_user)
+        return jsonify(data={'url': url_for("view_incident", deployment_name=deployment.name, incident_name=incident.name, incident_id=incident.id)})
+    return jsonify(data=form.errors)
 
 @app.route('/deployments/<deployment_name>/incidents/<incident_name>-<int:incident_id>', methods=['GET', 'POST'])
 @login_required

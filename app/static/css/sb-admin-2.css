@@ -66,7 +66,7 @@ body {
   line-height: 1.5;
   color: #32325d;
   text-align: left;
-  background-color: #fff;
+  background-color: #f8f9fc;
 }
 
 [tabindex="-1"]:focus {
@@ -9585,7 +9585,7 @@ a:focus {
   height: 2.75rem;
   text-align: center;
   color: #fff;
-  background: rgba(90, 92, 105, 0.5);
+  background: #32325d;
   line-height: 46px;
 }
 
