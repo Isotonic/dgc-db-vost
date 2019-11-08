@@ -1,53 +1,10 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "base.html" %}
 
-<head>
-    <meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link type="text/css" href="/static/css/argon.css" rel="stylesheet">
-    <link type="text/css" href="/static/js/plugins/nucleo/css/nucleo.css" rel="stylesheet"/>
-</head>
-
-<body class="bg-default">
-<div class="main-content">
-    <!-- Navbar -->
-    <nav class="navbar navbar-top navbar-horizontal navbar-expand-md navbar-dark">
-        <div class="container px-4">
-            <a class="navbar-brand" href="{{ url_for('view_deployments') }}">
-                <img src="/static/img/Logos/White.png"/>
-            </a>
-        </div>
-    </nav>
-    <!-- Header -->
-    <div class="header bg-gradient-primary py-7 py-lg-8">
-        <div class="separator separator-bottom separator-skew zindex-100">
-            <svg x="0" y="0" viewBox="0 0 2560 100" preserveAspectRatio="none" version="1.1"
-                 xmlns="http://www.w3.org/2000/svg">
-                <polygon class="fill-default" points="2560 0 2560 100 0 100"></polygon>
-            </svg>
-        </div>
-    </div>
-    <!-- Page content -->
-    <div class="container mt--8 pb-5">
-        <div class="row justify-content-center">
-            <div class="col-lg-5 col-md-7">
-                <div class="card bg-secondary shadow border-0">
-                    <div class="card-body px-lg-5 py-lg-5">
-                        <div class="text-center text-muted mb-4">
-                            <h2>404</h2>
-                            Unable to find page, click the button below to go back to the deployments page.
-                            <a href="{{ url_for('view_deployments') }}" style="margin-top:20px" class="btn btn-default">Deployments</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
-            integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
-            crossorigin="anonymous"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
-            integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
-            crossorigin="anonymous"></script>
-</body>
-</html>
+{% block body %}
+<div class="text-center">
+<div class="error mx-auto" data-text="404">404</div>
+<p class="lead text-gray-800 mb-5">Page Not Found</p>
+<p class="text-gray-500 mb-0">It looks like you found a page that doesn't exist.</p>
+<a href="{{ url_for('view_deployments') }}">&larr; Back to Deployments</a>
+</div>
+{% endblock %}

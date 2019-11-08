@@ -86,7 +86,7 @@ def create_group():
 @app.route('/deployments/', methods=['GET'])
 @login_required
 def view_deployments():
-    return render_template('deployments.html', title='Deployments', sidebar=False, back_url=url_for('view_deployments'), deployments=current_user.get_deployments())
+    return render_template('deployments.html', title='Deployments', nosidebar=True, back_url=url_for('view_deployments'), deployments=current_user.get_deployments())
 
 
 @app.route('/create_deployment/', methods=['GET', 'POST'])
@@ -110,7 +110,7 @@ def view_incidents(deployment_name):
     deployment_name = deployment_name.replace("-", " ")
     deployment = Deployment.query.filter(func.lower(Deployment.name) == func.lower(deployment_name)).first()
     if not deployment:
-        return render_template('404.html')
+        return render_template('404.html', nosidebar=True)
     form = CreateIncident()
     if form.validate_on_submit():
         new_incident(form.name.data, form.description.data, form.location.data, deployment, current_user)
@@ -126,7 +126,7 @@ def view_incident(deployment_name, incident_name, incident_id):
     incident = Incident.query.filter(func.lower(Incident.name) == func.lower(incident_name),
                                      Incident.id == incident_id).first()
     if not incident or incident.deployment.name.lower() != deployment_name.lower():
-        return render_template('404.html')
+        return render_template('404.html', nosidebar=True)
     return render_template('incident.html', incident=incident, deployment_name=incident.deployment.name, back_url=url_for('view_incidents', deployment_name=deployment_name), title=f'{deployment_name} - Incident {incident_id}')
 
 @app.route('/deployments/<deployment_name>/incidents/<incident_name>-<int:incident_id>/create_task/', methods=['GET', 'POST'])
@@ -136,7 +136,7 @@ def create_incident_task(deployment_name, incident_name, incident_id):
     incident = Incident.query.filter(func.lower(Incident.name) == func.lower(incident_name),
                                      Incident.id == incident_id).first()
     if not incident or incident.deployment.name.lower() != deployment_name.lower():
-        return render_template('404.html')
+        return render_template('404.html', nosidebar=True)
     users_list = [(i.id, i.username) for i in User.query.all()]
     form = CreateTask()
     form.users.choices = users_list

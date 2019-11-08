@@ -17,7 +17,7 @@
   <!-- Page Wrapper -->
   <div id="wrapper">
 
-      {% if sidebar is not defined %}
+      {% if nosidebar is not defined %}
     <!-- Sidebar -->
     <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
 
@@ -32,7 +32,7 @@
       <!-- Nav Item - Deployments -->
       <li class="nav-item active">
         <a class="nav-link" href="{{ url_for('view_deployments') }}">
-          <i class="fas fa-fw fa-server"></i>
+          <i class="fas fa-fw fa-tv"></i>
           <span>Deployments</span></a>
       </li>
 
@@ -190,15 +190,17 @@
         <div class="container-fluid">
 
           <!-- Page Heading -->
+          {% if title is defined %}
           <div class="d-sm-flex align-items-center justify-content-between mb-4">
             <h1 class="h3 mb-0">{{ title }}</h1>
-              {% block heading %}
-              {% endblock %}
+            {% block heading %}
+            {% endblock %}
           </div>
+          {% endif %}
 
           <!-- Content -->
-            {% block body %}
-              {% endblock %}
+           {% block body %}
+           {% endblock %}
           </div>
         <!-- /.container-fluid -->
 

@@ -52,3 +52,15 @@
 .fa-1fourx {
     font-size: 1.4em;
 }
+
+.btn.btn-icon-split {
+    margin-right: 0.2rem;
+}
+
+.edit-opacity {
+    opacity: 0.8;
+}
+
+.edit-margin {
+    margin-right: 0.4rem;
+}
