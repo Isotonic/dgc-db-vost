@@ -91,7 +91,7 @@ class User(db.Model, UserMixin):
         return incidents
 
     def __repr__(self):
-        return f'<User {self.firstname} {self.surname}>'
+        return f'{self.firstname} {self.surname}'
 
 
 @login.user_loader
@@ -190,6 +190,13 @@ class IncidentTask(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     completed_at = db.Column(db.DateTime)
     allocated_to = db.relationship('User', secondary=incidenttask_user_junction)
+
+    def get_assigned(self):
+        if not self.allocated_to:
+            return None
+        elif len(self.allocated_to) == 1:
+            return self.allocated_to[1]
+        return f'{", ".join([str(m) for m in self.allocated_to[:-1]])} and {str(self.allocated_to[-1])}'
 
 
 class IncidentComment(db.Model):

@@ -1,3 +1,4 @@
+from app import jwt
 from flask import Blueprint
 from flask_restplus import Api
 
@@ -20,6 +21,8 @@ c5_api = Api(api_blueprint,
              version='1.0',
              description='Complete actions via the API on behalf of a user.',
              authorizations=authorizations)
+
+jwt._set_error_handler_callbacks(c5_api) #Fix for Flask-RestPlus error handler not working.
 
 from .authentication import ns_auth
 from .user import ns_user

@@ -86,7 +86,7 @@ def create_group():
 @app.route('/deployments/', methods=['GET'])
 @login_required
 def view_deployments():
-    return render_template('deployments.html', title='Deployments', back_url=url_for('view_deployments'), deployments=current_user.get_deployments())
+    return render_template('deployments.html', title='Deployments', sidebar=False, back_url=url_for('view_deployments'), deployments=current_user.get_deployments())
 
 
 @app.route('/create_deployment/', methods=['GET', 'POST'])
@@ -114,8 +114,8 @@ def view_incidents(deployment_name):
     form = CreateIncident()
     if form.validate_on_submit():
         new_incident(form.name.data, form.description.data, form.location.data, deployment, current_user)
-        return redirect(url_for("view_incidents", deployment_name=deployment_name))
-    return render_template('incidents.html', title=f'{deployment.name}', deployment_name=deployment.name,
+        return redirect(url_for("view_incidents", deployment_name=deployment.name))
+    return render_template('incidents.html', title=f'{deployment.name}', deployment=deployment, deployment_name=deployment.name,
                            incidents=current_user.get_incidents(deployment.id), back_url=url_for('view_deployments'), form=form)
 
 
@@ -127,7 +127,7 @@ def view_incident(deployment_name, incident_name, incident_id):
                                      Incident.id == incident_id).first()
     if not incident or incident.deployment.name.lower() != deployment_name.lower():
         return render_template('404.html')
-    return render_template('incident.html', incident=incident, deployment_name=deployment_name, back_url=url_for('view_incidents', deployment_name=deployment_name), title=f'{deployment_name} - Incident {incident_id}')
+    return render_template('incident.html', incident=incident, deployment_name=incident.deployment.name, back_url=url_for('view_incidents', deployment_name=deployment_name), title=f'{deployment_name} - Incident {incident_id}')
 
 @app.route('/deployments/<deployment_name>/incidents/<incident_name>-<int:incident_id>/create_task/', methods=['GET', 'POST'])
 @login_required
@@ -161,25 +161,25 @@ def add_incident_comment(deployment_name, incident_name, incident_id):
     return render_template('new_user.html', title=f'{incident.name}', form=form)
 
 
-@app.route('/notification/', methods=['GET'])
+@app.route('/notifications/', methods=['GET'])
 @login_required
 def view_notifications():
     pass
 
 
-@app.route('/map/', methods=['GET'])
+@app.route('/<deployment_name>/map/', methods=['GET'])
 @login_required
-def view_map():
+def view_map(deployment_name):
     pass
 
 
-@app.route('/live-feed/', methods=['GET'])
+@app.route('/<deployment_name>/live-feed/', methods=['GET'])
 @login_required
-def view_live_feed():
+def view_live_feed(deployment_name):
     pass
 
 
-@app.route('/decision-making-log/', methods=['GET'])
+@app.route('/<deployment_name>/decision-making-log/', methods=['GET'])
 @login_required
-def view_decision_making_log():
+def view_decision_making_log(deployment_name):
     pass

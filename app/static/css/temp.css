@@ -1,8 +1,54 @@
-tr:hover {
-    cursor: pointer;
-    background-color: #0d203e !important;
+.badge-dot i {
+  display: inline-block;
+  vertical-align: middle;
+  width: .375rem;
+  height: .375rem;
+  border-radius: 50%;
+  margin-right: .375rem;
+}
+
+.avatar-sm {
+  width: 26px;
+  height: 26px;
+  font-size: 0.875rem;
+  display: inline-block;
+}
+
+.avatar-group .avatar {
+  position: relative;
+  z-index: 2;
+  border: 2px solid #fff;
+}
+
+.avatar-group .avatar:hover {
+  z-index: 3;
+}
+
+.avatar-group .avatar+.avatar {
+  margin-left: -1rem;
 }
 
 .bg-dark-blue {
     background: #1c1e2f;
+}
+
+.icon-shape {
+
+    padding: 12px;
+    text-align: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+
+}
+.icon {
+
+    width: 3rem;
+    height: 3rem;
+
+}
+
+.fa-1fourx {
+    font-size: 1.4em;
 }
