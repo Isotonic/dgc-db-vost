@@ -10,6 +10,11 @@
     };
   });
 
+    // Close any open menu when window is less than 600px
+    if ($(window).width() < 600 && !$(".sidebar").hasClass("toggled")) {
+        $(".sidebar").toggleClass("toggled");
+    }
+
   // Close any open menu accordions when window is resized below 768px
   $(window).resize(function() {
     if ($(window).width() < 768) {
