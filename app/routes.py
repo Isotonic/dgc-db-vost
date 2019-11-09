@@ -142,6 +142,7 @@ def add_incident(deployment_name):
         return jsonify(data={'url': url_for("view_incident", deployment_name=deployment.name, incident_name=incident.name, incident_id=incident.id)}), 200
     return jsonify(data=form.errors), 400
 
+
 @app.route('/deployments/<deployment_name>/incidents/<incident_name>-<int:incident_id>', methods=['GET', 'POST'])
 @login_required
 def view_incident(deployment_name, incident_name, incident_id):
@@ -155,6 +156,7 @@ def view_incident(deployment_name, incident_name, incident_id):
     for k, g in groupby(User.query.all(), key=lambda item: item.group):
         groups.append([k.name, list(g)])
     return render_template('incident.html', incident=incident, deployment_name=incident.deployment.name, groups=groups, back_url=url_for('view_incidents', deployment_name=deployment_name), title=f'{deployment_name} - Incident {incident_id}')
+
 
 @app.route('/deployments/<deployment_name>/incidents/<incident_name>-<int:incident_id>/add_task/', methods=['POST'])
 @login_required

@@ -81,13 +81,13 @@ class User(db.Model, UserMixin):
                         continue
         return deployments
 
-    def get_incidents(self, deployment_id):
+    def get_incidents(self, deployment_id, open_only=True):
         incidents = []
         deployment = Deployment.query.filter_by(id=deployment_id).first()
         if self.group_id and Group.query.filter_by(id=self.group_id).first().has_permission('view_all_incidents'):
-            return deployment.incidents
+            return [m for m in deployment.incidents if m.open_status] if open_only else deployment.incidents
         for x in deployment.incidents:
-            if self.id in x.users:
+            if (not open_only or (open_only and x.open_status)) and self.id in x.users:
                 incidents.append(x)
         return incidents
 
