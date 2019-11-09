@@ -6284,6 +6284,10 @@ button.bg-dark:focus {
   background-color: transparent !important;
 }
 
+.bg-orange {
+  background-color: #fd7e14 !important;
+}
+
 .border {
   border: 1px solid #e3e6f0 !important;
 }

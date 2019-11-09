@@ -120,12 +120,12 @@
                         <div class="text-s font-weight-bold text-success text-uppercase mb-1">Tasks</div>
                         <div class="row no-gutters align-items-center">
                             <div class="col-auto">
-                                <div class="h5 mb-0 mr-3 font-weight-bold text-gray-800">{{ percentage }}%</div>
+                                <div id="ProgressPercentage" class="h5 mb-0 mr-3 font-weight-bold text-gray-800">{{ percentage }}%</div>
                             </div>
                             <div class="col">
                                 <div class="progress progress-sm mr-2">
                                     <div class="progress-bar bg-success" role="progressbar"
-                                         style="width: {{ percentage }}%" aria-valuenow="{{ percentage }}"
+                                         style="width: 0%" aria-valuenow="{{ percentage }}"
                                          aria-valuemin="0" aria-valuemax="100"></div>
                                 </div>
                             </div>
@@ -232,7 +232,7 @@
             </div>
             {% if incident.tasks %}
             <ul id="Tasks" class="list-group">
-                {% for task in incident.tasks %}
+                {% for task in incident.tasks|sort(attribute='created_at') %}
                 {% include 'task.html' %}
                 {% endfor %}
             </ul>
@@ -248,6 +248,27 @@
 
 {% block scripts %}
 <script>
+    var current_percentage = parseInt(($('#Tasks :checked').length/$('#Tasks :checkbox').length)*100)
+
+    function progressBar(current_percentage) {
+        var percentage = parseInt(($('#Tasks :checked').length/$('#Tasks :checkbox').length)*100)
+        if (current_percentage == percentage) {return;}
+        $('#ProgressPercentage').text(percentage + '%')
+        $('.progress-bar').width(percentage + '%')
+        $('.progress-bar').removeClass(function (index, css) {
+            return (css.match (/\bbg-\S+/g) || []).join(' ');
+        })
+        if (percentage >= 80) {
+           $('.progress-bar').addClass("bg-success");
+        } else if (percentage >= 50) {
+            $('.progress-bar').addClass("bg-orange");
+        } else if (percentage >= 25) {
+            $('.progress-bar').addClass("bg-warning");
+        } else {
+            $('.progress-bar').addClass("bg-danger");
+        }
+    }
+
     //TODO
     var csrf_token = "{{ csrf_token() }}";
     $('#addTaskForm').submit( function(e) {
@@ -269,6 +290,7 @@
                     $('#NoTasks').remove()
                }
                $('#Tasks').append(data['data'])
+               progressBar();
            },
            error: function(data) {
                 console.log(data);
@@ -297,6 +319,7 @@
                     $('#TaskRow' + id).removeClass('text-muted');
                     $('#TaskDate' + id).text('Created ' + moment($('#TaskDate' + id).data('created-timestamp')).fromNow())
                 }
+                progressBar();
            },
            error: function(data) {
                 console.log(data);
@@ -310,6 +333,7 @@
     }
 
     $(document).ready(function() {
+    progressBar();
     $('#AssignSelect').select2({
         placeholder: "Users to assign",
         templateResult: format,

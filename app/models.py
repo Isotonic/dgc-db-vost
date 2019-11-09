@@ -183,8 +183,8 @@ class Incident(db.Model):
 
     def calculate_task_percentage(self):
         if not self.tasks:
-            return None
-        return int(sum([1 for m in self.tasks if m.completed]) / len(self.tasks))
+            return
+        return int((sum([1 for m in self.tasks if m.completed]) / len(self.tasks))*100)
 
 
 class IncidentTask(db.Model):
