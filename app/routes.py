@@ -1,11 +1,12 @@
 from app import app, db
 from sqlalchemy import func
+from app.utils.change import task_status
 from datetime import datetime, timedelta
 from flask import render_template, flash, redirect, url_for, request, jsonify
 from flask_login import current_user, login_user, logout_user, login_required
-from app.models import User, Group, Deployment, Incident, EmailLink, AuditLog
+from app.models import User, Group, Deployment, Incident, IncidentTask, EmailLink, AuditLog
 from app.utils.create import new_user, new_group, new_deployment, new_incident, new_task, new_comment
-from app.forms import LoginForm, CreateUser, CreateGroup, SetPassword, CreateDeployment, CreateIncident, CreateTask, AddComment
+from app.forms import LoginForm, CreateUser, CreateGroup, SetPassword, CreateDeployment, CreateIncident, AddTask, AddComment
 
 
 def calculate_incidents_percentage(incidents): ##TODO Ask Adam if he prefers this or just a number of the increase.
@@ -123,11 +124,9 @@ def view_incidents(deployment_name):
     deployment = Deployment.query.filter(func.lower(Deployment.name) == func.lower(deployment_name)).first()
     if not deployment:
         return render_template('404.html', nosidebar=True)
-    form = CreateIncident()
     incidents_percentage = calculate_incidents_percentage(deployment.incidents)
-
     return render_template('incidents.html', title=f'{deployment.name}', deployment=deployment, deployment_name=deployment.name,
-                           incidents_active=True, incidents_percentage=incidents_percentage, incidents=current_user.get_incidents(deployment.id), back_url=url_for('view_deployments'), form=form)
+                           incidents_active=True, incidents_percentage=incidents_percentage, incidents=current_user.get_incidents(deployment.id), back_url=url_for('view_deployments'))
 
 
 @app.route('/deployments/<deployment_name>/add_incident/', methods=['POST'])
@@ -136,12 +135,12 @@ def add_incident(deployment_name):
     deployment_name = deployment_name.replace("-", " ")
     deployment = Deployment.query.filter(func.lower(Deployment.name) == func.lower(deployment_name)).first()
     if not deployment:
-        return 404
+        return jsonify(data='Unable to find deployment.'), 404
     form = CreateIncident()
     if form.validate_on_submit():
         incident = new_incident(form.name.data, form.description.data, form.location.data, deployment, current_user)
-        return jsonify(data={'url': url_for("view_incident", deployment_name=deployment.name, incident_name=incident.name, incident_id=incident.id)})
-    return jsonify(data=form.errors)
+        return jsonify(data={'url': url_for("view_incident", deployment_name=deployment.name, incident_name=incident.name, incident_id=incident.id)}), 200
+    return jsonify(data=form.errors), 400
 
 @app.route('/deployments/<deployment_name>/incidents/<incident_name>-<int:incident_id>', methods=['GET', 'POST'])
 @login_required
@@ -151,23 +150,46 @@ def view_incident(deployment_name, incident_name, incident_id):
                                      Incident.id == incident_id).first()
     if not incident or incident.deployment.name.lower() != deployment_name.lower():
         return render_template('404.html', nosidebar=True)
-    return render_template('incident.html', incident=incident, deployment_name=incident.deployment.name, back_url=url_for('view_incidents', deployment_name=deployment_name), title=f'{deployment_name} - Incident {incident_id}')
+    from itertools import groupby
+    groups = []
+    for k, g in groupby(User.query.all(), key=lambda item: item.group):
+        groups.append([k.name, list(g)])
+    form = AddTask()
+    return render_template('incident.html', incident=incident, deployment_name=incident.deployment.name, groups=groups, back_url=url_for('view_incidents', deployment_name=deployment_name), title=f'{deployment_name} - Incident {incident_id}', form=form)
 
-@app.route('/deployments/<deployment_name>/incidents/<incident_name>-<int:incident_id>/create_task/', methods=['GET', 'POST'])
+@app.route('/deployments/<deployment_name>/incidents/<incident_name>-<int:incident_id>/add_task/', methods=['POST'])
 @login_required
-def create_incident_task(deployment_name, incident_name, incident_id):
+def add_task(deployment_name, incident_name, incident_id):
     deployment_name = deployment_name.replace("-", " ")
-    incident = Incident.query.filter(func.lower(Incident.name) == func.lower(incident_name),
-                                     Incident.id == incident_id).first()
+    incident = Incident.query.filter(func.lower(Incident.name) == func.lower(incident_name), Incident.id == incident_id).first()
     if not incident or incident.deployment.name.lower() != deployment_name.lower():
-        return render_template('404.html', nosidebar=True)
-    users_list = [(i.id, i.username) for i in User.query.all()]
-    form = CreateTask()
+        return jsonify(data='Unable to find the deployment or incident.'), 404
+    users_list = [(i.id, str(i)) for i in User.query.all()]
+    form = AddTask()
     form.users.choices = users_list
     if form.validate_on_submit():
-        task = new_task(form.name.data, form.details.data, form.users.data, incident, current_user)
-        return task.name
-    return render_template('base.html', title=f'{incident.name}', form=form)
+        task = new_task(form.name.data, form.users.data, incident, current_user)
+        return jsonify(data=render_template('task.html', task=task)), 200
+    return jsonify(data=form.errors)
+
+
+@app.route('/deployments/<deployment_name>/incidents/<incident_name>-<int:incident_id>/change_task_status/', methods=['POST'])
+@login_required
+def change_task_status(deployment_name, incident_name, incident_id):
+    try:
+        task_id = request.form['id']
+        completed = request.form['completed']
+    except:
+       return jsonify(data='Incorrect data supplied.'), 404
+    deployment_name = deployment_name.replace("-", " ")
+    incident = Incident.query.filter(func.lower(Incident.name) == func.lower(incident_name), Incident.id == incident_id).first()
+    task = IncidentTask.query.filter_by(incident_id=incident.id, id=task_id).first()
+    if not incident or incident.deployment.name.lower() != deployment_name.lower() or not task:
+        return jsonify(data='Unable to find the deployment or incident.'), 404
+    if task.assigned_to and current_user not in task.assigned_to:
+        return jsonify(data='You are not assigned to this task.'), 403
+    task_status(current_user, task, completed)
+    return jsonify(success=True)
 
 
 @app.route('/deployments/<deployment_name>/incidents/<incident_name>-<int:incident_id>/add_comment/', methods=['GET', 'POST'])

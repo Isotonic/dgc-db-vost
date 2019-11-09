@@ -69,9 +69,8 @@ class CreateIncident(FlaskForm):
     submit = SubmitField('Submit')
 
 
-class CreateTask(FlaskForm):
+class AddTask(FlaskForm):
     name = StringField('Name', validators=[DataRequired()])
-    details = StringField('Details')
     users = SelectMultipleField('Users', coerce=int)
     submit = SubmitField('Submit')
 

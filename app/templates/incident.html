@@ -1,6 +1,6 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 {% block css %}
-<link rel="stylesheet" type="text/css" href="/static/css/temp.css">
+<link href="https://cdn.jsdelivr.net/npm/select2@4.0.12/dist/css/select2.min.css" rel="stylesheet" />
 {% endblock %}
 
 {% block heading %}
@@ -33,6 +33,23 @@
 <div class="row">
     <div class="col-xl-3 col-md-6 mb-4">
         <div class="card border-left-primary shadow h-100 py-2">
+            {% if current_user.has_permission('change_allocation') %}
+            <a class="incident-cog" href="#" role="button" data-toggle="modal" data-target="#editAssignedToModal">
+                <i class="fas fa-cog float-right" data-toggle="tooltip" title="Change Allocation"></i>
+            </a>
+            <div class="modal fade" id="editAssignedToModal" tabindex="-1" role="dialog" aria-labelledby="editAssignedToModal" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="editAssignedToLabel">Edit Assigned To</h5>
+                                <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">×</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+            </div>
+            {% endif %}
             <div class="card-body">
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
@@ -59,6 +76,40 @@
             </div>
         </div>
     </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-danger shadow h-100 py-2">
+            {% if current_user.has_permission('change_priority') %}
+            <a class="incident-cog text-danger" href="#" role="button" data-toggle="modal" data-target="#changePriorityModal">
+                <i class="fas fa-cog float-right" data-toggle="tooltip" title="Change Priority"></i>
+            </a>
+            <div class="modal fade" id="changePriorityModal" tabindex="-1" role="dialog" aria-labelledby="changePriorityModal" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="changePriorityLabel">Change Priority</h5>
+                                <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">×</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+            </div>
+            {% endif %}
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-s font-weight-bold text-danger text-uppercase mb-1">Priority</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ incident.get_priority() }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <div class="icon icon-shape bg-danger text-white rounded-circle shadow">
+                            <i class="fas fa-car-crash fa-1fourx"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     {% set percentage = incident.calculate_task_percentage() %}
     {% if percentage != None %}
     <div class="col-xl-3 col-md-6 mb-4">
@@ -66,7 +117,7 @@
             <div class="card-body">
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Tasks</div>
+                        <div class="text-s font-weight-bold text-success text-uppercase mb-1">Tasks</div>
                         <div class="row no-gutters align-items-center">
                             <div class="col-auto">
                                 <div class="h5 mb-0 mr-3 font-weight-bold text-gray-800">{{ percentage }}%</div>
@@ -91,23 +142,6 @@
     </div>
     {% endif %}
     <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-danger shadow h-100 py-2">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Priority</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ incident.get_priority() }}</div>
-                    </div>
-                    <div class="col-auto">
-                        <div class="icon icon-shape bg-danger text-white rounded-circle shadow">
-                            <i class="fas fa-car-crash fa-1fourx"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-xl-3 col-md-6 mb-4">
         <div class="card border-left-warning shadow h-100 py-2">
             <div class="card-body">
                 <div class="row no-gutters align-items-center">
@@ -131,20 +165,18 @@
         <div class="card shadow mb-4">
             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 font-weight-bold text-primary">Incident Overview</h6>
-                <div class="dropdown no-arrow">
-                    <a class="dropdown-toggle" href="#" role="button" data-toggle="modal" data-target="#editOverviewModal">
-                        <i class="fas fa-cog"></i>
-                    </a>
-                    <div class="modal fade" id="editOverviewModal" tabindex="-1" role="dialog"
-                         aria-labelledby="editOverviewModal" aria-hidden="true">
-                        <div class="modal-dialog" role="document">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title" id="editOverviewLabel">Edit Overview</h5>
-                                    <button class="close" type="button" data-dismiss="modal" aria-label="Close">
-                                        <span aria-hidden="true">×</span>
-                                    </button>
-                                </div>
+                <a href="#" role="button" data-toggle="modal" data-target="#editOverviewModal">
+                    <i class="fas fa-cog" data-toggle="tooltip" title="Edit Incident Overview"></i>
+                </a>
+                <div class="modal fade" id="editOverviewModal" tabindex="-1" role="dialog"
+                     aria-labelledby="editOverviewModal" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="editOverviewLabel">Edit Overview</h5>
+                                <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">×</span>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -161,53 +193,130 @@
         <div class="card shadow mb-4">
             <div class="card-header py-3 d-flex align-items-center justify-content-between">
                 <h6 class="m-0 font-weight-bold text-primary">Tasks</h6>
-                <div class="dropdown no-arrow">
-                    <a class="dropdown-toggle text-success" href="#" role="button" data-toggle="modal" data-target="#addTaskModal">
-                        <i class="fas fa-plus"></i>
-                    </a>
-                    <div class="modal fade" id="addTaskModal" tabindex="-1" role="dialog" aria-labelledby="addTaskModal" aria-hidden="true">
-                        <div class="modal-dialog" role="document">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title" id="addTaskLabel">Add Task</h5>
-                                    <button class="close" type="button" data-dismiss="modal" aria-label="Close">
-                                        <span aria-hidden="true">×</span>
-                                    </button>
-                                </div>
+                <a class="text-success" href="#" role="button" data-toggle="modal" data-target="#addTaskModal">
+                    <i class="fas fa-plus" data-toggle="tooltip" title="Add Task"></i>
+                </a>
+                <div class="modal fade" id="addTaskModal" tabindex="-1" role="dialog" aria-labelledby="addTaskModal" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="addTaskLabel">Add Task</h5>
+                                <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">×</span>
+                                </button>
+                            </div>
+                            <div class="modal-body justify-content-center">
+                                <form id="addTaskForm" method="post" role="form">
+                                    <div class="form-group mb-3">
+                                        <input class="form-control was-validated" name="name" placeholder="Task Name" type="text" required>
+                                    </div>
+                                    <div class="form-group mb-3">
+                                        <select id="AssignSelect" name="users" multiple="multiple" style="width: 100%">
+                                            {% for group in groups %}
+                                            <optgroup label="{{ group[0] }}">
+                                                {% for user in group[1] %}
+                                                <option value="{{ user.id }}" data-avatar-url="{{ user.get_avatar() }}">{{ user }}</option>
+                                                {% endfor %}
+                                            </optgroup>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="text-center">
+                                        <button type="submit" class="btn btn-primary my-4">Submit</button>
+                                    </div>
+                                </form>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
             {% if incident.tasks %}
-            <ul class="list-group">
+            <ul id="Tasks" class="list-group">
                 {% for task in incident.tasks %}
-                <li class="list-group-item list-group-flush">
-                    <div class="row align-items-center no-gutters">
-                        <div class="col mr-2">
-                            <h6 class="mb-0">
-                                <strong>{{ task.name }} </strong><span class="text-xs">Created {{ moment(task.created_at).fromNow() }}</span>
-                            </h6>
-                            <span class="text-xs">Assigned to {{ task.get_assigned() }}</span>
-                        </div>
-                        <div class="col-auto">
-                            <div class="custom-control custom-checkbox" disabled>
-                                <input class="edit-margin" id="task{{ task.id }}" type="checkbox"{% if task.completed %} checked{% endif %}{% if current_user not in task.allocated_to %} disabled{% endif %}>
-                                <a class="edit-opacity" href="#" role="button" data-toggle="modal" data-target="#editOverviewModal">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </li>
+                {% include 'task.html' %}
                 {% endfor %}
             </ul>
                 {% else %}
-                <div class="card-body">
+                <div id="NoTasks" class="card-body">
                     <p class="card-text">No tasks currently.</p>
                 </div>
                     {% endif %}
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    //TODO
+    var csrf_token = "{{ csrf_token() }}";
+    $('#addTaskForm').submit( function(e) {
+       e.preventDefault();
+       $('#addTaskModal').modal('hide')
+
+       $.ajax({
+           data: $('#addTaskForm').serialize(),
+           type: "POST",
+           url: "{{ url_for('add_task', deployment_name=deployment_name, incident_name=incident.name, incident_id=incident.id) }}",
+           beforeSend: function(xhr, settings) {
+                if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
+                    xhr.setRequestHeader("X-CSRFToken", csrf_token)
+                }
+            },
+           success: function(data){
+               $('#addTaskForm').get(0).reset()
+               if ($('#NoTasks').length) {
+                    $('#NoTasks').remove()
+               }
+               $('#Tasks').append(data['data'])
+           },
+           error: function(data) {
+                console.log(data);
+           }
+       });
+     });
+
+    $('#Tasks :checkbox').change(function () {
+        if ($(this).prop('disabled')) {return;}
+        var id = $(this).val();
+        var completed = $(this).is(':checked');
+        $.ajax({
+           data: {'id': parseInt(id), 'completed': completed},
+           type: "POST",
+           url: "{{ url_for('change_task_status', deployment_name=deployment_name, incident_name=incident.name, incident_id=incident.id) }}",
+           beforeSend: function(xhr, settings) {
+                if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
+                    xhr.setRequestHeader("X-CSRFToken", csrf_token)
+                }
+            },
+           success: function(data) {
+                if (completed) {
+                    $('#TaskRow' + id).addClass('text-muted');
+                    $('#TaskDate' + id).text('Completed a few seconds ago')
+                } else {
+                    $('#TaskRow' + id).removeClass('text-muted');
+                    $('#TaskDate' + id).text('Created ' + moment($('#TaskDate' + id).data('created-timestamp')).fromNow())
+                }
+           },
+           error: function(data) {
+                console.log(data);
+           }
+       });
+    });
+
+    function format(state) {
+        if (!state.id) return state.text;
+        return $("<span><img class='rounded-circle avatar-sm' src='" + $(state.element).data('avatar-url') + "'/> " + state.text + "</span>");
+    }
+
+    $(document).ready(function() {
+    $('#AssignSelect').select2({
+        placeholder: "Users to assign",
+        templateResult: format,
+        templateSelection: format,
+        allowClear: true,
+    });
+});
+</script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.0.12/dist/js/select2.min.js"></script>
 {% endblock %}

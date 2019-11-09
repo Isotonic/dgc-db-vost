@@ -23,11 +23,11 @@
                         <form id="newIncidentForm" method="post" role="form">
                             {{ form.hidden_tag() }}
                             <div class="form-group mb-3">
-                                    <input class="form-control was-validated" name="name" placeholder="Incident Name" type="text" required>
+                                <input class="form-control was-validated" name="name" placeholder="Incident Name" type="text" required>
                             </div>
                             <div class="form-group mb-3">
-                                    <input class="form-control" name="location" placeholder="Location" type="text">
-                                </div>
+                                <input class="form-control" name="location" placeholder="Location" type="text">
+                            </div>
                             <textarea class="form-control" rows="3" name="description"
                                       placeholder="Description"></textarea>
                             <div class="text-center">
@@ -210,7 +210,6 @@
 <script>
     //TODO
     $('#newIncidentForm').submit( function(e) {
-       //prevent submit
        e.preventDefault();
        $('#newIncidentModal').modal('hide')
 

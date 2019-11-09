@@ -20,12 +20,12 @@ incident_user_junction = db.Table('incident_users',
                                   db.Column('incident_id', db.Integer, db.ForeignKey('incident.id')),
                                   )
 
-incident_pinned_junction = db.Table('incident_pinned',
+incident_pinned_junction = db.Table('incident_pins',
                                   db.Column('user_id', db.Integer, db.ForeignKey('user.id')),
                                   db.Column('incident_id', db.Integer, db.ForeignKey('incident.id')),
                                   )
 
-incidenttask_user_junction = db.Table('incident_tasks',
+incidenttask_user_junction = db.Table('task_users',
                                       db.Column('user_id', db.Integer, db.ForeignKey('user.id')),
                                       db.Column('id', db.Integer, db.ForeignKey('incident_task.id')),
                                       )
@@ -107,10 +107,10 @@ def load_user(id):
 
 
 class Group(db.Model):
-    permission_values = {'view_all_incidents': 0x1, 'change_status': 0x2, 'change_allocations': 0x4,
+    permission_values = {'view_all_incidents': 0x1, 'change_status': 0x2, 'change_allocation': 0x4,
                          'mark_as_public': 0x8,
-                         'new_reports': 0x16, 'create_deployments': 0x32, 'decision_making_log': 0x64,
-                         'supervisor': 0x128}
+                         'new_reports': 0x16, 'create_deployment': 0x32, 'decision_making_log': 0x64,
+                         'supervisor': 0x128, 'change_priority': 0x256} ##TODO RE-DORDER ONCE DONE
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64), index=True, unique=True)
@@ -196,14 +196,14 @@ class IncidentTask(db.Model):
     completed = db.Column(db.Boolean(), default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     completed_at = db.Column(db.DateTime)
-    allocated_to = db.relationship('User', secondary=incidenttask_user_junction)
+    assigned_to = db.relationship('User', secondary=incidenttask_user_junction)
 
     def get_assigned(self):
-        if not self.allocated_to:
+        if not self.assigned_to:
             return None
-        elif len(self.allocated_to) == 1:
-            return self.allocated_to[1]
-        return f'{", ".join([str(m) for m in self.allocated_to[:-1]])} and {str(self.allocated_to[-1])}'
+        elif len(self.assigned_to) == 1:
+            return self.assigned_to[0]
+        return f'{", ".join([str(m) for m in self.assigned_to[:-1]])} and {str(self.assigned_to[-1])}'
 
 
 class IncidentComment(db.Model):
@@ -246,13 +246,15 @@ class AuditLog(db.Model):
 
 class IncidentLog(db.Model):
     action_values = {'create_incident': 1, 'create_task': 2, 'complete_task': 3, 'delete_task': 4, 'add_comment': 5,
-                     'delete_comment': 6}
-    action_strings = {1: 'created incident', 2: 'created task', 3: 'completed task', 4: 'deleted task', 5: 'added comment', 6: 'deleted comment'}
+                     'delete_comment': 6, 'incomplete_task': 7} ##TODO RE-ORDER ONCE DONE
+    action_strings = {1: 'created incident', 2: 'created task', 3: 'completed task', 4: 'deleted task', 5: 'added comment', 6: 'deleted comment', 7: 'marked task as incomplete'}
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    user = db.relationship('User', backref='incident_actions', lazy=True)
+    user = db.relationship('User', backref='incident_actions')
     incident_id = db.Column(db.Integer, db.ForeignKey('incident.id'))
+    task_id = db.Column(db.Integer, db.ForeignKey('incident_task.id'))
+    task = db.relationship('IncidentTask', backref="logs", lazy=True)
     action_type = db.Column(db.Integer())
     reason = db.Column(db.String(256))
     occurred_at = db.Column(db.DateTime, default=datetime.utcnow)

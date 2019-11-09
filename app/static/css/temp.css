@@ -17,7 +17,7 @@
 .avatar-group .avatar {
   position: relative;
   z-index: 2;
-  border: 2px solid #fff;
+  border: 2px solid #fff; //TODO Maybe remove.
 }
 
 .avatar-group .avatar:hover {
@@ -67,4 +67,19 @@
 
 .deployments_brand_img {
     height: 80%;
+}
+
+.incident-cog {
+    margin-bottom: -1.2rem;
+    margin-right: 0.4rem;
+    z-index: 999;
+}
+
+input[type=checkbox][disabled]{
+  cursor: not-allowed;
+}
+
+tr:hover {
+    cursor: pointer;
+    background-color: #f6f8fe !important;
 }
