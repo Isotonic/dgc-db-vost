@@ -32,7 +32,7 @@
       <!-- Nav Item - Deployments -->
       <li class="nav-item">
         <a class="nav-link" href="{{ url_for('view_deployments') }}">
-          <i class="fas fa-fw fa-tv"></i>
+          <i class="fas fa-fw fa-list"></i>
           <span>Deployments</span></a>
       </li>
 
@@ -46,7 +46,7 @@
 
       <li class="nav-item{% if incidents_active is defined %} active{% endif %}">
         <a class="nav-link" href="{{ url_for('view_incidents', deployment_name=deployment_name) }}">
-          <i class="far fa-fw fa-file"></i>
+          <i class="fas fa-fw fa-clone"></i>
           <span>Incidents</span></a>
       </li>
 
