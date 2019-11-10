@@ -6,7 +6,7 @@ from flask import render_template, flash, redirect, url_for, request, jsonify
 from flask_login import current_user, login_user, logout_user, login_required
 from app.models import User, Group, Deployment, Incident, IncidentTask, EmailLink, AuditLog
 from app.utils.create import new_user, new_group, new_deployment, new_incident, new_task, new_comment
-from app.forms import LoginForm, CreateUser, CreateGroup, SetPassword, CreateDeployment, CreateIncident, AddComment
+from app.forms import LoginForm, CreateUser, CreateGroup, SetPassword, CreateDeployment, CreateIncident, AddTask, AddComment
 
 
 def calculate_incidents_percentage(incidents): ##TODO Ask Adam if he prefers this or just a number of the increase.
@@ -20,6 +20,14 @@ def calculate_incidents_percentage(incidents): ##TODO Ask Adam if he prefers thi
         return ["danger", "arrow-up", ((one_hour-two_hours)/two_hours)*100]
     else:
         return ["success", "arrow-down", ((two_hours-one_hour)/two_hours)*100]
+
+@app.errorhandler(404)
+@login_required
+def page_not_found(e):
+    if current_user.is_authenticated:
+        return render_template('404.html', nosidebar=True), 404
+    return redirect(url_for('login'))
+
 
 @app.route('/logout/')
 @login_required
@@ -39,7 +47,6 @@ def login():
             return render_template('login.html', title='Sign In', form=form, invalid=True)
         login_user(user, remember=form.remember_me.data)
         next = request.args.get('next')
-        print(next)
         if next:
             return redirect(next)
         return redirect(url_for('view_deployments'))
@@ -123,7 +130,7 @@ def view_incidents(deployment_name):
     deployment_name = deployment_name.replace("-", " ")
     deployment = Deployment.query.filter(func.lower(Deployment.name) == func.lower(deployment_name)).first()
     if not deployment:
-        return render_template('404.html', nosidebar=True)
+        return render_template('404.html', nosidebar=True), 404
     incidents_percentage = calculate_incidents_percentage(deployment.incidents)
     return render_template('incidents.html', title=f'{deployment.name}', deployment=deployment, deployment_name=deployment.name,
                            incidents_active=True, incidents_percentage=incidents_percentage, incidents=current_user.get_incidents(deployment.id), back_url=url_for('view_deployments'))
@@ -150,7 +157,7 @@ def view_incident(deployment_name, incident_name, incident_id):
     incident = Incident.query.filter(func.lower(Incident.name) == func.lower(incident_name),
                                      Incident.id == incident_id).first()
     if not incident or incident.deployment.name.lower() != deployment_name.lower():
-        return render_template('404.html', nosidebar=True)
+        return render_template('404.html', nosidebar=True), 404
     from itertools import groupby
     groups = []
     for k, g in groupby(User.query.all(), key=lambda item: item.group):
@@ -200,7 +207,7 @@ def add_incident_comment(deployment_name, incident_name, incident_id):
     incident = Incident.query.filter(func.lower(Incident.name) == func.lower(incident_name),
                                      Incident.id == incident_id).first()
     if not incident or incident.deployment.name.lower() != deployment_name.lower():
-        return render_template('404.html', nosidebar=True)
+        return render_template('404.html', nosidebar=True), 404
     form = AddComment()
     if form.validate_on_submit():
         comment = new_comment(form.text.data, form.highlight.data, incident, current_user)

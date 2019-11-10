@@ -11,4 +11,3 @@ flask_restplus
 flask_bootstrap
 flask-sqlalchemy
 flask-jwt-extended
-flask_debugtoolbar #Can remove once done.

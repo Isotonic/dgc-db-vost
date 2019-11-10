@@ -1,134 +1,56 @@
-<!--<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link type="text/css" href="/static/css/argon.css" rel="stylesheet">
-    <link type="text/css" href="/static/js/plugins/nucleo/css/nucleo.css" rel="stylesheet" />
-</head>
-
-<body class="bg-default">
-<div class="main-content">
-    &lt;!&ndash; Navbar &ndash;&gt;
-    <nav class="navbar navbar-top navbar-horizontal navbar-expand-md navbar-dark">
-        <div class="container px-4">
-            <div class="navbar-brand">
-                <img src="/static/img/Logos/White.png" />
-            </div>
-        </div>
-    </nav>
-    &lt;!&ndash; Header &ndash;&gt;
-    <div class="header bg-gradient-primary py-7 py-lg-8">
-        <div class="separator separator-bottom separator-skew zindex-100">
-            <svg x="0" y="0" viewBox="0 0 2560 100" preserveAspectRatio="none" version="1.1" xmlns="http://www.w3.org/2000/svg">
-                <polygon class="fill-default" points="2560 0 2560 100 0 100"></polygon>
-            </svg>
-        </div>
-    </div>
-    &lt;!&ndash; Page content &ndash;&gt;
-    <div class="container mt&#45;&#45;8 pb-5">
-        <div class="row justify-content-center">
-            <div class="col-lg-5 col-md-7">
-                <div class="card bg-secondary shadow border-0">
-                    <div class="card-body px-lg-5 py-lg-5">
-                        <div class="text-center text-muted mb-4">
-                            <small>Log in to DGVOST</small>
-                        </div>
-                        <form method="post" role="form">
-                            {{ form.hidden_tag() }}
-                            <div class="form-group mb-3{% if invalid %} has-danger{% endif %}">
-                                <div class="input-group input-group-alternative">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text"><i class="ni ni-email-83"></i></span>
-                                    </div>
-                                    <input class="form-control" name="email" placeholder="{% if invalid %}Incorrect Email{% else %}Enter Email{% endif %}" type="email">
-                                </div>
-                            </div>
-                            <div class="form-group{% if invalid %} has-danger{% endif %}">
-                                <div class="input-group input-group-alternative">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text"><i class="ni ni-lock-circle-open"></i></span>
-                                    </div>
-                                    <input class="form-control" name="password" placeholder="{% if invalid %}Incorrect Password{% else %}Enter Password{% endif %}" type="password">
-                                </div>
-                            </div>
-                            <div class="custom-control custom-control-alternative custom-checkbox">
-                                <input name="remember_me" class="custom-control-input" id=" customCheckLogin" type="checkbox">
-                                <label class="custom-control-label" for=" customCheckLogin">
-                                    <span class="text-muted">Remember me</span>
-                                </label>
-                            </div>
-                            <div class="text-center">
-                                <button type="submit" class="btn btn-primary my-4">Sign in</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-                <div class="row mt-3">
-                    <div class="col-6">
-                        <a href="#" class="text-light"><small>Forgot password?</small></a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
-</body>
-</html>-->
-
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta property="og:title" content="DGVOST - {{ title }}" />
+    <meta property="og:type" content="website" />
+    <meta name="theme-color" content="#4e73df">
     <link type="text/css" href="/static/css/sb-admin-2.css" rel="stylesheet">
 </head>
 
 <body class="bg-gradient-primary">
 
-  <div class="container">
-    <!-- Outer Row -->
-    <div class="row justify-content-center">
+    <div class="container">
+        <!-- Outer Row -->
+        <div class="row justify-content-center">
 
-      <div class="col-xl-5 col-lg-6 col-md-4">
+            <div class="col-xl-5 col-lg-6 col-md-4">
 
-        <div class="card o-hidden border-0 shadow-lg my-5">
-          <div class="card-body p-0">
-            <!-- Nested Row within Card Body -->
-                <div class="p-5">
-                  <div class="text-center">
-                    <h1 class="h4 text-gray-900 mb-4">Log in to DGVOST</h1>
-                  </div>
-                  <form class="user" method="post" role="form">
-                      {{ form.hidden_tag() }}
-                    <div class="form-group">
-                      <input type="email" class="form-control form-control-user{% if invalid %} is-invalid{% endif %}" name="email" placeholder="{% if invalid %}Incorrect Email{% else %}Enter Email{% endif %}">
+                <div class="card o-hidden border-0 shadow-lg my-5">
+                    <div class="card-body p-0">
+                        <!-- Nested Row within Card Body -->
+                        <div class="p-5">
+                            <div class="text-center">
+                                <h1 class="h4 text-gray-900 mb-4">Log in to DGVOST</h1>
+                            </div>
+                            <form class="user" method="post" role="form">
+                                {{ form.hidden_tag() }}
+                                <div class="form-group">
+                                    <input type="email" class="form-control form-control-user{% if invalid %} is-invalid{% endif %}" name="email" placeholder="{% if invalid %}Incorrect Email{% else %}Enter Email{% endif %}">
+                                </div>
+                                <div class="form-group">
+                                    <input type="password" class="form-control form-control-user{% if invalid %} is-invalid{% endif %}" name="password" placeholder="{% if invalid %}Incorrect Password{% else %}Enter Password{% endif %}">
+                                </div>
+                                <div class="form-group">
+                                    <div class="custom-control custom-checkbox small">
+                                        <input type="checkbox" class="custom-control-input" name="remember_me" id="customCheckLogin">
+                                        <label class="custom-control-label" for="customCheckLogin">Remember Me</label>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-user btn-block">Sign in</button>
+                            </form>
+                            <hr>
+                            <div class="text-center">
+                                <a class="small" href="forgot-password.html">Forgot Password?</a>
+                            </div>
+                        </div>
                     </div>
-                    <div class="form-group">
-                      <input type="password" class="form-control form-control-user{% if invalid %} is-invalid{% endif %}" name="password" placeholder="{% if invalid %}Incorrect Password{% else %}Enter Password{% endif %}">
-                    </div>
-                    <div class="form-group">
-                      <div class="custom-control custom-checkbox small">
-                        <input type="checkbox" class="custom-control-input" name="remember_me" id="customCheckLogin">
-                        <label class="custom-control-label" for="customCheckLogin">Remember Me</label>
-                      </div>
-                    </div>
-                      <button type="submit" class="btn btn-primary btn-user btn-block">Sign in</button>
-                  </form>
-                  <hr>
-                  <div class="text-center">
-                    <a class="small" href="forgot-password.html">Forgot Password?</a>
                 </div>
-              </div>
             </div>
-          </div>
-        </div>
 
-      </div>
+        </div>
 
     </div>
 
