@@ -10,7 +10,7 @@ from app.forms import LoginForm, CreateUser, CreateGroup, SetPassword, CreateDep
 
 
 def calculate_incidents_percentage(incidents): ##TODO Ask Adam if he prefers this or just a number of the increase.
-    two_hours = len([m for m in incidents if m.created_at >= (datetime.utcnow() - timedelta(hours=2)) and m.created_at < (datetime.utcnow() - timedelta(hours=1))])
+    two_hours = len([m for m in incidents if (datetime.utcnow() - timedelta(hours=2)) <= m.created_at < (datetime.utcnow() - timedelta(hours=1))])
     one_hour = len([m for m in incidents if m.created_at >= (datetime.utcnow() - timedelta(hours=1))])
     if two_hours == one_hour:
         return ["info", "minus", 0]

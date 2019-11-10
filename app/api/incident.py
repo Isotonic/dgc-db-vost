@@ -33,17 +33,17 @@ class get_all_incidents(Resource):
         return all_incidents, 200
 
 
-@ns_incident.route('/get/<int:id>')
+@ns_incident.route('/<int:deployment_id>/get/<int:id>')
 class get_incident(Resource):
     @jwt_required
     @ns_incident.doc(security='access_token')
     @ns_incident.response(200, 'Success', [incident_model])
     @ns_incident.response(401, "Incident doesn't exist")
-    def get(self, id):
+    def get(self, deployment_id, id):
         """
                 Returns incident info.
         """
-        incident = Incident.query.filter_by(id=id).first()
+        incident = Incident.query.filter_by(deployment_id=deployment_id, id=id).first()
         if not incident:
             ns_incident.abort(401, "Incident doesn't exist")
         return {'id': incident.id, 'name': incident.name, 'description': incident.description,
@@ -53,21 +53,25 @@ class get_incident(Resource):
                 'created_at': incident.created_at}, 200
 
 
-@ns_incident.route('/create')
+@ns_incident.route('/<int:deployment_id>/create')
 class create_new_incident(Resource):
     @jwt_required
     @ns_incident.expect(new_incident_model, validate=True)
     @ns_incident.doc(security='access_token')
     @ns_incident.response(200, 'Success', incident_model)
     @ns_incident.response(401, 'Incorrect credentials')
-    def post(self):
+    @ns_incident.response(404, "Deployment doesn't exist")
+    def post(self, deployment_id):
         """
                 Creates a new incident.
         """
+        deployment = Deployment.query.filter_by(id=deployment_id).first()
+        if not deployment:
+            ns_incident.abort(404, "Deployment doesn't exist")
         payload = c5_api.payload
         current_user = User.query.filter_by(username=get_jwt_identity()).first()
 
-        created_incident = new_incident(payload['name'], payload['description'], payload['location'], current_user)
+        created_incident = new_incident(payload['name'], payload['description'], payload['location'], deployment, current_user)
         return {'id': created_incident.id, 'name': created_incident.name, 'description': created_incident.description,
                 'location': created_incident.location, 'open': created_incident.open_status,
                 'public': created_incident.public,
