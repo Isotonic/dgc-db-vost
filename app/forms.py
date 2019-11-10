@@ -2,14 +2,13 @@ from sqlalchemy import func
 from flask_wtf import FlaskForm
 from app.models import User, Group, Deployment
 from wtforms.validators import DataRequired, ValidationError, Email, EqualTo
-from wtforms import StringField, PasswordField, BooleanField, SubmitField, SelectField, SelectMultipleField
+from wtforms import StringField, PasswordField, BooleanField, SelectField, SelectMultipleField
 
 
 class LoginForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired()])
     password = PasswordField('Password', validators=[DataRequired()])
     remember_me = BooleanField('Remember Me')
-    submit = SubmitField('Sign In')
 
 
 class CreateUser(FlaskForm):
@@ -17,7 +16,6 @@ class CreateUser(FlaskForm):
     surname = StringField('Surname', validators=[DataRequired()])
     email = StringField('Email', validators=[DataRequired(), Email()])
     group = SelectField('Group', coerce=int)
-    submit = SubmitField('Create User')
 
     def validate_email(self, email):
         user = User.query.filter(func.lower(User.email) == email.data.lower()).first()
@@ -35,7 +33,6 @@ class CreateGroup(FlaskForm):
     decision_making_log = BooleanField("Decision-Making Log", default=False)
     new_reports = BooleanField("Handle New Reports", default=False)
     supervisor = BooleanField("Supervisor", default=False)
-    submit = SubmitField('Create Group')
 
     def validate_name(self, name):
         group = Group.query.filter(func.lower(Group.name) == name.data.lower()).first()
@@ -46,7 +43,6 @@ class CreateGroup(FlaskForm):
 class SetPassword(FlaskForm):
     password = PasswordField('Password', validators=[DataRequired()])
     password2 = PasswordField('Repeat Password', validators=[DataRequired(), EqualTo('password')])
-    submit = SubmitField('Submit')
 
 
 class CreateDeployment(FlaskForm):
@@ -54,7 +50,6 @@ class CreateDeployment(FlaskForm):
     description = StringField('Description')
     groups = SelectMultipleField('Groups', coerce=int)
     users = SelectMultipleField('Users', coerce=int)
-    submit = SubmitField('Submit')
 
     def validate_name(self, name):
         deployment = Deployment.query.filter(func.lower(Deployment.name) == name.data.lower()).first()
@@ -66,16 +61,7 @@ class CreateIncident(FlaskForm):
     name = StringField('Name', validators=[DataRequired()])
     description = StringField('Description', validators=[DataRequired()])
     location = StringField('Location', validators=[DataRequired()])
-    submit = SubmitField('Submit')
-
-
-class AddTask(FlaskForm):
-    name = StringField('Name', validators=[DataRequired()])
-    users = SelectMultipleField('Users', coerce=int)
-    submit = SubmitField('Submit')
-
 
 class AddComment(FlaskForm):
     text = StringField('Comment', validators=[DataRequired()])
     highlight = BooleanField("Highlight", default=False)
-    submit = SubmitField('Submit')

@@ -6,7 +6,7 @@ from flask import render_template, flash, redirect, url_for, request, jsonify
 from flask_login import current_user, login_user, logout_user, login_required
 from app.models import User, Group, Deployment, Incident, IncidentTask, EmailLink, AuditLog
 from app.utils.create import new_user, new_group, new_deployment, new_incident, new_task, new_comment
-from app.forms import LoginForm, CreateUser, CreateGroup, SetPassword, CreateDeployment, CreateIncident, AddTask, AddComment
+from app.forms import LoginForm, CreateUser, CreateGroup, SetPassword, CreateDeployment, CreateIncident, AddComment
 
 
 def calculate_incidents_percentage(incidents): ##TODO Ask Adam if he prefers this or just a number of the increase.

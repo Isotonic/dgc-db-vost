@@ -35,7 +35,6 @@ class get_group(Resource):
         """
                 Returns group info.
         """
-        payload = c5_api.payload
         group = Group.query.filter_by(id=id).first()
         if not group:
             ns_group.abort(401, "Group doesn't exist")
