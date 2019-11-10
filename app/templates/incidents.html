@@ -11,34 +11,6 @@
     </span>
     <span class="text">New Incident</span>
 </a>
-<div class="modal fade" id="newIncidentModal" tabindex="-1" role="dialog" aria-labelledby="newIncidentModal" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-body p-0">
-                <div class="card shadow">
-                    <div class="card-header py-3 d-flex ">
-                <h6 class="m-0 font-weight-bold text-primary">New Incident Report</h6>
-            </div>
-                    <div class="card-body">
-                        <form id="newIncidentForm" method="post" role="form">
-                            <div class="form-group mb-3">
-                                <input class="form-control was-validated" name="name" placeholder="Incident Name" type="text" required>
-                            </div>
-                            <div class="form-group mb-3">
-                                <input class="form-control" name="location" placeholder="Location" type="text">
-                            </div>
-                            <textarea class="form-control" rows="3" name="description"
-                                      placeholder="Description"></textarea>
-                            <div class="text-center">
-                                <button type="submit" class="btn btn-primary my-4">Submit</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 {% endblock %}
 
 {% block body %}
@@ -198,6 +170,40 @@
             </table>
         </div>
 
+    </div>
+</div>
+{% endblock %}
+
+{% block modals %}
+<div class="modal fade" id="newIncidentModal" tabindex="-1" role="dialog" aria-labelledby="newIncidentModal" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-body p-0">
+                <div class="card shadow">
+                    <div class="card-header py-3 d-flex align-items-center justify-content-between">
+                        <h6 class="m-0 font-weight-bold text-primary">New Incident Report</h6>
+                        <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">×</span>
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <form id="newIncidentForm" method="post" role="form">
+                            <div class="form-group mb-3">
+                                <input class="form-control was-validated" name="name" placeholder="Incident Name" type="text" required>
+                            </div>
+                            <div class="form-group mb-3">
+                                <input class="form-control" name="location" placeholder="Location" type="text">
+                            </div>
+                            <textarea class="form-control" rows="3" name="description"
+                                      placeholder="Description"></textarea>
+                            <div class="text-center">
+                                <button type="submit" class="btn btn-primary my-4">Submit</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}

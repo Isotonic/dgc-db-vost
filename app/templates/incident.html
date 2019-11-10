@@ -37,18 +37,6 @@
             <a class="incident-cog" href="#" role="button" data-toggle="modal" data-target="#editAssignedToModal">
                 <i class="fas fa-cog float-right" data-toggle="tooltip" title="Change Allocation"></i>
             </a>
-            <div class="modal fade" id="editAssignedToModal" tabindex="-1" role="dialog" aria-labelledby="editAssignedToModal" aria-hidden="true">
-                    <div class="modal-dialog" role="document">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="editAssignedToLabel">Edit Assigned To</h5>
-                                <button class="close" type="button" data-dismiss="modal" aria-label="Close">
-                                    <span aria-hidden="true">×</span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-            </div>
             {% endif %}
             <div class="card-body">
                 <div class="row no-gutters align-items-center">
@@ -82,18 +70,6 @@
             <a class="incident-cog text-danger" href="#" role="button" data-toggle="modal" data-target="#changePriorityModal">
                 <i class="fas fa-cog float-right" data-toggle="tooltip" title="Change Priority"></i>
             </a>
-            <div class="modal fade" id="changePriorityModal" tabindex="-1" role="dialog" aria-labelledby="changePriorityModal" aria-hidden="true">
-                    <div class="modal-dialog" role="document">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="changePriorityLabel">Change Priority</h5>
-                                <button class="close" type="button" data-dismiss="modal" aria-label="Close">
-                                    <span aria-hidden="true">×</span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-            </div>
             {% endif %}
             <div class="card-body">
                 <div class="row no-gutters align-items-center">
@@ -168,19 +144,6 @@
                 <a href="#" role="button" data-toggle="modal" data-target="#editOverviewModal">
                     <i class="fas fa-cog" data-toggle="tooltip" title="Edit Incident Overview"></i>
                 </a>
-                <div class="modal fade" id="editOverviewModal" tabindex="-1" role="dialog"
-                     aria-labelledby="editOverviewModal" aria-hidden="true">
-                    <div class="modal-dialog" role="document">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="editOverviewLabel">Edit Overview</h5>
-                                <button class="close" type="button" data-dismiss="modal" aria-label="Close">
-                                    <span aria-hidden="true">×</span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
             <div class="card-body">
                 <h3 class="font-weight-bold">{{ incident.name }}</h3>
@@ -196,39 +159,6 @@
                 <a class="text-success" href="#" role="button" data-toggle="modal" data-target="#addTaskModal">
                     <i class="fas fa-plus" data-toggle="tooltip" title="Add Task"></i>
                 </a>
-                <div class="modal fade" id="addTaskModal" tabindex="-1" role="dialog" aria-labelledby="addTaskModal" aria-hidden="true">
-                    <div class="modal-dialog" role="document">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="addTaskLabel">Add Task</h5>
-                                <button class="close" type="button" data-dismiss="modal" aria-label="Close">
-                                    <span aria-hidden="true">×</span>
-                                </button>
-                            </div>
-                            <div class="modal-body justify-content-center">
-                                <form id="addTaskForm" method="post" role="form">
-                                    <div class="form-group mb-3">
-                                        <input class="form-control was-validated" name="name" placeholder="Task Name" type="text" required>
-                                    </div>
-                                    <div class="form-group mb-3">
-                                        <select id="AssignSelect" name="users" multiple="multiple" style="width: 100%">
-                                            {% for group in groups %}
-                                            <optgroup label="{{ group[0] }}">
-                                                {% for user in group[1] %}
-                                                <option value="{{ user.id }}" data-avatar-url="{{ user.get_avatar() }}">{{ user }}</option>
-                                                {% endfor %}
-                                            </optgroup>
-                                            {% endfor %}
-                                        </select>
-                                    </div>
-                                    <div class="text-center">
-                                        <button type="submit" class="btn btn-primary my-4">Submit</button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
             {% if incident.tasks %}
             <ul id="Tasks" class="list-group">
@@ -236,11 +166,95 @@
                 {% include 'task.html' %}
                 {% endfor %}
             </ul>
-                {% else %}
-                <div id="NoTasks" class="card-body">
-                    <p class="card-text">No tasks currently.</p>
+            {% else %}
+            <div id="NoTasks" class="card-body">
+                <p class="card-text">No tasks currently.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block modals %}
+<!-- Edit Assigned To Modal -->
+<div class="modal fade" id="editAssignedToModal" tabindex="-1" role="dialog" aria-labelledby="editAssignedToModal" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editAssignedToLabel">Edit Assigned To</h5>
+                <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Change Priority Modal -->
+<div class="modal fade" id="changePriorityModal" tabindex="-1" role="dialog" aria-labelledby="changePriorityModal" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="changePriorityLabel">Change Priority</h5>
+                <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Overview Modal -->
+<div class="modal fade" id="editOverviewModal" tabindex="-1" role="dialog" aria-labelledby="editOverviewModal" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editOverviewLabel">Edit Overview</h5>
+                <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Task Modal -->
+<div class="modal fade" id="addTaskModal" tabindex="-1" role="dialog" aria-labelledby="addTaskModal" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+             <div class="modal-body p-0">
+                <div class="card shadow">
+                    <div class="card-header py-3 d-flex align-items-center justify-content-between">
+                        <h6 class="m-0 font-weight-bold text-primary">Add Task</h6>
+                        <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">×</span>
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <form id="addTaskForm" method="post" role="form">
+                            <div class="form-group mb-3">
+                                <input class="form-control was-validated" name="name" placeholder="Task Name" type="text" required>
+                            </div>
+                            <div class="form-group mb-3">
+                                <select id="AssignSelect" name="users" multiple="multiple" style="width: 100%">
+                                    <option value="0"></option>
+                                    {% for group in groups %}
+                                    <optgroup label="{{ group[0] }}">
+                                        {% for user in group[1] %}
+                                        <option value="{{ user.id }}" data-avatar-url="{{ user.get_avatar() }}">{{ user }}</option>
+                                        {% endfor %}
+                                    </optgroup>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="text-center">
+                                <button type="submit" class="btn btn-primary my-4">Submit</button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
-                    {% endif %}
+            </div>
         </div>
     </div>
 </div>
@@ -335,10 +349,10 @@
     $(document).ready(function() {
     progressBar();
     $('#AssignSelect').select2({
-        placeholder: "Users to assign",
+        allowClear: true,
+        placeholder: {id:'0', text:'Assign to users, not required'},
         templateResult: format,
         templateSelection: format,
-        allowClear: true,
     });
 });
 </script>

@@ -35,22 +35,9 @@
                     <p class="mb-0 mt-1 text-muted text-xs text-nowrap">Created {{ moment(deployment.created_at).fromNow() }}</p>
                 </h6>
                 <div class="dropdown no-arrow">
-                    <a class="dropdown-toggle" href="#" role="button" data-toggle="modal" data-target="#editOverviewModal">
+                    <a class="dropdown-toggle" href="#" role="button" data-toggle="modal" data-target="#editDeploymentModal">
                         <i class="fas fa-cog"></i>
                     </a>
-                    <div class="modal fade" id="editOverviewModal" tabindex="-1" role="dialog"
-                         aria-labelledby="editOverviewModal" aria-hidden="true">
-                        <div class="modal-dialog" role="document">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title" id="editOverviewLabel">Edit Overview</h5>
-                                    <button class="close" type="button" data-dismiss="modal" aria-label="Close">
-                                        <span aria-hidden="true">×</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
             <div class="card-body text-center">
@@ -60,5 +47,20 @@
         </div>
     </div>
     {% endfor %}
+</div>
+{% endblock %}
+
+{% block modals %}
+<div class="modal fade" id="editDeploymentModal" tabindex="-1" role="dialog" aria-labelledby="editDeploymentModal" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editDeploymentLabel">Edit Deployment</h5>
+                <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
