@@ -1,5 +1,5 @@
-from app import app, db
 from sqlalchemy import func
+from app import app, db, moment
 from app.utils.change import task_status
 from datetime import datetime, timedelta
 from flask import render_template, flash, redirect, url_for, request, jsonify
@@ -177,7 +177,7 @@ def add_task(deployment_name, incident_name, incident_id):
     form.users.choices = users_list
     if form.validate_on_submit():
         task = new_task(form.name.data, form.users.data, incident, current_user)
-        return jsonify(data=render_template('task.html', task=task)), 200
+        return jsonify(html=render_template('task.html', task=task)), 200
     return jsonify(data=form.errors)
 
 
@@ -186,7 +186,8 @@ def add_task(deployment_name, incident_name, incident_id):
 def change_task_status(deployment_name, incident_name, incident_id):
     try:
         task_id = request.form['id']
-        completed = request.form['completed']
+        print(request.form['completed'])
+        completed = bool(int(request.form['completed']))
     except:
        return jsonify(data='Incorrect data supplied.'), 404
     deployment_name = deployment_name.replace("-", " ")
@@ -197,7 +198,10 @@ def change_task_status(deployment_name, incident_name, incident_id):
     if task.assigned_to and current_user not in task.assigned_to:
         return jsonify(data='You are not assigned to this task.'), 403
     task_status(current_user, task, completed)
-    return jsonify(success=True)
+    if task.completed:
+        return jsonify(timestamp=moment.create(task.completed_at).fromNow(refresh=True))
+    else:
+        return jsonify(timestamp=moment.create(task.created_at).fromNow(refresh=True))
 
 
 @app.route('/deployments/<deployment_name>/incidents/<incident_name>-<int:incident_id>/add_comment/', methods=['GET', 'POST'])

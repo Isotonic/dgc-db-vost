@@ -2,7 +2,7 @@
     <div class="row align-items-center no-gutters">
         <div class="col mr-2">
             <h6 class="mb-0">
-                <strong>{{ task.name }} </strong><span id="TaskDate{{ task.id }}" data-created-timestamp="{{ task.created_at }}" class="text-xs">{% if task.completed %}Completed {{ moment(task.completed_at).fromNow() }}{% else %}Created {{ moment(task.created_at).fromNow() }}{% endif %}</span>
+                <strong>{{ task.name }} </strong><span id="TaskDate{{ task.id }}" class="text-xs">{% if task.completed %}Completed {{ moment(task.completed_at).fromNow(refresh=True) }}{% else %}Created {{ moment(task.created_at).fromNow(refresh=True) }}{% endif %}</span>
             </h6>
             {% set assigned_to = task.get_assigned() %}
             {% if assigned_to %}
@@ -11,7 +11,7 @@
         </div>
         <div class="col-auto">
             <div>
-                <input class="edit-margin" id="task{{ task.id }}" value="{{ task.id }}" type="checkbox"{% if task.completed %} checked{% endif %}{% if current_user not in task.assigned_to %} disabled data-toggle="tooltip" title="Not Assigned To You"{% endif %}>
+                <input class="edit-margin" id="task{{ task.id }}" value="{{ task.id }}" type="checkbox"{% if task.completed %} checked{% endif %}{% if task.assigned_to and current_user not in task.assigned_to %} disabled data-toggle="tooltip" title="Not Assigned To You"{% endif %}>
                 <a class="edit-opacity" href="#" role="button" data-toggle="modal" data-target="#editOverviewModal">
                     <i class="fas fa-edit" data-toggle="tooltip" title="Edit Task"></i>
                 </a>

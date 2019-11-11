@@ -162,7 +162,7 @@
                         </div>
                     </td>
                     <td class="status">
-                        {{ moment(incident.last_updated).fromNow() }}
+                        {{ moment(incident.last_updated).fromNow(refresh=True) }}
                     </td>
                 </tr>
                 {% endfor %}

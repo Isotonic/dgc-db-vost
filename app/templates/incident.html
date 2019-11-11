@@ -123,7 +123,7 @@
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
                         <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Last Updated</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ moment(incident.last_updated).fromNow() }}
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ moment(incident.last_updated).fromNow(refresh=True) }}
                         </div>
                     </div>
                     <div class="col-auto">
@@ -303,7 +303,8 @@
                if ($('#NoTasks').length) {
                     $('#NoTasks').remove()
                }
-               $('#Tasks').append(data['data'])
+               $('#Tasks').append(data['html'])
+               flask_moment_render_all()
                progressBar();
            },
            error: function(data) {
@@ -317,7 +318,7 @@
         var id = $(this).val();
         var completed = $(this).is(':checked');
         $.ajax({
-           data: {'id': parseInt(id), 'completed': completed},
+           data: {'id': parseInt(id), 'completed': completed ? 1 : 0},
            type: "POST",
            url: "{{ url_for('change_task_status', deployment_name=deployment_name, incident_name=incident.name, incident_id=incident.id) }}",
            beforeSend: function(xhr, settings) {
@@ -328,11 +329,12 @@
            success: function(data) {
                 if (completed) {
                     $('#TaskRow' + id).addClass('text-muted');
-                    $('#TaskDate' + id).text('Completed a few seconds ago')
+                    $('#TaskDate' + id).html('Completed ' + data['timestamp'])
                 } else {
                     $('#TaskRow' + id).removeClass('text-muted');
-                    $('#TaskDate' + id).text('Created ' + moment($('#TaskDate' + id).data('created-timestamp')).fromNow())
+                    $('#TaskDate' + id).html('Created ' + data['timestamp'])
                 }
+                flask_moment_render_all()
                 progressBar();
            },
            error: function(data) {
