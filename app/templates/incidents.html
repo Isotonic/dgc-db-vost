@@ -266,6 +266,10 @@
 $(document).ready(function() {
     $('#dataTable').DataTable({
         "columnDefs": [
+            {   "targets": [ 0 ],
+                "orderable": false,
+                "searchable": false
+            },
             {
                 "targets": [ 7 ],
                 "visible": false,
