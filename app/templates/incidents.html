@@ -105,6 +105,7 @@
                     <th scope="col">
                         Last Updated
                     </th>
+                    <th scope="col" class="d-none"></th>
                 </tr>
                 </thead>
                 <tbody class="list">
@@ -164,6 +165,9 @@
                     <td class="status">
                         {{ moment(incident.last_updated).fromNow(refresh=True) }}
                     </td>
+                    <td class="d-none">
+                        {{ incident.last_updated }}
+                    </td>
                 </tr>
                 {% endfor %}
                 </tbody>
@@ -210,7 +214,7 @@
 
 {% block scripts %}
 <script src="https://cdn.datatables.net/1.10.20/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.10.20/js/dataTables.bootstrap4.min.js "></script>
+<script src="https://cdn.datatables.net/1.10.20/js/dataTables.bootstrap4.min.js"></script>
 <script>
     //TODO
     var csrf_token = "{{ csrf_token() }}";
@@ -260,7 +264,23 @@
 <script>
 // Call the dataTables jQuery plugin
 $(document).ready(function() {
-  $('#dataTable').DataTable();
+    $('#dataTable').DataTable({
+        "columnDefs": [
+            {
+                "targets": [ 7 ],
+                "visible": false,
+                "searchable": false
+            },
+            {
+                "targets": [ 6 ],
+                "orderData": [ 7 ]
+
+            }
+        ],
+        "order": [
+            [ 6, "desc" ]
+        ]
+    });
 });
 </script>
 {% endblock %}
