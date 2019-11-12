@@ -32,7 +32,7 @@ new_deployment_model = c5_api.model('New Deployment',
 deployment_model = c5_api.model('Deployment',
                                 {'id': fields.Integer(), 'name': fields.String(), 'description': fields.String(),
                                  'open': fields.Boolean(),
-                                 'created_at': fields.DateTime(dt_format='iso8601', description="UTC Timestamp."),
+                                 'created_at': fields.Float(description="UTC Timestamp."),
                                  'groups': fields.List(fields.Integer), 'users': fields.List(fields.Integer)})
 
 new_incident_model = c5_api.model('New Incident',
@@ -44,4 +44,4 @@ incident_model = c5_api.model('Incident',
                                'location': fields.String(), 'open': fields.Boolean(), 'public': fields.Boolean(),
                                'flagged': fields.Boolean(), 'type': fields.Integer(), 'priority': fields.Integer(),
                                'longitude': fields.Float(), 'latitude': fields.Float(),
-                               'created_at': fields.DateTime(dt_format='iso8601', description="UTC Timestamp.")})
+                               'created_at': fields.Float(description="UTC Timestamp.")})
