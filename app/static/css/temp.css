@@ -17,7 +17,6 @@
 .avatar-group .avatar {
   position: relative;
   z-index: 2;
-  border: 2px solid #fff; //TODO Maybe remove.
 }
 
 .avatar-group .avatar:hover {
