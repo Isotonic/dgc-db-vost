@@ -85,3 +85,8 @@ tr:hover {
     margin-top: 1rem !important;
     margin-bottom: 1.7rem !important;
 }
+
+.not-pinned {
+    text-shadow: 0px 0px 1px black, 0px 0px 1px black;
+    color: white;
+}
