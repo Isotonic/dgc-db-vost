@@ -60,8 +60,8 @@ class User(db.Model, UserMixin):
         avatar = pyavagen.Avatar(pyavagen.CHAR_AVATAR, size=128, string=f'{self.firstname} {self.surname}')
         avatar.generate().save(f'./app/static/img/avatars/{self.id}_{self.firstname}_{self.surname}.png')
 
-    def get_avatar(self):
-        avatar_path = f'/static/img/avatars/{self.id}_{self.firstname}_{self.surname}.png'
+    def get_avatar(self, static=True):
+        avatar_path = f'{"/static/" if static else ""}img/avatars/{self.id}_{self.firstname}_{self.surname}.png'
         if path.exists(f'./app{avatar_path}'):
             return avatar_path
         self.create_avatar()

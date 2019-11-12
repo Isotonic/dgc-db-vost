@@ -22,7 +22,7 @@ class get_all_incidents(Resource):
         """
         if not Deployment.query.filter_by(id=deployment_id).first():
             ns_incident.abort(404, "Deployment doesn't exist")
-        current_user = User.query.filter_by(username=get_jwt_identity()).first()
+        current_user = User.query.filter_by(id=get_jwt_identity()).first()
         all_incidents = [{'id': m.id, 'name': m.name, 'description': m.description,
                           'location': m.location, 'open': m.open_status, 'public': m.public,
                           'flagged': m.flagged, 'type': m.incident_type, 'priority': m.priority,
@@ -49,7 +49,7 @@ class get_incident(Resource):
         return {'id': incident.id, 'name': incident.name, 'description': incident.description,
                 'location': incident.location, 'open': incident.open_status, 'public': incident.public,
                 'flagged': incident.flagged, 'type': incident.incident_type, 'priority': incident.priority,
-                'xcoord': incident.xcoord, 'ycoord': incident.ycoord,
+                'longitude': incident.longitude, 'latitude': incident.latitude,
                 'created_at': incident.created_at}, 200
 
 
@@ -69,7 +69,7 @@ class create_new_incident(Resource):
         if not deployment:
             ns_incident.abort(404, "Deployment doesn't exist")
         payload = c5_api.payload
-        current_user = User.query.filter_by(username=get_jwt_identity()).first()
+        current_user = User.query.filter_by(id=get_jwt_identity()).first()
 
         created_incident = new_incident(payload['name'], payload['description'], payload['location'], deployment, current_user)
         return {'id': created_incident.id, 'name': created_incident.name, 'description': created_incident.description,
@@ -77,5 +77,5 @@ class create_new_incident(Resource):
                 'public': created_incident.public,
                 'flagged': created_incident.flagged, 'type': created_incident.incident_type,
                 'priority': created_incident.priority,
-                'xcoord': created_incident.xcoord, 'ycoord': created_incident.ycoord,
+                'longitude': created_incident.longitude, 'latitude': created_incident.latitude,
                 'created_at': created_incident.created_at}, 200

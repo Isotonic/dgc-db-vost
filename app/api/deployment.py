@@ -20,7 +20,7 @@ class get_all_deployments(Resource):
         """
                 Returns all deployments the user has access to.
         """
-        current_user = User.query.filter_by(username=get_jwt_identity()).first()
+        current_user = User.query.filter_by(id=get_jwt_identity()).first()
         all_deployments = [{'id': m.id, 'name': m.name, 'description': m.description, 'open': m.open_status,
                             'created_at': m.created_at, 'groups': [x.id for x in m.groups],
                             'users': [y.id for y in m.users]} for m in current_user.get_deployments()]
@@ -61,7 +61,7 @@ class create_new_deployment(Resource):
                 Creates a new deployment, requires the Supervisor permission. Supplying a list of groups and users is optional and is left blank if everyone is to have access.
         """
         payload = c5_api.payload
-        current_user = User.query.filter_by(username=get_jwt_identity()).first()
+        current_user = User.query.filter_by(id=get_jwt_identity()).first()
 
         if not current_user.group.has_permission('Supervisor'):
             ns_deployment.abort(403, 'Missing Supervisor permission')

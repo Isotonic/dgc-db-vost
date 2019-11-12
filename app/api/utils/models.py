@@ -14,7 +14,7 @@ new_user_model = c5_api.model('New User',
 
 user_model = c5_api.model('User',
                           {'user_id': fields.Integer(), 'firstname': fields.String(), 'surname': fields.String(),
-                           'group_id': fields.Integer()})
+                           'avatar_url': fields.String, 'group_id': fields.Integer()})
 
 new_group_model = c5_api.model('New Group',
                                {'name': fields.String(required=True), 'permissions': fields.List(fields.String)})

@@ -1,3 +1,4 @@
+from flask import url_for
 from app.api import c5_api
 from sqlalchemy import func
 from app.models import User, Group
@@ -19,7 +20,7 @@ class get_all_users(Resource):
         """
                 Returns all users.
         """
-        all_users = [{'id': m.id, 'firstname': m.firstname, 'surname': m.surname, 'group_id': m.group_id} for m in User.query.all()]
+        all_users = [{'id': m.id, 'firstname': m.firstname, 'surname': m.surname, 'avatar_url': url_for('static', filename=m.get_avatar(static=False), _external=True), 'group_id': m.group_id} for m in User.query.all()]
         if not all_users:
             ns_user.abort(404, 'No users exist')
         return all_users, 200
@@ -38,7 +39,7 @@ class get_user(Resource):
         user = User.query.filter_by(id=id).first()
         if not user:
             ns_user.abort(401, "User doesn't exist")
-        return {'id': user.id, 'firstname': user.firstname, 'surname': user.surname, 'group_id': user.group_id}, 200
+        return {'id': user.id, 'firstname': user.firstname, 'surname': user.surname, 'avatar_url': url_for('static', filename=user.get_avatar(static=False), _external=True), 'group_id': user.group_id}, 200
 
 
 @ns_user.route('/create')
@@ -54,7 +55,7 @@ class create_new_user(Resource):
                 Creates a new user, requires the Supervisor permission. Supplying a group is optional.
         """
         payload = c5_api.payload
-        current_user = User.query.filter_by(username=get_jwt_identity()).first()
+        current_user = User.query.filter_by(id=get_jwt_identity()).first()
 
         if not current_user.group.has_permission('Supervisor'):
             ns_user.abort(403, 'Missing Supervisor permission')
@@ -69,4 +70,4 @@ class create_new_user(Resource):
                 ns_user.abort(401, "Group doesn't exist")
 
         created_user = new_user(payload['firstname'], payload['surname'], payload['email'], group.id, current_user)
-        return {'user_id': created_user.id, 'firstname': created_user.firstname, 'surname': created_user.surname, 'group_id': created_user.group_id}, 200
+        return {'user_id': created_user.id, 'firstname': created_user.firstname, 'surname': created_user.surname, 'avatar_url': url_for('static', filename=created_user.get_avatar(static=False), _external=True), 'group_id': created_user.group_id}, 200

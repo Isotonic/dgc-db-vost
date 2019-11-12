@@ -54,7 +54,7 @@ class create_new_group(Resource):
                 Creates a new group, requires the Supervisor permission. Supplying a list of permissions is optional.
         """
         payload = c5_api.payload
-        current_user = User.query.filter_by(username=get_jwt_identity()).first()
+        current_user = User.query.filter_by(id=get_jwt_identity()).first()
 
         if not current_user.group.has_permission('Supervisor'):
             ns_group.abort(403, 'Missing Supervisor permission')
