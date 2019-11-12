@@ -27,7 +27,7 @@ class get_all_incidents(Resource):
                           'location': m.location, 'open': m.open_status, 'public': m.public,
                           'flagged': m.flagged, 'type': m.incident_type, 'priority': m.priority,
                           'longitude': m.longitude, 'latitude': m.latitude,
-                          'created_at': m.created_at} for m in current_user.get_incidents(deployment_id)]
+                          'created_at': m.created_at.timestamp()} for m in current_user.get_incidents(deployment_id)]
         if not all_incidents:
             ns_incident.abort(404, 'No incidents found')
         return all_incidents, 200
@@ -50,7 +50,7 @@ class get_incident(Resource):
                 'location': incident.location, 'open': incident.open_status, 'public': incident.public,
                 'flagged': incident.flagged, 'type': incident.incident_type, 'priority': incident.priority,
                 'longitude': incident.longitude, 'latitude': incident.latitude,
-                'created_at': incident.created_at}, 200
+                'created_at': incident.created_at.timestamp()}, 200
 
 
 @ns_incident.route('/<int:deployment_id>/create')
@@ -78,4 +78,4 @@ class create_new_incident(Resource):
                 'flagged': created_incident.flagged, 'type': created_incident.incident_type,
                 'priority': created_incident.priority,
                 'longitude': created_incident.longitude, 'latitude': created_incident.latitude,
-                'created_at': created_incident.created_at}, 200
+                'created_at': created_incident.created_at.timestamp()}, 200

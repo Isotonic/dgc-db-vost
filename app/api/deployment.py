@@ -22,7 +22,7 @@ class get_all_deployments(Resource):
         """
         current_user = User.query.filter_by(id=get_jwt_identity()).first()
         all_deployments = [{'id': m.id, 'name': m.name, 'description': m.description, 'open': m.open_status,
-                            'created_at': m.created_at, 'groups': [x.id for x in m.groups],
+                            'created_at': m.created_at.timestamp(), 'groups': [x.id for x in m.groups],
                             'users': [y.id for y in m.users]} for m in current_user.get_deployments()]
         if not all_deployments:
             ns_deployment.abort(404, 'No deployments found')
@@ -44,7 +44,7 @@ class get_deployment(Resource):
         if not deployment:
             ns_deployment.abort(401, "Deployment doesn't exist")
         return {'id': deployment.id, 'name': deployment.name, 'description': deployment.description,
-                'open': deployment.open_status, 'created_at': deployment.created_at,
+                'open': deployment.open_status, 'created_at': deployment.created_at.timestamp(),
                 'groups': [m.id for m in deployment.groups], 'users': [m.id for m in deployment.users]}, 200
 
 
@@ -74,5 +74,5 @@ class create_new_deployment(Resource):
                                             payload['users'], current_user)
         return {'id': created_deployment.id, 'name': created_deployment.name,
                 'description': created_deployment.description, 'open': created_deployment.open_status,
-                'created_at': created_deployment.created_at, 'groups': [m.id for m in created_deployment.groups],
+                'created_at': created_deployment.created_at.timestamp(), 'groups': [m.id for m in created_deployment.groups],
                 'users': [m.id for m in created_deployment.users]}, 200
