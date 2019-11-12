@@ -1,4 +1,4 @@
-from app.api import c5_api
+from app.api import dgvost_api
 from app.utils.create import new_incident
 from flask_restplus import Resource, Namespace
 from app.models import User, Incident, Deployment
@@ -68,7 +68,7 @@ class create_new_incident(Resource):
         deployment = Deployment.query.filter_by(id=deployment_id).first()
         if not deployment:
             ns_incident.abort(404, "Deployment doesn't exist")
-        payload = c5_api.payload
+        payload = dgvost_api.payload
         current_user = User.query.filter_by(id=get_jwt_identity()).first()
 
         created_incident = new_incident(payload['name'], payload['description'], payload['location'], deployment, current_user)

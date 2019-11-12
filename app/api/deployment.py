@@ -1,5 +1,5 @@
-from app.api import c5_api
 from sqlalchemy import func
+from app.api import dgvost_api
 from app.models import User, Deployment
 from app.utils.create import new_deployment
 from flask_restplus import Resource, Namespace
@@ -22,8 +22,8 @@ class get_all_deployments(Resource):
         """
         current_user = User.query.filter_by(id=get_jwt_identity()).first()
         all_deployments = [{'id': m.id, 'name': m.name, 'description': m.description, 'open': m.open_status,
-                            'created_at': m.created_at.timestamp(), 'groups': [x.id for x in m.groups],
-                            'users': [y.id for y in m.users]} for m in current_user.get_deployments()]
+                            'created_at': m.created_at.timestamp(), 'group_ids': [x.id for x in m.groups],
+                            'user_ids': [y.id for y in m.users]} for m in current_user.get_deployments()]
         if not all_deployments:
             ns_deployment.abort(404, 'No deployments found')
         return all_deployments, 200
@@ -39,13 +39,12 @@ class get_deployment(Resource):
         """
                 Returns deployment info.
         """
-        payload = c5_api.payload
         deployment = Deployment.query.filter_by(id=id).first()
         if not deployment:
             ns_deployment.abort(401, "Deployment doesn't exist")
         return {'id': deployment.id, 'name': deployment.name, 'description': deployment.description,
                 'open': deployment.open_status, 'created_at': deployment.created_at.timestamp(),
-                'groups': [m.id for m in deployment.groups], 'users': [m.id for m in deployment.users]}, 200
+                'group_ids': [m.id for m in deployment.groups], 'user_ids': [m.id for m in deployment.users]}, 200
 
 
 @ns_deployment.route('/create')
@@ -60,7 +59,7 @@ class create_new_deployment(Resource):
         """
                 Creates a new deployment, requires the Supervisor permission. Supplying a list of groups and users is optional and is left blank if everyone is to have access.
         """
-        payload = c5_api.payload
+        payload = dgvost_api.payload
         current_user = User.query.filter_by(id=get_jwt_identity()).first()
 
         if not current_user.group.has_permission('Supervisor'):
@@ -74,5 +73,5 @@ class create_new_deployment(Resource):
                                             payload['users'], current_user)
         return {'id': created_deployment.id, 'name': created_deployment.name,
                 'description': created_deployment.description, 'open': created_deployment.open_status,
-                'created_at': created_deployment.created_at.timestamp(), 'groups': [m.id for m in created_deployment.groups],
-                'users': [m.id for m in created_deployment.users]}, 200
+                'created_at': created_deployment.created_at.timestamp(), 'group_ids': [m.id for m in created_deployment.groups],
+                'user_ids': [m.id for m in created_deployment.users]}, 200

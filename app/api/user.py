@@ -1,6 +1,6 @@
 from flask import url_for
-from app.api import c5_api
 from sqlalchemy import func
+from app.api import dgvost_api
 from app.models import User, Group
 from app.utils.create import new_user
 from flask_restplus import Resource, Namespace
@@ -54,7 +54,7 @@ class create_new_user(Resource):
         """
                 Creates a new user, requires the Supervisor permission. Supplying a group is optional.
         """
-        payload = c5_api.payload
+        payload = dgvost_api.payload
         current_user = User.query.filter_by(id=get_jwt_identity()).first()
 
         if not current_user.group.has_permission('Supervisor'):
@@ -64,7 +64,7 @@ class create_new_user(Resource):
             ns_user.abort(409, 'Username or email already exists')
 
         group = None
-        if 'group_id' in c5_api.payload.keys():
+        if 'group_id' in dgvost_api.payload.keys():
             group = Group.query.filter_by(id=payload['group_id']).first()
             if not group:
                 ns_user.abort(401, "Group doesn't exist")

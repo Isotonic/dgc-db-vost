@@ -1,47 +1,48 @@
-from app.api import c5_api
+from app.api import dgvost_api
 from flask_restplus import fields
 
-login_model = c5_api.model('Login',
-                           {'email': fields.String(required=True), 'password': fields.String(required=True)})
+login_model = dgvost_api.model('Login',
+                               {'email': fields.String(required=True), 'password': fields.String(required=True)})
 
-tokens_model = c5_api.model('Token', {'access_token': fields.String(required=True),
-                                      'refresh_token': fields.String(required=True)})
+tokens_model = dgvost_api.model('Token', {'access_token': fields.String(required=True),
+                                          'refresh_token': fields.String(required=True)})
 
-new_user_model = c5_api.model('New User',
-                              {'firstname': fields.String(required=True), 'surname': fields.String(required=True),
-                               'email': fields.String(required=True), 'group_id': fields.Integer(
-                                  description='Optional ID of the group for the user to be added to.')})
+new_user_model = dgvost_api.model('New User',
+                                  {'firstname': fields.String(required=True), 'surname': fields.String(required=True),
+                                   'email': fields.String(required=True), 'group_id': fields.Integer(
+                                      description='Optional ID of the group for the user to be added to.')})
 
-user_model = c5_api.model('User',
-                          {'user_id': fields.Integer(), 'firstname': fields.String(), 'surname': fields.String(),
-                           'avatar_url': fields.String, 'group_id': fields.Integer()})
+user_model = dgvost_api.model('User',
+                              {'user_id': fields.Integer(), 'firstname': fields.String(), 'surname': fields.String(),
+                               'avatar_url': fields.String, 'group_id': fields.Integer()})
 
-new_group_model = c5_api.model('New Group',
-                               {'name': fields.String(required=True), 'permissions': fields.List(fields.String)})
+new_group_model = dgvost_api.model('New Group',
+                                   {'name': fields.String(required=True), 'permissions': fields.List(fields.String)})
 
-group_model = c5_api.model('Group',
-                           {'group_id': fields.Integer(), 'name': fields.String(), 'permission': fields.Integer()})
+group_model = dgvost_api.model('Group',
+                               {'group_id': fields.Integer(), 'name': fields.String(), 'permission': fields.Integer()})
 
-new_deployment_model = c5_api.model('New Deployment',
-                                    {'name': fields.String(required=True), 'description': fields.String(),
-                                     'groups': fields.List(fields.Integer,
-                                                           description='Leave blank for everyone to have access.'),
-                                     'users': fields.List(fields.Integer,
-                                                          description='Leave blank for everyone to have access.')})
+new_deployment_model = dgvost_api.model('New Deployment',
+                                        {'name': fields.String(required=True), 'description': fields.String(),
+                                         'group_ids': fields.List(fields.Integer,
+                                                               description='Leave blank for everyone to have access.'),
+                                         'user_ids': fields.List(fields.Integer,
+                                                              description='Leave blank for everyone to have access.')})
 
-deployment_model = c5_api.model('Deployment',
-                                {'id': fields.Integer(), 'name': fields.String(), 'description': fields.String(),
-                                 'open': fields.Boolean(),
-                                 'created_at': fields.Float(description="UTC Timestamp."),
-                                 'groups': fields.List(fields.Integer), 'users': fields.List(fields.Integer)})
+deployment_model = dgvost_api.model('Deployment',
+                                    {'id': fields.Integer(), 'name': fields.String(), 'description': fields.String(),
+                                     'open': fields.Boolean(),
+                                     'created_at': fields.Float(description="UTC Timestamp."),
+                                     'group_ids': fields.List(fields.Integer), 'user_ids': fields.List(fields.Integer)})
 
-new_incident_model = c5_api.model('New Incident',
-                                  {'name': fields.String(required=True), 'description': fields.String(required=True),
-                                   'location': fields.String(required=True)})
+new_incident_model = dgvost_api.model('New Incident',
+                                      {'name': fields.String(required=True),
+                                       'description': fields.String(required=True),
+                                       'location': fields.String(required=True)})
 
-incident_model = c5_api.model('Incident',
-                              {'id': fields.Integer(), 'name': fields.String(), 'description': fields.String(),
-                               'location': fields.String(), 'open': fields.Boolean(), 'public': fields.Boolean(),
-                               'flagged': fields.Boolean(), 'type': fields.Integer(), 'priority': fields.Integer(),
-                               'longitude': fields.Float(), 'latitude': fields.Float(),
-                               'created_at': fields.Float(description="UTC Timestamp.")})
+incident_model = dgvost_api.model('Incident',
+                                  {'id': fields.Integer(), 'name': fields.String(), 'description': fields.String(),
+                                   'location': fields.String(), 'open': fields.Boolean(), 'public': fields.Boolean(),
+                                   'flagged': fields.Boolean(), 'type': fields.Integer(), 'priority': fields.Integer(),
+                                   'longitude': fields.Float(), 'latitude': fields.Float(),
+                                   'created_at': fields.Float(description="UTC Timestamp.")})

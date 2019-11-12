@@ -1,1 +1,1 @@
-web: gunicorn c5:app
+web: gunicorn dgvost:app

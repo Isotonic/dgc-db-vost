@@ -16,13 +16,13 @@ authorizations = {
     }
 }
 
-c5_api = Api(api_blueprint,
-             title='C5 API',
+dgvost_api = Api(api_blueprint,
+             title='DGVOST API',
              version='1.0',
              description='Complete actions via the API on behalf of a user.',
              authorizations=authorizations)
 
-jwt._set_error_handler_callbacks(c5_api) #Fix for Flask-RestPlus error handler not working.
+jwt._set_error_handler_callbacks(dgvost_api) #Fix for Flask-RestPlus error handler not working.
 
 from .authentication import ns_auth
 from .user import ns_user
@@ -30,8 +30,8 @@ from .group import ns_group
 from .deployment import ns_deployment
 from .incident import ns_incident
 
-c5_api.add_namespace(ns_auth)
-c5_api.add_namespace(ns_user)
-c5_api.add_namespace(ns_group)
-c5_api.add_namespace(ns_deployment)
-c5_api.add_namespace(ns_incident)
+dgvost_api.add_namespace(ns_auth)
+dgvost_api.add_namespace(ns_user)
+dgvost_api.add_namespace(ns_group)
+dgvost_api.add_namespace(ns_deployment)
+dgvost_api.add_namespace(ns_incident)

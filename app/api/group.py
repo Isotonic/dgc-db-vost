@@ -1,5 +1,5 @@
-from app.api import c5_api
 from sqlalchemy import func
+from app.api import dgvost_api
 from app.models import User, Group
 from app.utils.create import new_group
 from flask_restplus import Resource, Namespace
@@ -53,7 +53,7 @@ class create_new_group(Resource):
         """
                 Creates a new group, requires the Supervisor permission. Supplying a list of permissions is optional.
         """
-        payload = c5_api.payload
+        payload = dgvost_api.payload
         current_user = User.query.filter_by(id=get_jwt_identity()).first()
 
         if not current_user.group.has_permission('Supervisor'):
