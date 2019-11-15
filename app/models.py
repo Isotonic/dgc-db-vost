@@ -35,6 +35,12 @@ incidentlog_target_users_junction = db.Table('incidentlog_target_users_actions',
                                              db.Column('id', db.Integer, db.ForeignKey('incident_log.id')),
                                              )
 
+def list_of_names(names):
+    if not names:
+        return None
+    elif len(names) == 1:
+        return str(names[0])
+    return f'{", ".join([str(m) for m in names[:-1]])} and {str(names[-1])}'
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
@@ -112,7 +118,7 @@ def load_user(id):
 
 
 class Group(db.Model):
-    permission_values = {'view_all_incidents': 0x1, 'change_incident_status': 0x2, 'change_allocation': 0x4,
+    permission_values = {'view_all_incidents': 0x1, 'change_status': 0x2, 'change_allocation': 0x4,
                          'mark_as_public': 0x8,
                          'new_reports': 0x16, 'create_deployment': 0x32, 'decision_making_log': 0x64,
                          'supervisor': 0x128, 'change_priority': 0x256}  ##TODO RE-DORDER ONCE DONE
@@ -157,8 +163,10 @@ class Deployment(db.Model):
 
 
 class Incident(db.Model):
+    priority_values = {'standard': 1, 'prompt': 2, 'immediate': 3}
     priorities = {1: 'standard', 2: 'prompt', 3: 'immediate'}
     incident_types = {}  ##TODO Get incident types.
+
     # TODO Add who has this pinned.
     id = db.Column(db.Integer, primary_key=True, index=True)
     deployment_id = db.Column(db.Integer, db.ForeignKey('deployment.id'))
@@ -204,11 +212,7 @@ class IncidentTask(db.Model):
     assigned_to = db.relationship('User', secondary=incidenttask_user_junction)
 
     def get_assigned(self):
-        if not self.assigned_to:
-            return None
-        elif len(self.assigned_to) == 1:
-            return self.assigned_to[0]
-        return f'{", ".join([str(m) for m in self.assigned_to[:-1]])} and {str(self.assigned_to[-1])}'
+        return list_of_names(self.assigned_to)
 
 
 class IncidentComment(db.Model):
@@ -252,10 +256,10 @@ class AuditLog(db.Model):
 class IncidentLog(db.Model):
     action_values = {'create_incident': 1, 'create_task': 2, 'complete_task': 3, 'delete_task': 4, 'add_comment': 5,
                      'delete_comment': 6, 'incomplete_task': 7, 'assigned_user': 8, 'removed_user': 9,
-                     'marked_complete': 10, 'marked_incomplete': 11}  ##TODO RE-ORDER ONCE DONE
+                     'marked_complete': 10, 'marked_incomplete': 11, 'changed_priority': 12}  ##TODO RE-ORDER ONCE DONE
     action_strings = {1: 'created incident', 2: 'created task', 3: 'completed task', 4: 'deleted task',
                       5: 'added comment', 6: 'deleted comment', 7: 'marked task as incomplete', 8: 'assigned user{0}',
-                      9: 'removed user{0}', 10: 'marked incident as complete', 11: 'marked incident as incomplete'}
+                      9: 'removed user{0}', 10: 'marked incident as complete', 11: 'marked incident as incomplete', 12: 'changed the priority to'}
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
@@ -269,7 +273,10 @@ class IncidentLog(db.Model):
     occurred_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __repr__(self):
-        return f'{self.user.firstname} {self.user.surname} {self.action_strings[self.action_type]}'
+        plural = ''
+        if self.target_users and len(self.target_users) > 1:
+            plural = 's'
+        return f'{self.action_strings[self.action_type]}{" " + list_of_names(self.target_users) if self.target_users else ""}{" " + self.task.name if self.task else ""}'.format(plural)
 
 
 class RevokedToken(db.Model):

@@ -57,7 +57,7 @@ def new_task(name, user_ids, incident, created_by):
     db.session.add(task)
     db.session.commit()
     action = IncidentLog(user=created_by, action_type=IncidentLog.action_values['create_task'],
-                         incident_id=incident.id)
+                         incident_id=incident.id, target_users=users)
     db.session.add(action)
     db.session.commit()
     return task

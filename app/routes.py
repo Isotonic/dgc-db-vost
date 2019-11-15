@@ -1,9 +1,9 @@
 from sqlalchemy import func
 from app import app, db, moment
 from datetime import datetime, timedelta
-from app.utils.change import incident_status, allocation, task_status
 from flask import render_template, flash, redirect, url_for, request, jsonify
 from flask_login import current_user, login_user, logout_user, login_required
+from app.utils.change import incident_status, allocation, incident_priority, task_status
 from app.models import User, Group, Deployment, Incident, IncidentTask, EmailLink, AuditLog
 from app.utils.create import new_user, new_group, new_deployment, new_incident, new_task, new_comment
 from app.forms import LoginForm, CreateUser, CreateGroup, SetPassword, CreateDeployment, CreateIncident, ChangeAllocation, AddTask, AddComment
@@ -168,7 +168,7 @@ def view_incident(deployment_name, incident_name, incident_id):
 @app.route('/deployments/<deployment_name>/incidents/<incident_name>-<int:incident_id>/change_incident_status/', methods=['POST'])
 @login_required
 def change_incident_status(deployment_name, incident_name, incident_id):
-    if not current_user.has_permission('change_incident_status'):
+    if not current_user.has_permission('change_status'):
         return jsonify(data="You don't have permission to change an incident's status."), 403
     try:
         status = bool(int(request.form['status']))
@@ -202,6 +202,24 @@ def change_allocation(deployment_name, incident_name, incident_id):
     return jsonify(data=form.errors), 400
 
 
+@app.route('/deployments/<deployment_name>/incidents/<incident_name>-<int:incident_id>/change_incident_priority/', methods=['POST'])
+@login_required
+def change_incident_priority(deployment_name, incident_name, incident_id):
+    if not current_user.has_permission('change_priority'):
+        return jsonify(data="You don't have permission to change an incident's priority."), 403
+    try:
+        priority = Incident.priority_values[request.form['priority'].lower()]
+    except:
+        return jsonify(data='Incorrect data supplied.'), 404
+    deployment_name = deployment_name.replace("-", " ")
+    incident = Incident.query.filter(func.lower(Incident.name) == func.lower(incident_name), Incident.id == incident_id).first()
+    if not incident or incident.deployment.name.lower() != deployment_name.lower():
+        return jsonify(data='Unable to find the deployment or incident.'), 404
+    if incident_priority(current_user, incident, priority) is False:
+        return jsonify(data="Incident already has this priority."), 400
+    return jsonify(priority=Incident.priorities[incident.priority].title()), 200
+
+
 @app.route('/deployments/<deployment_name>/incidents/<incident_name>-<int:incident_id>/add_task/', methods=['POST'])
 @login_required
 def add_task(deployment_name, incident_name, incident_id):
@@ -233,7 +251,8 @@ def change_task_status(deployment_name, incident_name, incident_id):
         return jsonify(data='Unable to find the deployment or incident.'), 404
     if task.assigned_to and current_user not in task.assigned_to:
         return jsonify(data='You are not assigned to this task.'), 403
-    task_status(current_user, task, completed)
+    if task_status(current_user, task, completed) is False:
+        return jsonify(data="Task already has this status."), 400
     if task.completed:
         return jsonify(timestamp=moment.create(task.completed_at).fromNow(refresh=True))
     else:

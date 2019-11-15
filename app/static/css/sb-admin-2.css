@@ -9388,7 +9388,11 @@ a.text-success:hover, a.text-success:focus {
 }
 
 a.text-info:hover, a.text-info:focus {
-  color: #258391 !important;
+  color: #00a8ff !important;
+}
+
+.text-orange{
+  color: #fd7e14 !important;
 }
 
 .text-warning {
@@ -9868,6 +9872,9 @@ a:focus {
   border-bottom: 0.25rem solid #5a5c69 !important;
 }
 
+.border-left-orange {
+  border-left: 0.25rem solid #fd7e14 !important;
+}
 .progress-sm {
   height: .5rem;
 }

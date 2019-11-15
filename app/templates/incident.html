@@ -69,24 +69,24 @@
 		{% set priority_colour = 'danger' %}
 		{% endif %}
 		{% if current_user.has_permission('change_priority') %}
-		<div class="card border-left-{{ priority_colour }} shadow h-100 py-2">
-			<a class="incident-cog text-{{ priority_colour }}" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-			<i class="fas fa-cog float-right" data-toggle="tooltip" title="Change Priority"></i>
+		<div id="PriorityBorder" class="card border-left-{{ priority_colour }} shadow h-100 py-2">
+			<a id="PriorityCog" class="incident-cog text-{{ priority_colour }}" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+			    <i class="fas fa-cog float-right" data-toggle="tooltip" title="Change Priority"></i>
 			</a>
-			<div class="dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="dropdownMenuLink">
-				<a class="dropdown-item{% if priority == 'Standard' %} active{% endif %}" href="#">Standard</a>
-				<a class="dropdown-item{% if priority == 'Prompt' %} active{% endif %}" href="#">Prompt</a>
-				<a class="dropdown-item{% if priority == 'Immediate' %} active{% endif %}" href="#">Immediate</a>
+			<div id="PriorityDropdown" class="dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="dropdownMenuLink">
+				<a id="PriorityStandard" class="dropdown-item{% if priority == 'Standard' %} active{% endif %}" href="#" type="submit">Standard</a>
+				<a id="PriorityPrompt" class="dropdown-item{% if priority == 'Prompt' %} active{% endif %}" href="#" type="submit">Prompt</a>
+				<a id="PriorityImmediate" class="dropdown-item{% if priority == 'Immediate' %} active{% endif %}" href="#" type="submit">Immediate</a>
 			</div>
 			{% endif %}
 			<div class="card-body">
 				<div class="row no-gutters align-items-center">
 					<div class="col mr-2">
-						<div class="text-s font-weight-bold text-{{ priority_colour }} text-uppercase mb-1">Priority</div>
-						<div class="h5 mb-0 font-weight-bold text-gray-800">{{ priority }}</div>
+						<div id="PriorityTitle" class="text-s font-weight-bold text-{{ priority_colour }} text-uppercase mb-1">Priority</div>
+						<div id="PriorityText" class="h5 mb-0 font-weight-bold text-gray-800">{{ priority }}</div>
 					</div>
 					<div class="col-auto">
-						<div class="icon icon-shape bg-{{ priority_colour }} text-white rounded-circle shadow">
+						<div id="PriorityIcon" class="icon icon-shape bg-{{ priority_colour }} text-white rounded-circle shadow">
 							<i class="fas fa-car-crash fa-1fourx"></i>
 						</div>
 					</div>
@@ -181,6 +181,16 @@
 			{% endif %}
 		</div>
 	</div>
+</div>
+<div class="col-xl-6 col-lg-7 offset-md-4">
+    <ul class="list-unstyled">
+        {% for action in incident.actions %}
+        <li class="text-muted">
+            <a href="">{{ action.user }}</a>
+            <span> {{ action }} {{ moment(action.occurred_at).fromNow(refresh=True) }}.</span>
+        </li>
+        {% endfor %}
+    </ul>
 </div>
 {% endblock %}
 {% block modals %}
@@ -353,6 +363,7 @@
 	});
 
 	$('#ChangeIncidentStatus').click( function(e) {
+		e.preventDefault();
 	    $.ajax({
 	       data: {'status': $('#ChangeIncidentStatus').hasClass('btn-info') ? 1 : 0},
 	       type: "POST",
@@ -376,6 +387,36 @@
 	       }
 	    });
 	});
+
+    $('#PriorityDropdown a').click(function (e) {
+        e.preventDefault();
+		var colours = {'Immediate': 'danger', 'Prompt': 'orange', 'Standard': 'warning'}
+        var old_colour = colours[$('#PriorityText').text()]
+        $.ajax({
+			data: {'priority': $(this).text()},
+			type: "POST",
+			url: "{{ url_for('change_incident_priority', deployment_name=deployment_name, incident_name=incident.name, incident_id=incident.id) }}",
+			beforeSend: function(xhr, settings) {
+				if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
+					xhr.setRequestHeader("X-CSRFToken", csrf_token)
+				}
+			},
+			success: function(data){
+				$('#PriorityBorder').removeClass('border-left-' + old_colour)
+				$('#PriorityCog').removeClass('text-' + old_colour)
+				$('#PriorityTitle').removeClass('text-' + old_colour)
+				$('#PriorityIcon').removeClass('bg-' + old_colour)
+				$('#PriorityText').text(data['priority'])
+				$('#PriorityBorder').addClass('border-left-' + colours[data['priority']])
+				$('#PriorityCog').addClass('text-' + colours[data['priority']])
+				$('#PriorityTitle').addClass('text-' + colours[data['priority']])
+				$('#PriorityIcon').addClass('bg-' + colours[data['priority']])
+			},
+			error: function(data) {
+				console.log(data);
+			}
+	    });
+    });
 
 	$('#Tasks :checkbox').change(function () {
 	    if ($(this).prop('disabled')) {return;}

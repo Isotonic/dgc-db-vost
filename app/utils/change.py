@@ -39,7 +39,20 @@ def allocation(user, incident, allocated_to_ids):
     db.session.commit()
 
 
+def incident_priority(user, incident, priority):
+    if incident.priority == priority:
+        return False
+    incident.priority = priority
+    incident.last_updated = datetime.utcnow()
+    action = IncidentLog(user=user, action_type=IncidentLog.action_values['changed_priority'],
+                         incident_id=incident.id)
+    db.session.add(action)
+    db.session.commit()
+
+
 def task_status(user, task, status):
+    if task.completed == status:
+        return False
     task.completed = status
     if status:
         task.completed_at = datetime.utcnow()
