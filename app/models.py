@@ -21,14 +21,19 @@ incident_user_junction = db.Table('incident_users',
                                   )
 
 incident_pinned_junction = db.Table('incident_pins',
-                                  db.Column('user_id', db.Integer, db.ForeignKey('user.id')),
-                                  db.Column('incident_id', db.Integer, db.ForeignKey('incident.id')),
-                                  )
+                                    db.Column('user_id', db.Integer, db.ForeignKey('user.id')),
+                                    db.Column('incident_id', db.Integer, db.ForeignKey('incident.id')),
+                                    )
 
 incidenttask_user_junction = db.Table('task_users',
                                       db.Column('user_id', db.Integer, db.ForeignKey('user.id')),
                                       db.Column('id', db.Integer, db.ForeignKey('incident_task.id')),
                                       )
+
+incidentlog_target_users_junction = db.Table('incidentlog_target_users_actions',
+                                             db.Column('user_id', db.Integer, db.ForeignKey('user.id')),
+                                             db.Column('id', db.Integer, db.ForeignKey('incident_log.id')),
+                                             )
 
 
 class User(db.Model, UserMixin):
@@ -44,6 +49,7 @@ class User(db.Model, UserMixin):
     incidents = db.relationship('Incident', secondary=incident_user_junction)
     pinned = db.relationship('Incident', secondary=incident_pinned_junction)
     tasks = db.relationship('IncidentTask', secondary=incidenttask_user_junction)
+    incident_log_target = db.relationship('IncidentLog', secondary=incidentlog_target_users_junction)
     audit_actions = db.relationship('AuditLog', backref='user', lazy=True)
     incident_comments = db.relationship('IncidentComment', backref='user')
     media_uploads = db.relationship('IncidentMedia', backref='uploaded_by')
@@ -96,7 +102,6 @@ class User(db.Model, UserMixin):
             return False
         return self.group.has_permission(permission)
 
-
     def __repr__(self):
         return f'{self.firstname} {self.surname}'
 
@@ -107,10 +112,10 @@ def load_user(id):
 
 
 class Group(db.Model):
-    permission_values = {'view_all_incidents': 0x1, 'change_status': 0x2, 'change_allocation': 0x4,
+    permission_values = {'view_all_incidents': 0x1, 'change_incident_status': 0x2, 'change_allocation': 0x4,
                          'mark_as_public': 0x8,
                          'new_reports': 0x16, 'create_deployment': 0x32, 'decision_making_log': 0x64,
-                         'supervisor': 0x128, 'change_priority': 0x256} ##TODO RE-DORDER ONCE DONE
+                         'supervisor': 0x128, 'change_priority': 0x256}  ##TODO RE-DORDER ONCE DONE
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64), index=True, unique=True)
@@ -178,13 +183,13 @@ class Incident(db.Model):
     actions = db.relationship('IncidentLog', backref='incident')
 
     def get_priority(self):
-        return self.priorities[1].title()  ##TODO REMOVE
+        if not self.priority: return self.priorities[1].title()  ##TODO REMOVE
         return self.priorities[self.priority].title()
 
     def calculate_task_percentage(self):
         if not self.tasks:
             return
-        return int((sum([1 for m in self.tasks if m.completed]) / len(self.tasks))*100)
+        return int((sum([1 for m in self.tasks if m.completed]) / len(self.tasks)) * 100)
 
 
 class IncidentTask(db.Model):
@@ -246,8 +251,11 @@ class AuditLog(db.Model):
 
 class IncidentLog(db.Model):
     action_values = {'create_incident': 1, 'create_task': 2, 'complete_task': 3, 'delete_task': 4, 'add_comment': 5,
-                     'delete_comment': 6, 'incomplete_task': 7} ##TODO RE-ORDER ONCE DONE
-    action_strings = {1: 'created incident', 2: 'created task', 3: 'completed task', 4: 'deleted task', 5: 'added comment', 6: 'deleted comment', 7: 'marked task as incomplete'}
+                     'delete_comment': 6, 'incomplete_task': 7, 'assigned_user': 8, 'removed_user': 9,
+                     'marked_complete': 10, 'marked_incomplete': 11}  ##TODO RE-ORDER ONCE DONE
+    action_strings = {1: 'created incident', 2: 'created task', 3: 'completed task', 4: 'deleted task',
+                      5: 'added comment', 6: 'deleted comment', 7: 'marked task as incomplete', 8: 'assigned user{0}',
+                      9: 'removed user{0}', 10: 'marked incident as complete', 11: 'marked incident as incomplete'}
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
@@ -255,6 +263,7 @@ class IncidentLog(db.Model):
     incident_id = db.Column(db.Integer, db.ForeignKey('incident.id'))
     task_id = db.Column(db.Integer, db.ForeignKey('incident_task.id'))
     task = db.relationship('IncidentTask', backref="logs", lazy=True)
+    target_users = db.relationship('User', secondary=incidentlog_target_users_junction)
     action_type = db.Column(db.Integer())
     reason = db.Column(db.String(256))
     occurred_at = db.Column(db.DateTime, default=datetime.utcnow)

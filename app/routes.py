@@ -1,12 +1,12 @@
 from sqlalchemy import func
 from app import app, db, moment
-from app.utils.change import task_status
 from datetime import datetime, timedelta
+from app.utils.change import incident_status, allocation, task_status
 from flask import render_template, flash, redirect, url_for, request, jsonify
 from flask_login import current_user, login_user, logout_user, login_required
 from app.models import User, Group, Deployment, Incident, IncidentTask, EmailLink, AuditLog
 from app.utils.create import new_user, new_group, new_deployment, new_incident, new_task, new_comment
-from app.forms import LoginForm, CreateUser, CreateGroup, SetPassword, CreateDeployment, CreateIncident, AddTask, AddComment
+from app.forms import LoginForm, CreateUser, CreateGroup, SetPassword, CreateDeployment, CreateIncident, ChangeAllocation, AddTask, AddComment
 
 
 def calculate_incidents_percentage(incidents): ##TODO Ask Adam if he prefers this or just a number of the increase.
@@ -165,6 +165,43 @@ def view_incident(deployment_name, incident_name, incident_id):
     return render_template('incident.html', incident=incident, deployment_name=incident.deployment.name, groups=groups, back_url=url_for('view_incidents', deployment_name=deployment_name), title=f'{deployment_name} - Incident {incident_id}')
 
 
+@app.route('/deployments/<deployment_name>/incidents/<incident_name>-<int:incident_id>/change_incident_status/', methods=['POST'])
+@login_required
+def change_incident_status(deployment_name, incident_name, incident_id):
+    if not current_user.has_permission('change_incident_status'):
+        return jsonify(data="You don't have permission to change an incident's status."), 403
+    try:
+        status = bool(int(request.form['status']))
+    except:
+        return jsonify(data='Incorrect data supplied.'), 404
+    deployment_name = deployment_name.replace("-", " ")
+    incident = Incident.query.filter(func.lower(Incident.name) == func.lower(incident_name), Incident.id == incident_id).first()
+    if not incident or incident.deployment.name.lower() != deployment_name.lower():
+        return jsonify(data='Unable to find the deployment or incident.'), 404
+    if incident_status(current_user, incident, status) is False:
+        return jsonify(data="Incident already has this status."), 400
+    return jsonify(status=status), 200
+
+
+@app.route('/deployments/<deployment_name>/incidents/<incident_name>-<int:incident_id>/change_allocation/', methods=['POST'])
+@login_required
+def change_allocation(deployment_name, incident_name, incident_id):
+    if not current_user.has_permission('change_allocation'):
+        return jsonify(data="You don't have permission to change an incident's allocation."), 403
+    deployment_name = deployment_name.replace("-", " ")
+    incident = Incident.query.filter(func.lower(Incident.name) == func.lower(incident_name), Incident.id == incident_id).first()
+    if not incident or incident.deployment.name.lower() != deployment_name.lower():
+        return jsonify(data='Unable to find the deployment or incident.'), 404
+    users_list = [(i.id, str(i)) for i in User.query.all()]
+    form = ChangeAllocation()
+    form.users.choices = users_list
+    if form.validate_on_submit():
+        if allocation(current_user, incident, form.users.data) is False:
+            return jsonify(data="Didn't change assigned users."), 400
+        return jsonify(html=[render_template('assigned_to.html', user=m) for m in incident.assigned_to]), 200
+    return jsonify(data=form.errors), 400
+
+
 @app.route('/deployments/<deployment_name>/incidents/<incident_name>-<int:incident_id>/add_task/', methods=['POST'])
 @login_required
 def add_task(deployment_name, incident_name, incident_id):
@@ -186,10 +223,9 @@ def add_task(deployment_name, incident_name, incident_id):
 def change_task_status(deployment_name, incident_name, incident_id):
     try:
         task_id = request.form['id']
-        print(request.form['completed'])
         completed = bool(int(request.form['completed']))
     except:
-       return jsonify(data='Incorrect data supplied.'), 404
+        return jsonify(data='Incorrect data supplied.'), 404
     deployment_name = deployment_name.replace("-", " ")
     incident = Incident.query.filter(func.lower(Incident.name) == func.lower(incident_name), Incident.id == incident_id).first()
     task = IncidentTask.query.filter_by(incident_id=incident.id, id=task_id).first()

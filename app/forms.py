@@ -63,6 +63,10 @@ class CreateIncident(FlaskForm):
     location = StringField('Location', validators=[DataRequired()])
 
 
+class ChangeAllocation(FlaskForm):
+    users = SelectMultipleField('Users', coerce=int)
+
+
 class AddTask(FlaskForm):
     name = StringField('Name', validators=[DataRequired()])
     users = SelectMultipleField('Users', coerce=int)
