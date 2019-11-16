@@ -7505,6 +7505,7 @@ button.bg-dark:focus {
 .mr-4,
 .mx-4 {
   margin-right: 1.5rem;
+  width: -webkit-fill-available;
 }
 
 .mb-4,
