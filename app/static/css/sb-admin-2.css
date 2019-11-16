@@ -10023,6 +10023,18 @@ a:focus {
   color: #3a3b45;
 }
 
+#PriorityStandard.active {
+  background-color: #f6c23e !important;
+}
+
+#PriorityPrompt.active {
+  background-color: #fd7e14 !important;
+}
+
+#PriorityImmediate.active {
+  background-color: #e74a3b !important;
+}
+
 @media (min-width: 576px) {
   .topbar .dropdown {
     position: relative;
