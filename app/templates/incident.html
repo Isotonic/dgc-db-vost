@@ -10,6 +10,7 @@
 	    </span>
 	    <span class="text">Flag To Supervisor</span>
 	</a>
+	<!-- TODO Allow non-privileged users to request a status change -->
 	{% if incident.open_status %}
 	<a id="ChangeIncidentStatus" href="#" class="btn btn-icon-split btn-success mb-1 mt-2">
 	    <span class="btn-icon">
@@ -287,6 +288,7 @@
 <script>
 	var current_percentage = parseInt(($('#Tasks :checked').length/$('#Tasks :checkbox').length)*100)
 
+	<!-- TODO Update last updated on AJAX calls -->
 	function progressBar(current_percentage) {
 	    var percentage = parseInt(($('#Tasks :checked').length/$('#Tasks :checkbox').length)*100)
 	    if (current_percentage == percentage) {return;}
@@ -390,8 +392,7 @@
 
     $('#PriorityDropdown a').click(function (e) {
         e.preventDefault();
-		var colours = {'Immediate': 'danger', 'Prompt': 'orange', 'Standard': 'warning'}
-        var old_colour = colours[$('#PriorityText').text()]
+        var old_priority = $('#PriorityText').text()
         $.ajax({
 			data: {'priority': $(this).text()},
 			type: "POST",
@@ -402,15 +403,18 @@
 				}
 			},
 			success: function(data){
-				$('#PriorityBorder').removeClass('border-left-' + old_colour)
-				$('#PriorityCog').removeClass('text-' + old_colour)
-				$('#PriorityTitle').removeClass('text-' + old_colour)
-				$('#PriorityIcon').removeClass('bg-' + old_colour)
+				var colours = {'Immediate': 'danger', 'Prompt': 'orange', 'Standard': 'warning'}
+				$('#PriorityBorder').removeClass('border-left-' + colours[old_priority])
+				$('#PriorityCog').removeClass('text-' + colours[old_priority])
+				$('#PriorityTitle').removeClass('text-' + colours[old_priority])
+				$('#PriorityIcon').removeClass('bg-' + colours[old_priority])
+				$('#Priority' + old_priority).removeClass('active')
 				$('#PriorityText').text(data['priority'])
 				$('#PriorityBorder').addClass('border-left-' + colours[data['priority']])
 				$('#PriorityCog').addClass('text-' + colours[data['priority']])
 				$('#PriorityTitle').addClass('text-' + colours[data['priority']])
 				$('#PriorityIcon').addClass('bg-' + colours[data['priority']])
+				$('#Priority' + data['priority']).addClass('active')
 			},
 			error: function(data) {
 				console.log(data);
