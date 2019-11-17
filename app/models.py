@@ -72,7 +72,7 @@ class User(db.Model, UserMixin):
     def create_avatar(self):
         if not path.exists(f'./app/static/img/avatars'): ##TODO Move this to the start-up.
             makedirs(f'./app/static/img/avatars')
-        avatar = pyavagen.Avatar(pyavagen.CHAR_AVATAR, size=128, string=f'{self.firstname} {self.surname}')
+        avatar = pyavagen.Avatar(pyavagen.CHAR_AVATAR, size=128, font_size=65, string=f'{self.firstname} {self.surname}')
         avatar.generate().save(f'./app/static/img/avatars/{self.id}_{self.firstname}_{self.surname}.png')
 
     def get_avatar(self, static=True):
