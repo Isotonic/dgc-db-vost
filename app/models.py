@@ -1,8 +1,10 @@
 import pyavagen
-from app import db, login
+from flask_admin import Admin ##TODO Remove
 from datetime import datetime
 from os import path, makedirs
+from app import app, db, login
 from flask_login import UserMixin
+from flask_admin.contrib.sqla import ModelView
 from werkzeug.security import generate_password_hash, check_password_hash
 
 deployment_user_junction = db.Table('deployment_users',
@@ -35,6 +37,7 @@ incidentlog_target_users_junction = db.Table('incidentlog_target_users_actions',
                                              db.Column('id', db.Integer, db.ForeignKey('incident_log.id')),
                                              )
 
+
 def list_of_names(names):
     if not names:
         return None
@@ -48,7 +51,7 @@ class User(db.Model, UserMixin):
     surname = db.Column(db.String(64))
     email = db.Column(db.String(120), index=True, unique=True)
     password_hash = db.Column(db.String(128))
-    admin = db.Column(db.Boolean(), default=False)
+    superuser = db.Column(db.Boolean(), default=False)
     group_id = db.Column(db.Integer, db.ForeignKey('group.id'))
     group = db.relationship('Group', backref='users')
     deployments = db.relationship('Deployment', secondary=deployment_user_junction)
@@ -67,7 +70,7 @@ class User(db.Model, UserMixin):
         return check_password_hash(self.password_hash, password)
 
     def create_avatar(self):
-        if not path.exists(f'./app/static/img/avatars'):
+        if not path.exists(f'./app/static/img/avatars'): ##TODO Move this to the start-up.
             makedirs(f'./app/static/img/avatars')
         avatar = pyavagen.Avatar(pyavagen.CHAR_AVATAR, size=128, string=f'{self.firstname} {self.surname}')
         avatar.generate().save(f'./app/static/img/avatars/{self.id}_{self.firstname}_{self.surname}.png')
@@ -291,3 +294,17 @@ class RevokedToken(db.Model):
     def is_jti_blacklisted(cls, jti):
         query = cls.query.filter_by(jti=jti).first()
         return bool(query)
+
+
+admin = Admin(app, name='DGVOST', template_mode='bootstrap3')
+admin.add_view(ModelView(User, db.session))
+admin.add_view(ModelView(Group, db.session))
+admin.add_view(ModelView(Deployment, db.session))
+admin.add_view(ModelView(Incident, db.session))
+admin.add_view(ModelView(IncidentTask, db.session))
+admin.add_view(ModelView(IncidentComment, db.session))
+admin.add_view(ModelView(IncidentMedia, db.session))
+admin.add_view(ModelView(EmailLink, db.session))
+admin.add_view(ModelView(AuditLog, db.session))
+admin.add_view(ModelView(IncidentLog, db.session))
+admin.add_view(ModelView(RevokedToken, db.session))
