@@ -187,10 +187,16 @@
 {{ moment.include_moment() }}
 {% block scripts %}
 {% endblock %}
-<script type="text/javascript">$(function () {$('[data-toggle="tooltip"]').tooltip()})
+<script type="text/javascript">
+$(document).ready(function(){
+    $('[data-toggle="tooltip"]').tooltip()
+    $('[data-toggle="tooltip"]').click(function () {
+          $('[data-toggle="tooltip"]').tooltip("hide");
+    });
     $("form").each(function() {
       $(this)[0].reset()
     });
+});
 </script>
 </body>
 </html>

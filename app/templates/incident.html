@@ -4,12 +4,6 @@
 {% endblock %}
 {% block heading %}
 <div>
-	<a href="#flagModal" data-toggle="modal" data-target="#flagModal" class="btn btn-icon-split btn-warning mb-1 mt-2">
-	    <span class="btn-icon">
-	        <i class="fas fa-flag"></i>
-	    </span>
-	    <span class="text">Flag To Supervisor</span>
-	</a>
 	<!-- TODO Allow non-privileged users to request a status change -->
 	{% if incident.open_status %}
 	<a id="ChangeIncidentStatus" href="#" class="btn btn-icon-split btn-success mb-1 mt-2">
@@ -26,6 +20,16 @@
 	    <span id="ChangeIncidentStatusText" class="text">Mark As Incomplete</span>
 	</a>
 	{% endif %}
+	<a href="#flagModal" class="btn btn-icon-split btn-warning mb-1 mt-2 dropdown-toggle" role="button" id="dropdownFlagMenu" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+		<span class="btn-icon">
+			<i class="fas fa-flag"></i>
+		</span>
+		<span class="text">Flag</span>
+	</a>
+	<div class="dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="dropdownPriorityMenu">
+		<a class="dropdown-item" href="#" type="submit">User</a>
+		<a class="dropdown-item" href="#" type="submit">Supervisor</a>
+	</div>
 </div>
 {% endblock %}
 {% block body %}
@@ -71,10 +75,10 @@
 		{% endif %}
 		{% if current_user.has_permission('change_priority') %}
 		<div id="PriorityBorder" class="card border-left-{{ priority_colour }} shadow h-100 py-2">
-			<a id="PriorityCog" class="incident-cog text-{{ priority_colour }}" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+			<a id="PriorityCog" class="incident-cog text-{{ priority_colour }}" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 			    <i class="fas fa-cog float-right" data-toggle="tooltip" title="Change Priority"></i>
 			</a>
-			<div id="PriorityDropdown" class="dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="dropdownMenuLink">
+			<div id="PriorityDropdown" class="dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="dropdownPriorityMenu">
 				<a id="PriorityStandard" class="dropdown-item{% if priority == 'Standard' %} active{% endif %}" href="#" type="submit">Standard</a>
 				<a id="PriorityPrompt" class="dropdown-item{% if priority == 'Prompt' %} active{% endif %}" href="#" type="submit">Prompt</a>
 				<a id="PriorityImmediate" class="dropdown-item{% if priority == 'Immediate' %} active{% endif %}" href="#" type="submit">Immediate</a>
@@ -152,13 +156,43 @@
 			<div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
 				<h6 class="m-0 font-weight-bold text-primary">Incident Overview</h6>
 				<a href="#" role="button" data-toggle="modal" data-target="#editOverviewModal">
-				<i class="fas fa-cog" data-toggle="tooltip" title="Edit Incident Overview"></i>
+					<i class="fas fa-cog" data-toggle="tooltip" title="Edit Incident Overview"></i>
 				</a>
 			</div>
 			<div class="card-body">
 				<h3 class="font-weight-bold">{{ incident.name }}</h3>
 				<p class="card-text"><b>Location:</b> {{ incident.location }}</p>
 				<p class="card-text"><b>Description:</b> {{ incident.description }}</p>
+				<p class="card-text"><b>Reported Via:</b> {{ incident.reporting }}</p>
+				<p class="card-text"><b>Logged by:</b> {{ incident.created_by }}</p>
+				<p class="card-text"><b>Refrence Number (If Provided):</b> {{ incident.reference }}</p>
+			</div>
+		</div>
+		<div class="card shadow mb-4">
+			<div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+				<h6 class="m-0 font-weight-bold text-primary">Recent Activity</h6>
+			</div>
+			<div class="card-body" style="background-color: #f8f9fc;">
+				<ul class="activity">
+					{% for action in incident.actions|sort(attribute='occurred_at', reverse=True) %}
+					<li>
+						<div>
+							<i class="fas text-gray-300 fa-1fourx fa-plus-circle activity-icon"></i>
+							<div class="media">
+								<div class="media-left">
+									<a href="#">
+										<img class="media-object img-profile rounded-circle" src="{{ action.user.get_avatar() }}" alt="Image">
+									</a>
+								</div>
+								<div class="media-body">
+									{{ moment(action.occurred_at).fromNow(refresh=True) }}
+								</div>
+								<span class="card-text"><a href="#">{{ action.user }}</a> {{ action }}.</span>
+							</div>
+						</div>
+                	</li>
+					{% endfor %}
+				</ul>
 			</div>
 		</div>
 	</div>
@@ -167,7 +201,7 @@
 			<div class="card-header py-3 d-flex align-items-center justify-content-between">
 				<h6 class="m-0 font-weight-bold text-primary">Tasks</h6>
 				<a class="text-success" href="#" role="button" data-toggle="modal" data-target="#addTaskModal">
-				<i class="fas fa-plus" data-toggle="tooltip" title="Add Task"></i>
+					<i class="fas fa-plus" data-toggle="tooltip" title="Add Task"></i>
 				</a>
 			</div>
 			{% if incident.tasks %}
@@ -182,17 +216,22 @@
 			</div>
 			{% endif %}
 		</div>
+		<div class="card shadow mb-4">
+			<div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+				<h6 class="m-0 font-weight-bold text-primary">Map</h6>
+				<div class="form-check">
+				  <input class="form-check-input" type="checkbox" value="" id="publicCheck">
+				  <label class="form-check-label text-muted" for="publicCheck">
+					Public
+				  </label>
+				</div>
+
+			</div>
+			<div class="card-body">
+
+			</div>
+		</div>
 	</div>
-</div>
-<div class="col-xl-6 col-lg-7 offset-md-4">
-    <ul class="list-unstyled">
-        {% for action in incident.actions %}
-        <li class="text-muted">
-            <a href="">{{ action.user }}</a>
-            <span> {{ action }} {{ moment(action.occurred_at).fromNow(refresh=True) }}.</span>
-        </li>
-        {% endfor %}
-    </ul>
 </div>
 {% endblock %}
 {% block modals %}

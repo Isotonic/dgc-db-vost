@@ -175,8 +175,11 @@ class Incident(db.Model):
     deployment_id = db.Column(db.Integer, db.ForeignKey('deployment.id'))
     name = db.Column(db.String(64), index=True)
     description = db.Column(db.String(256))
+    reporting = db.Column(db.String(256))
+    reference = db.Column(db.String(64)) ##TODO MAYBE CHANGE TO INT
     incident_type = db.Column(db.Integer)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
     closed_at = db.Column(db.DateTime)
     last_updated = db.Column(db.DateTime, default=datetime.utcnow)
     public = db.Column(db.Boolean(), default=False)
