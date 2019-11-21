@@ -264,8 +264,8 @@ class IncidentLog(db.Model):
                      'delete_comment': 6, 'incomplete_task': 7, 'assigned_user': 8, 'removed_user': 9,
                      'marked_complete': 10, 'marked_incomplete': 11, 'changed_priority': 12}  ##TODO RE-ORDER ONCE DONE
     action_strings = {1: 'created incident', 2: 'created task', 3: 'completed task', 4: 'deleted task',
-                      5: 'added comment', 6: 'deleted comment', 7: 'marked task as incomplete', 8: 'assigned user{0}',
-                      9: 'removed user{0}', 10: 'marked incident as complete', 11: 'marked incident as incomplete', 12: 'changed the priority to'}
+                      5: 'added comment', 6: 'deleted comment', 7: 'marked task as incomplete', 8: 'assigned user{0} to incident',
+                      9: 'removed user{0} from incident', 10: 'marked incident as complete', 11: 'marked incident as incomplete', 12: 'changed the priority to'}
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
@@ -276,13 +276,22 @@ class IncidentLog(db.Model):
     target_users = db.relationship('User', secondary=incidentlog_target_users_junction)
     action_type = db.Column(db.Integer())
     reason = db.Column(db.String(256))
+    extra = db.Column(db.String(64))
     occurred_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __repr__(self):
-        plural = ''
-        if self.target_users and len(self.target_users) > 1:
-            plural = 's'
-        return f'{self.action_strings[self.action_type]}{" " + list_of_names(self.target_users) if self.target_users else ""}{" " + self.task.name if self.task else ""}'.format(plural)
+        if self.target_users:
+            plural = ''
+            if len(self.target_users) > 1:
+                plural = 's'
+            msg = f'{self.action_strings[self.action_type]} {list_of_names(self.target_users)}'.format(plural)
+        elif self.task:
+            msg = f' {self.task.name}'
+        elif self.extra:
+            msg = f'{self.action_strings[self.action_type]} {self.extra}'
+        else:
+            msg = f'{self.action_strings[self.action_type]}'
+        return f'{msg}.'
 
 
 class RevokedToken(db.Model):

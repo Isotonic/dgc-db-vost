@@ -51,16 +51,18 @@ def new_incident(name, description, location, deployment, created_by):
     db.session.commit()
     return incident
 
+
 def new_task(name, user_ids, incident, created_by):
     users = User.query.filter(User.id.in_(user_ids)).all()
     task = IncidentTask(name=name, assigned_to=users, incident=incident)
     db.session.add(task)
     db.session.commit()
     action = IncidentLog(user=created_by, action_type=IncidentLog.action_values['create_task'],
-                         incident_id=incident.id, target_users=users)
+                         incident_id=incident.id, task=task, target_users=users)
     db.session.add(action)
     db.session.commit()
     return task
+
 
 def new_comment(text, highlight, incident, added_by):
     comment = IncidentComment(text=text, highlight=highlight, user_id=added_by.id, incident=incident)

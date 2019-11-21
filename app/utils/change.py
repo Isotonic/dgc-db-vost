@@ -1,7 +1,7 @@
 from app import db
 from datetime import datetime
 from collections import Counter
-from app.models import User, IncidentLog
+from app.models import User, Incident, IncidentLog
 
 
 def incident_status(user, incident, status):
@@ -45,7 +45,7 @@ def incident_priority(user, incident, priority):
     incident.priority = priority
     incident.last_updated = datetime.utcnow()
     action = IncidentLog(user=user, action_type=IncidentLog.action_values['changed_priority'],
-                         incident_id=incident.id)
+                         incident_id=incident.id, extra=Incident.priorities[priority])
     db.session.add(action)
     db.session.commit()
 
