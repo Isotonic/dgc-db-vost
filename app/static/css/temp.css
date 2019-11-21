@@ -233,3 +233,19 @@ MODIFIED VERSION
     margin-left: -20px;
     margin-right: 30px;
 }
+
+.map-container{
+    overflow:hidden;
+    padding-bottom: 56.25%;
+    position: relative;
+    height: 300px;
+    box-shadow: 0 5px 11px 0 rgba(0,0,0,0.18),0 4px 15px 0 rgba(0,0,0,0.15);
+}
+.map-container iframe{
+    left: 0;
+    top: 0;
+    border: 0;
+    height: 100%;
+    width: 100%;
+    position: absolute;
+}
