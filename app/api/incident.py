@@ -43,7 +43,7 @@ class get_incident(Resource):
         """
                 Returns incident info.
         """
-        incident = Incident.query.filter_by(deployment_id=deployment_id, id=id).first()
+        incident = Incident.query.filter(Deployment.id==deployment_id, id==id).first()
         if not incident:
             ns_incident.abort(401, "Incident doesn't exist")
         return {'id': incident.id, 'name': incident.name, 'description': incident.description,
