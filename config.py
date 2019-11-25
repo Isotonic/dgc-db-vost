@@ -27,3 +27,4 @@ class Config(object):
     JWT_BLACKLIST_TOKEN_CHECKS = ['access', 'refresh']
 
     GOOGLE_MAPS_API_KEY = os.environ.get('GOOGLE_MAPS_API_KEY') or ''
+    ERROR_404_HELP = False
