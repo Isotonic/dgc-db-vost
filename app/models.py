@@ -263,7 +263,7 @@ class IncidentLog(db.Model):
     action_values = {'create_incident': 1, 'create_task': 2, 'complete_task': 3, 'delete_task': 4, 'add_comment': 5,
                      'delete_comment': 6, 'incomplete_task': 7, 'assigned_user': 8, 'removed_user': 9,
                      'marked_complete': 10, 'marked_incomplete': 11, 'changed_priority': 12}  ##TODO RE-ORDER ONCE DONE
-    action_strings = {1: 'created incident', 2: 'created task', 3: 'completed task', 4: 'deleted task',
+    action_strings = {1: 'created this incident', 2: 'created task', 3: 'completed task', 4: 'deleted task',
                       5: 'added comment', 6: 'deleted comment', 7: 'marked task as incomplete', 8: 'assigned user{0} to incident',
                       9: 'removed user{0} from incident', 10: 'marked incident as complete', 11: 'marked incident as incomplete', 12: 'changed the priority to'}
 

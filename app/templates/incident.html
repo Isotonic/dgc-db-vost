@@ -169,35 +169,6 @@
 			</div>
 		</div>
 		<div class="card shadow mb-4">
-			<div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-				<h6 class="m-0 font-weight-bold text-primary">Recent Activity</h6>
-			</div>
-			<div class="card-body bg-light">
-				<ul class="activity">
-					{% for action in incident.actions|sort(attribute='occurred_at', reverse=True) %}
-					<li>
-						<div>
-							<i class="fas text-gray-300 fa-1fourx fa-plus-circle activity-icon"></i>
-							<div class="media">
-								<div class="media-left">
-									<a href="#">
-										<img class="media-object img-profile rounded-circle" src="{{ action.user.get_avatar() }}" alt="Image">
-									</a>
-								</div>
-								<div class="media-body">
-									{{ moment(action.occurred_at).fromNow(refresh=True) }}
-								</div>
-								<span class="card-text"><a href="#">{{ action.user }}</a> {{ action }}</span>
-							</div>
-						</div>
-                	</li>
-					{% endfor %}
-				</ul>
-			</div>
-		</div>
-	</div>
-	<div class="col-xl-6 col-lg-7">
-		<div class="card shadow mb-4">
 			<div class="card-header py-3 d-flex align-items-center justify-content-between">
 				<h6 class="m-0 font-weight-bold text-primary">Tasks</h6>
 				<a class="text-success" href="#" role="button" data-toggle="modal" data-target="#addTaskModal">
@@ -216,6 +187,8 @@
 			</div>
 			{% endif %}
 		</div>
+	</div>
+	<div class="col-xl-6 col-lg-7">
 		<div class="card shadow mb-4">
 			<div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
 				<h6 class="m-0 font-weight-bold text-primary">Map</h6>
@@ -227,6 +200,61 @@
 			<div class="card-body">
 				<div id="map" class="map-container">
 				</div>
+			</div>
+		</div>
+		<div class="card shadow mb-4">
+			<div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+				<h6 class="m-0 font-weight-bold text-primary">Updates</h6>
+				<a class="text-success" href="#" role="button" data-toggle="modal" data-target="#addCommentModal">
+					<i class="fas fa-plus" data-toggle="tooltip" title="Add Comment"></i>
+				</a>
+			</div>
+			<div class="card-body bg-light">
+				<ul class="list-unstyled">
+				{% for comment in incident.comments|sort(attribute='sent_at') %}
+					<li class="update-log">
+						<div class="update-log-avatar">
+							<a href="#">
+								<img class="media-object rounded-circle" src="{{ comment.user.get_avatar() }}" alt="Avatar">
+							</a>
+							<div class="update-log-name text-muted">{{ comment.user }}</div>
+						</div>
+						<div class="update-log-text">
+							<span class="d-block">{{ comment.text }}</span>
+							<div class="update-body">{{ moment(comment.sent_at).fromNow(refresh=True) }}</div>
+						</div>
+					</li>
+					{% else %}
+					No updates currently.
+					{% endfor %}
+				</ul>
+			</div>
+		</div>
+		<div class="card shadow mb-4">
+			<div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+				<h6 class="m-0 font-weight-bold text-primary">Recent Activity</h6>
+			</div>
+			<div class="card-body bg-light">
+				<ul class="activity">
+					{% for action in incident.actions|sort(attribute='occurred_at', reverse=True) %}
+					<li>
+						<div>
+							<i class="fas text-gray-300 fa-1fourx fa-plus-circle activity-icon"></i>
+							<div class="media">
+								<div class="media-left">
+									<a href="#">
+										<img class="media-object rounded-circle" src="{{ action.user.get_avatar() }}" alt="Avatar">
+									</a>
+								</div>
+								<div class="media-body">
+									{{ moment(action.occurred_at).fromNow(refresh=True) }}
+								</div>
+								<span class="card-text"><a href="#">{{ action.user }}</a> {{ action }}</span>
+							</div>
+						</div>
+                	</li>
+					{% endfor %}
+				</ul>
 			</div>
 		</div>
 	</div>
@@ -310,6 +338,33 @@
 									</optgroup>
 									{% endfor %}
 								</select>
+							</div>
+							<div class="text-center">
+								<button type="submit" class="btn btn-primary my-4">Submit</button>
+							</div>
+						</form>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<!-- Add Comment Modal -->
+<div class="modal fade" id="addCommentModal" tabindex="-1" role="dialog" aria-labelledby="addCommentModal" aria-hidden="true">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-body p-0">
+				<div class="card shadow">
+					<div class="card-header py-3 d-flex align-items-center justify-content-between">
+						<h6 class="m-0 font-weight-bold text-primary">Add Task</h6>
+						<button class="close" type="button" data-dismiss="modal" aria-label="Close">
+						<span aria-hidden="true">×</span>
+						</button>
+					</div>
+					<div class="card-body">
+						<form id="addCommentForm" method="post" role="form">
+							<div class="form-group mb-3">
+								<input class="form-control was-validated" name="comment" placeholder="Comment" type="text" required>
 							</div>
 							<div class="text-center">
 								<button type="submit" class="btn btn-primary my-4">Submit</button>
