@@ -158,6 +158,7 @@ class Deployment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64), index=True)
     description = db.Column(db.String(256))
+    areas = db.Column(db.ARRAY(db.String(64)))
     open_status = db.Column(db.Boolean(), default=True)
     incidents = db.relationship('Incident', backref='deployment')
     groups = db.relationship('Group', secondary=deployment_group_junction)

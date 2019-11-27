@@ -22,18 +22,20 @@ new_group_model = dgvost_api.model('New Group',
 group_model = dgvost_api.model('Group',
                                {'group_id': fields.Integer(), 'name': fields.String(), 'permission': fields.Integer()})
 
-new_deployment_model = dgvost_api.model('New Deployment',
+new_deployment_model = dgvost_api.model('New Deployment',  ##TODO Add areas
                                         {'name': fields.String(required=True), 'description': fields.String(),
                                          'group_ids': fields.List(fields.Integer,
-                                                               description='Leave blank for everyone to have access.'),
+                                                                  description='Leave blank for everyone to have access.'),
                                          'user_ids': fields.List(fields.Integer,
-                                                              description='Leave blank for everyone to have access.')})
+                                                                 description='Leave blank for everyone to have access.')})
 
 deployment_model = dgvost_api.model('Deployment',
                                     {'id': fields.Integer(), 'name': fields.String(), 'description': fields.String(),
                                      'open': fields.Boolean(),
-                                     'created_at': fields.Float(description="UTC Timestamp."),
-                                     'group_ids': fields.List(fields.Integer), 'user_ids': fields.List(fields.Integer)})
+                                     'created_at': fields.Float(description='UTC Timestamp.'),
+                                     'group_ids': fields.List(fields.Integer), 'user_ids': fields.List(fields.Integer,
+                                                                                                       description='List of LAD13CDO area codes.'),
+                                     'areas': fields.List(fields.Integer)})
 
 new_incident_model = dgvost_api.model('New Incident',
                                       {'name': fields.String(required=True),
@@ -45,4 +47,4 @@ incident_model = dgvost_api.model('Incident',
                                    'location': fields.String(), 'open': fields.Boolean(), 'public': fields.Boolean(),
                                    'flagged': fields.Boolean(), 'type': fields.Integer(), 'priority': fields.Integer(),
                                    'longitude': fields.Float(), 'latitude': fields.Float(),
-                                   'created_at': fields.Float(description="UTC Timestamp.")})
+                                   'created_at': fields.Float(description='UTC Timestamp.')})

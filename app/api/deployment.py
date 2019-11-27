@@ -23,7 +23,7 @@ class get_all_deployments(Resource):
         current_user = User.query.filter_by(id=get_jwt_identity()).first()
         all_deployments = [{'id': m.id, 'name': m.name, 'description': m.description, 'open': m.open_status,
                             'created_at': m.created_at.timestamp(), 'group_ids': [x.id for x in m.groups],
-                            'user_ids': [y.id for y in m.users]} for m in current_user.get_deployments()]
+                            'user_ids': [y.id for y in m.users], 'areas': m.areas} for m in current_user.get_deployments()]
         if not all_deployments:
             ns_deployment.abort(404, 'No deployments found')
         return all_deployments, 200
@@ -35,7 +35,7 @@ class get_deployment(Resource):
     @ns_deployment.doc(security='access_token')
     @ns_deployment.response(200, 'Success', [deployment_model])
     @ns_deployment.response(401, "Deployment doen't exist")
-    def get(self):
+    def get(self, id):
         """
                 Returns deployment info.
         """
@@ -44,7 +44,8 @@ class get_deployment(Resource):
             ns_deployment.abort(401, "Deployment doesn't exist")
         return {'id': deployment.id, 'name': deployment.name, 'description': deployment.description,
                 'open': deployment.open_status, 'created_at': deployment.created_at.timestamp(),
-                'group_ids': [m.id for m in deployment.groups], 'user_ids': [m.id for m in deployment.users]}, 200
+                'group_ids': [m.id for m in deployment.groups], 'user_ids': [m.id for m in deployment.users],
+                'areas': deployment.areas}, 200
 
 
 @ns_deployment.route('/create')
