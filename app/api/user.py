@@ -26,17 +26,17 @@ class get_all_users(Resource):
         return all_users, 200
 
 
-@ns_user.route('/get/<int:id>')
+@ns_user.route('/get/<int:user_id>')
 class get_user(Resource):
     @jwt_required
     @ns_user.doc(security='access_token')
     @ns_user.response(200, 'Success', [user_model])
     @ns_user.response(401, "User doesn't exist")
-    def get(self, id):
+    def get(self, user_id):
         """
                 Returns user info.
         """
-        user = User.query.filter_by(id=id).first()
+        user = User.query.filter_by(id=user_id).first()
         if not user:
             ns_user.abort(401, "User doesn't exist")
         return {'id': user.id, 'firstname': user.firstname, 'surname': user.surname, 'avatar_url': url_for('static', filename=user.get_avatar(static=False), _external=True), 'group_id': user.group_id}, 200

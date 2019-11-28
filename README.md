@@ -1,3 +1,3 @@
-# C5
+# DGVOST
 
-Central Crisis Coordination, Collaboration and Communication
+A crisis event management system for DGVOST.
