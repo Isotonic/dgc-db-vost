@@ -20,7 +20,7 @@ from .api import api_blueprint
 app.register_blueprint(api_blueprint, url_prefix='/api')
 csrf.exempt(api_blueprint)
 
-from app import models
+from app import routes, models
 
 login.login_view = 'login'
 
