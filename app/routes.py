@@ -9,17 +9,15 @@ from app.utils.create import new_user, new_group, new_deployment, new_incident, 
 from app.forms import LoginForm, CreateUser, CreateGroup, SetPassword, CreateDeployment, CreateIncident, ChangeAllocation, AddTask, AddComment
 
 
-def calculate_incidents_percentage(incidents): ##TODO Ask Adam if he prefers this or just a number of the increase.
+def calculate_incidents_stat(incidents):
     two_hours = len([m for m in incidents if (datetime.utcnow() - timedelta(hours=2)) <= m.created_at < (datetime.utcnow() - timedelta(hours=1))])
     one_hour = len([m for m in incidents if m.created_at >= (datetime.utcnow() - timedelta(hours=1))])
     if two_hours == one_hour:
-        return ["info", "minus", 0]
-    elif two_hours == 0:
-        return ["danger", "arrow-up", 100]
+        return ["primary", None, 0]
     elif one_hour > two_hours:
-        return ["danger", "arrow-up", ((one_hour-two_hours)/two_hours)*100]
+        return ["danger", "plus", one_hour-two_hours]
     else:
-        return ["success", "arrow-down", ((two_hours-one_hour)/two_hours)*100]
+        return ["success", "minus", two_hours-one_hour]
 
 @app.errorhandler(404)
 @login_required
@@ -131,9 +129,9 @@ def view_incidents(deployment_name):
     deployment = Deployment.query.filter(func.lower(Deployment.name) == func.lower(deployment_name)).first()
     if not deployment:
         return render_template('404.html', nosidebar=True), 404
-    incidents_percentage = calculate_incidents_percentage(deployment.incidents)
+    incidents_stat = calculate_incidents_stat(deployment.incidents)
     return render_template('incidents.html', title=f'{deployment.name}', deployment=deployment, deployment_name=deployment.name,
-                           incidents_active=True, incidents_percentage=incidents_percentage, incidents=current_user.get_incidents(deployment.id), back_url=url_for('view_deployments'))
+                           incidents_active=True, incidents_stat=incidents_stat, incidents=current_user.get_incidents(deployment.id), back_url=url_for('view_deployments'))
 
 
 @app.route('/deployments/<deployment_name>/add_incident/', methods=['POST'])

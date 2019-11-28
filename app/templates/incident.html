@@ -161,11 +161,12 @@
 			</div>
 			<div class="card-body">
 				<h3 class="font-weight-bold">{{ incident.name }}</h3>
+				<p class="card-text"><b>Created:</b> {{ moment(incident.created_at).format('Do MMMM YYYY, h:mma') }}</p>
 				<p class="card-text"><b>Location:</b> {{ incident.location }}</p>
 				<p class="card-text"><b>Description:</b> {{ incident.description }}</p>
 				<p class="card-text"><b>Reported Via:</b> {{ incident.reporting }}</p>
 				<p class="card-text"><b>Logged by:</b> {{ incident.created_by }}</p>
-				<p class="card-text"><b>Refrence Number (If Provided):</b> {{ incident.reference }}</p>
+				<p class="card-text"><b>Reference Number (If Provided):</b> {{ incident.reference }}</p>
 			</div>
 		</div>
 		<div class="card shadow mb-4">

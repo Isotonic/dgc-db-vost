@@ -9224,6 +9224,7 @@ button.bg-dark:focus {
 
 .text-nowrap {
   white-space: nowrap !important;
+  margin-left: -5px;
 }
 
 .text-truncate {
@@ -9730,6 +9731,10 @@ a:focus {
 
 .text-xs {
   font-size: .7rem;
+}
+
+.text-s {
+  font-size: .9rem;
 }
 
 .text-lg {
