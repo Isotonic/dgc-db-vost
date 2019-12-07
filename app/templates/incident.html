@@ -379,6 +379,12 @@
 </div>
 {% endblock %}
 {% block scripts %}
+<script type="text/javascript" charset="utf-8">
+	var socket = io();
+    socket.on('connect', function() {
+        socket.emit('my event', {data: 'I\'m connected!'});
+    });
+</script>
 <script>
 	var current_percentage = parseInt(($('#Tasks :checked').length/$('#Tasks :checkbox').length)*100)
 

@@ -6,3 +6,6 @@ app/static/img/avatars/
 #File extensions
 .env
 *.pyc
+
+#Files
+flask_profiler.py

@@ -2,10 +2,12 @@ from flask import Flask
 from config import Config
 from flask_moment import Moment
 from flask_migrate import Migrate
+from flask_socketio import SocketIO
 from flask_login import LoginManager
 from flask_wtf.csrf import CSRFProtect
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager
+
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -15,13 +17,13 @@ migrate = Migrate(app, db)
 login = LoginManager(app)
 moment = Moment(app)
 csrf = CSRFProtect(app)
+socketio = SocketIO(app)
 
 from .api import api_blueprint
 app.register_blueprint(api_blueprint, url_prefix='/api')
 csrf.exempt(api_blueprint)
 
 from app import routes, models
-
 login.login_view = 'login'
 
 @jwt.token_in_blacklist_loader

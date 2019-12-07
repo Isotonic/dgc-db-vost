@@ -9,5 +9,7 @@ flask-moment==0.9.0
 flask-migrate==2.5.2
 python-dotenv==0.10.3
 flask_restplus==0.13.0
+python-socketio==4.4.0
 flask-sqlalchemy==2.4.1
+gevent-websocket==0.10.1
 flask-jwt-extended==3.24.1

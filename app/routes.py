@@ -1,6 +1,7 @@
 from sqlalchemy import func
-from app import app, db, moment
+from flask_socketio import emit
 from datetime import datetime, timedelta
+from app import app, db, moment, socketio
 from flask import render_template, flash, redirect, url_for, request, jsonify
 from flask_login import current_user, login_user, logout_user, login_required
 from app.utils.change import incident_status, allocation, incident_priority, task_status
@@ -294,3 +295,7 @@ def view_live_feed(deployment_name):
 @login_required
 def view_decision_making_log(deployment_name):
     pass
+
+@socketio.on('message')
+def handle_message(message):
+    print('received message: ' + message["data"])
