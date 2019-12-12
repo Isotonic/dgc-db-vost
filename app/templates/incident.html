@@ -405,7 +405,7 @@
 	$('#changeAllocationForm').submit( function(e) {
 	    e.preventDefault();
 	    $('#changeAllocationModal').modal('hide')
-		socket.emit('change_incident_allocation', {'users': $(this).val(), 'deployment_id': deployment_id, 'incident_id': incident_id})
+		socket.emit('change_incident_allocation', {'users': $('#changeAllocationSelect').val(), 'deployment_id': deployment_id, 'incident_id': incident_id})
 		$('#changeAllocationForm').get(0).reset()
 	})
 
