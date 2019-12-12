@@ -1,7 +1,7 @@
 import pyavagen
-from flask_admin import Admin ##TODO Remove
-from datetime import datetime
+from string import Template
 from os import path, makedirs
+from flask_admin import Admin ##TODO Remove
 from app import app, db, login
 from flask_login import UserMixin
 from datetime import datetime, timedelta
@@ -213,6 +213,7 @@ class Incident(db.Model):
     incident_type = db.Column(db.Integer)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+    created_by_user = db.relationship('User', backref='created_incidents')
     closed_at = db.Column(db.DateTime)
     last_updated = db.Column(db.DateTime, default=datetime.utcnow)
     public = db.Column(db.Boolean(), default=False)
@@ -253,6 +254,8 @@ class IncidentTask(db.Model):
     def get_assigned(self):
         return list_of_names(self.assigned_to)
 
+    def __repr__(self):
+        return f'{self.name}'
 
 class IncidentComment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -296,9 +299,9 @@ class IncidentLog(db.Model):
     action_values = {'create_incident': 1, 'create_task': 2, 'complete_task': 3, 'delete_task': 4, 'add_comment': 5,
                      'delete_comment': 6, 'incomplete_task': 7, 'assigned_user': 8, 'removed_user': 9,
                      'marked_complete': 10, 'marked_incomplete': 11, 'changed_priority': 12}  ##TODO RE-ORDER ONCE DONE
-    action_strings = {1: 'created incident', 2: 'created task {0}', 3: 'marked {0} as complete', 4: 'deleted task {0}',
-                      5: 'added update', 6: 'deleted update', 7: 'marked {0} as incomplete', 8: 'assigned {0} to incident',
-                      9: 'removed {0} from incident', 10: 'marked incident as complete', 11: 'marked incident as incomplete', 12: 'changed priority to'}
+    action_strings = {1: 'created incident', 2: 'created task $task', 3: 'marked $task as complete', 4: 'deleted task {task}',
+                      5: 'added update', 6: 'deleted update', 7: 'marked $task as incomplete', 8: 'assigned $target_users to incident',
+                      9: 'removed $target_users from incident', 10: 'marked incident as complete', 11: 'marked incident as incomplete', 12: 'changed priority to'}
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
@@ -313,20 +316,13 @@ class IncidentLog(db.Model):
     occurred_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __repr__(self):
+        target_users = None
         if self.target_users:
-            plural = ''
             if len(self.target_users) > 1:
-                plural = 's'
-            if '{0}' in self.action_strings[self.action_type]:
-                msg = f'{self.action_strings[self.action_type]}'.format(self.target_users[0])
+                target_users = list_of_names(self.target_users)
             else:
-                msg = f'{self.action_strings[self.action_type]} {list_of_names(self.target_users)}'.format(plural)
-        elif self.task:
-            msg = f'{self.action_strings[self.action_type]}'.format(self.task.name)
-        elif self.extra:
-            msg = f'{self.action_strings[self.action_type]} {self.extra}'
-        else:
-            msg = f'{self.action_strings[self.action_type]}'
+                target_users = self.target_users[0]
+        msg = Template(self.action_strings[self.action_type]).substitute(target_users=target_users, task=self.task, extra=self.extra)
         return f'{msg}.'
 
 

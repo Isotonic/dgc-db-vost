@@ -164,7 +164,7 @@
 				<p class="card-text"><b>Location:</b> {{ incident.location }}</p>
 				<p class="card-text"><b>Description:</b> {{ incident.description }}</p>
 				<p class="card-text"><b>Reported Via:</b> {{ incident.reporting }}</p>
-				<p class="card-text"><b>Logged by:</b> {{ incident.created_by }}</p>
+				<p class="card-text"><b>Logged by:</b> <a href="#">{{ incident.created_by_user }}</a></p>
 				<p class="card-text"><b>Reference Number (If Provided):</b> {{ incident.reference }}</p>
 			</div>
 		</div>

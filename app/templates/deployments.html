@@ -29,7 +29,7 @@
         </div>
 </div>
 <div id="Deployments" class="row">
-    {% for deployment in deployments %}
+    {% for deployment in deployments|sort(attribute='created_at', reverse=True) %}
     {% include 'deployment_card.html' %}
     {% endfor %}
 </div>
@@ -128,7 +128,7 @@
 
 	socket.on('create_deployment', function(data) {
 		if (recieve(data)) {
-		    $('#Deployments').append(data['html'])
+		    $('#Deployments').prepend(data['html'])
 		}
 	})
 

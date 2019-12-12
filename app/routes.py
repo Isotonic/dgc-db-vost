@@ -295,13 +295,14 @@ def create_incident_task(data):
     print(data)
     try: ##TODO Add in incident id and deployment id in here too
         name = data['name']
-        users = [User.query.filter_by(id=int(m)).first() for m in data['users'] if m]
+        users = User.query.filter(User.id.in_(data['users'])).all()
     except:
         return emit('create_incident_task', {'message': 'Incorrect data supplied.', 'code': 403})
     incident = Incident.query.filter(Deployment.id == data['deployment_id'], Incident.id == data['incident_id']).first()
     if not incident:
         return emit('create_incident_task', {'message': 'Unable to find the deployment or incident.', 'code': 404})
-    users = [m for m in users if m and m in incident.assigned_to]
+    if set(users) - set(incident.assigned_to):
+        allocation(current_user, incident, users)
     new_task(name, users, incident, current_user)
 
 
