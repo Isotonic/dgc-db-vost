@@ -3,8 +3,7 @@ from app import db, moment
 from flask_socketio import emit
 from flask import render_template
 from .actions import IncidentAction
-from app.models import User, Group, Deployment, Incident, IncidentTask, IncidentComment, EmailLink, AuditLog, \
-    IncidentLog
+from app.models import User, Group, Deployment, Incident, IncidentTask, IncidentComment, EmailLink, AuditLog, IncidentLog
 
 
 def new_user(firstname, surname, email, groupid, created_by):
@@ -38,6 +37,7 @@ def new_deployment(name, description, group_ids, user_ids, created_by):
     deployment = Deployment(name=name, description=description, groups=groups, users=users)
     db.session.add(deployment)
     db.session.commit()
+    emit('create_deployment', {'html': render_template('deployment_card.html', deployment=deployment), 'code': 200}, room='deployments')
     action = AuditLog(user=created_by, action_type=AuditLog.action_values['create_deployment'],
                       target_id=deployment.id)
     db.session.add(action)

@@ -1,13 +1,14 @@
 import functools
 from sqlalchemy import func
+from itertools import groupby
 from app import app, db, socketio
 from flask_socketio import emit, join_room, disconnect
-from flask import render_template, flash, redirect, url_for, request, jsonify
+from flask import render_template, flash, redirect, url_for, request
 from flask_login import current_user, login_user, logout_user, login_required
+from app.forms import LoginForm, CreateUser, CreateGroup, SetPassword, CreateDeployment
 from app.utils.change import incident_status, allocation, incident_priority, task_status
 from app.models import User, Group, Deployment, Incident, IncidentTask, EmailLink, AuditLog
 from app.utils.create import new_user, new_group, new_deployment, new_incident, new_task, new_comment
-from app.forms import LoginForm, CreateUser, CreateGroup, SetPassword, CreateDeployment, CreateIncident
 
 
 def login_required_sockets(f):
@@ -113,22 +114,10 @@ def create_group():
 @app.route('/deployments/', methods=['GET'])
 @login_required
 def view_deployments():
-    return render_template('deployments.html', title='Deployments', nosidebar=True, back_url=url_for('view_deployments'), deployments=current_user.get_deployments())
-
-
-@app.route('/create_deployment/', methods=['GET', 'POST'])
-@login_required
-def create_deployment():
-    groups_list = [(i.id, i.name) for i in Group.query.all()]
-    users_list = [(i.id, i.username) for i in User.query.all()]
-    form = CreateDeployment()
-    form.groups.choices = groups_list
-    form.users.choices = users_list
-    if form.validate_on_submit():
-        deployment = new_deployment(form.name.data, form.description.data, form.groups.data, form.users.data,
-                                    current_user)
-        return deployment.name
-    return render_template('base.html', title='Create New User', form=form)
+    groups = []
+    for k, g in groupby(User.query.all(), key=lambda item: item.group):
+        groups.append([[k.id, k.name], list(g)])
+    return render_template('deployments.html', title='Deployments', nosidebar=True, groups=groups, back_url=url_for('view_deployments'), deployments=current_user.get_deployments())
 
 
 @app.route('/deployments/<deployment_name>/incidents/', methods=['GET'])
@@ -162,9 +151,7 @@ def view_incident(deployment_name, incident_name, incident_id):
                                      Incident.id == incident_id).first()
     if not incident or incident.deployment.name.lower() != deployment_name.lower():
         return render_template('404.html', nosidebar=True), 404
-    from itertools import groupby
     groups = []
-    print(incident.last_updated)
     for k, g in groupby(User.query.all(), key=lambda item: item.group):
         groups.append([k.name, list(g)])
     return render_template('incident.html', incident=incident, deployment=incident.deployment, groups=groups, back_url=url_for('view_incidents', deployment_name=deployment_name), title=f'{deployment_name} - Incident {incident_id}')
@@ -197,6 +184,9 @@ def view_decision_making_log(deployment_name):
 @login_required_sockets
 def on_join(data):
     if data['type'] == 0:
+        join_room('deployments')
+        print('Joined Private Room: deployments')
+    if data['type'] == 1:
         if current_user.has_deployment_access(data['deployment_id']):
             if current_user.has_permission('view_all_incidents'):
                 join_room(f'{data["deployment_id"]}-all')
@@ -207,13 +197,28 @@ def on_join(data):
         else:
             disconnect()
             print(f'Kicked from Room: {data["deployment_id"]}')
-    elif data['type'] == 1:
+    elif data['type'] == 2:
         if current_user.has_incident_access(data['deployment_id'], data['incident_id']):
             join_room(f'{data["deployment_id"]}-{data["incident_id"]}')
             print(f'Joined Room: {data["deployment_id"]}-{data["incident_id"]}')
         else:
             disconnect()
             print(f'Kicked from Room: {data["deployment_id"]}-{data["incident_id"]}')
+
+
+@socketio.on('create_deployment')
+@login_required_sockets
+#@has_permission_sockets
+def create_incident(data):
+    print(data)
+    try:
+        name = data['name']
+        description = data['description']
+        groups = data['groups']
+        users = data['users']
+    except:
+        return emit('create_incident', {'message': 'Incorrect data supplied.', 'code': 403})
+    new_deployment(name, description, groups, users, current_user)
 
 
 @socketio.on('create_incident')
