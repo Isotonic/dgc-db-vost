@@ -196,6 +196,9 @@ class Deployment(db.Model):
         else:
             return ["success", "minus", two_hours-one_hour]
 
+    def __repr__(self):
+        return f'{self.name}'
+
 
 class Incident(db.Model):
     priority_values = {'standard': 1, 'prompt': 2, 'immediate': 3}

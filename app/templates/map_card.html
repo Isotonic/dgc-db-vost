@@ -1,0 +1,19 @@
+{% set priority = incident.get_priority() %}
+{% if priority == 'Standard' %}
+{% set priority_colour = 'warning' %}
+{% elif priority == 'Prompt' %}
+{% set priority_colour = 'orange' %}
+{% else %}
+{% set priority_colour = 'danger' %}
+{% endif %}
+<li id="Incident{{ incident.id }}" class="list-group-item list-group-flush border-left-{{ priority_colour }}">
+    <div class="row align-items-center no-gutters">
+        <div class="col mr-2">
+            <h6 class="mb-0">
+                <strong>{{ incident.name }} </strong>
+            </h6>
+                <p id="IncidentDate{{ incident.id }}" class="text-xs text-muted">Created {{ moment(incident.created_at).fromNow(refresh=True) }}</p>
+            <span class="text-xs">{{ incident.description }}</span>
+        </div>
+    </div>
+</li>

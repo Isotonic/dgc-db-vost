@@ -151,10 +151,12 @@ def view_incident(deployment_name, incident_name, incident_id):
                                      Incident.id == incident_id).first()
     if not incident or incident.deployment.name.lower() != deployment_name.lower():
         return render_template('404.html', nosidebar=True), 404
+    if not current_user.has_permission('view_all_incidents'):
+        return redirect(url_for('view_assigned_incidents', deployment_name=deployment_name))
     groups = []
     for k, g in groupby(User.query.all(), key=lambda item: item.group):
         groups.append([k.name, list(g)])
-    return render_template('incident.html', incident=incident, deployment=incident.deployment, groups=groups, back_url=url_for('view_incidents', deployment_name=deployment_name), title=f'{deployment_name} - Incident {incident_id}')
+    return render_template('incident.html', incident=incident, deployment=incident.deployment, groups=groups, back_url=url_for('view_incidents', deployment_name=deployment_name), title=f'{incident.deployment.id} - Incident {incident_id}')
 
 
 @app.route('/notifications/', methods=['GET'])
@@ -166,7 +168,11 @@ def view_notifications():
 @app.route('/<deployment_name>/map/', methods=['GET'])
 @login_required
 def view_map(deployment_name):
-    pass
+    deployment_name = deployment_name.replace("-", " ")
+    deployment = Deployment.query.filter(func.lower(Deployment.name) == func.lower(deployment_name)).first()
+    if not deployment:
+        return render_template('404.html', nosidebar=True), 404
+    return render_template('map.html', title=f'{deployment}', deployment=deployment, map_active=True, back_url=url_for('view_incidents', deployment_name=deployment_name))
 
 
 @app.route('/<deployment_name>/live-feed/', methods=['GET'])

@@ -239,12 +239,20 @@ MODIFIED VERSION
 }
 
 .map-container{
+    overflow: hidden;
+    padding-bottom: 56.25%;
+    position: relative;
+    height: 70vh;
+}
+
+.map-container-incident {
     overflow:hidden;
     padding-bottom: 56.25%;
     position: relative;
     height: 300px;
-    box-shadow: 0 5px 11px 0 rgba(0,0,0,0.18),0 4px 15px 0 rgba(0,0,0,0.15);
+    box-shadow: 0 5px 11px 0 rgba(0,0,0,0.18),0 4px 15px 0 rgba(0,0,0,0.15); */
 }
+
 
 .map-container iframe{
     left: 0;
@@ -306,4 +314,8 @@ li.update-log > .update-log-text:before {
 
 .select2-search__field {
     width: 300% !important;
+}
+
+.overflow-auto.pr-0 {
+    max-height: 70vh;
 }
