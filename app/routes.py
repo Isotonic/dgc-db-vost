@@ -4,8 +4,8 @@ from itertools import groupby
 from app import app, db, socketio
 from flask_socketio import emit, join_room, disconnect
 from flask import render_template, flash, redirect, url_for, request
+from app.forms import LoginForm, CreateUser, CreateGroup, SetPassword
 from flask_login import current_user, login_user, logout_user, login_required
-from app.forms import LoginForm, CreateUser, CreateGroup, SetPassword, CreateDeployment
 from app.utils.change import incident_status, allocation, incident_priority, task_status
 from app.models import User, Group, Deployment, Incident, IncidentTask, EmailLink, AuditLog
 from app.utils.create import new_user, new_group, new_deployment, new_incident, new_task, new_comment
@@ -245,8 +245,8 @@ def create_incident(data):
 #@has_permission_sockets
 def change_incident_status(data):
     print(data)
-    try:
-        status = data["status"]
+    try: ##TODO Make sure not None
+        status = data['status']
     except:
         return emit('change_incident_status', {'message': 'Incorrect data supplied.', 'code': 403})
     incident = Incident.query.filter(Deployment.id==data['deployment_id'], Incident.id == data['incident_id']).first()

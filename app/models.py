@@ -2,11 +2,10 @@ import pyavagen
 from string import Template
 from os import path, makedirs
 from flask_admin import Admin ##TODO Remove
-from app import app, db, login
 from flask_login import UserMixin
+from app import app, db, login, argon2
 from datetime import datetime, timedelta
 from flask_admin.contrib.sqla import ModelView
-from werkzeug.security import generate_password_hash, check_password_hash
 
 deployment_user_junction = db.Table('deployment_users',
                                     db.Column('user_id', db.Integer, db.ForeignKey('user.id')),
@@ -65,10 +64,10 @@ class User(db.Model, UserMixin):
     media_uploads = db.relationship('IncidentMedia', backref='uploaded_by')
 
     def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
+        self.password_hash = argon2.generate_password_hash(password)
 
     def check_password(self, password):
-        return check_password_hash(self.password_hash, password)
+        return argon2.check_password_hash(self.password_hash, password)
 
     def create_avatar(self):
         if not path.exists(f'./app/static/img/avatars'): ##TODO Move this to the start-up.
