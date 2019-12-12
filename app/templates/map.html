@@ -44,10 +44,21 @@ $(document).ready(function() {
 			accessToken: '{{ config['MAPBOX_API_KEY'] }}'
 		}).addTo(map);
 
-		var marker = L.circleMarker([55.872326, -4.288094]).addTo(map)
+        function clickZoom(e) {
+            map.flyTo(e.target.getLatLng(), 15, {
+            animate: true,
+            duration: 0.5
+          });
+        }
 
+        var incident_locations = {{ incident_locations|safe }}
+        var latlng = []
+        for (var i = 0; i < incident_locations.length; i++) {
+			marker = new L.circleMarker([incident_locations[i][0],incident_locations[i][1]], {color: incident_locations[i][2]}).addTo(map).bindPopup("Marker " + i).on('click', clickZoom)
+		    latlng.push(L.latLng(incident_locations[i][0],incident_locations[i][1]))
+		}
+		var bounds = new L.LatLngBounds(latlng)
+        map.fitBounds(bounds)
 	})
-
-
 </script>
 {% endblock %}
