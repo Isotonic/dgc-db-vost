@@ -11,7 +11,7 @@
         </div>
         <div class="col-auto">
             <div>
-                <input class="edit-margin" id="task{{ task.id }}" value="{{ task.id }}" type="checkbox"{% if task.completed %} checked{% endif %}{% if task.assigned_to and current_user not in task.assigned_to %} disabled data-toggle="tooltip" title="Not Assigned To You"{% endif %}>
+                <input class="edit-margin" id="Task{{ task.id }}" value="{{ task.id }}" type="checkbox"{% if task.completed %} checked{% endif %}>
                 <a class="edit-opacity" href="#" role="button" data-toggle="modal" data-target="#editOverviewModal">
                     <i class="fas fa-edit" data-toggle="tooltip" title="Edit Task"></i>
                 </a>

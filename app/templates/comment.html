@@ -1,0 +1,12 @@
+<li class="update-log">
+    <div class="update-log-avatar">
+        <a href="#">
+            <img class="media-object rounded-circle" src="{{ comment.user.get_avatar() }}" alt="Avatar">
+        </a>
+        <div class="update-log-name text-muted">{{ comment.user }}</div>
+    </div>
+    <div class="update-log-text">
+        <span class="d-block">{{ comment.text }}</span>
+        <div class="update-body">{{ moment(comment.sent_at).fromNow(refresh=True) }}</div>
+    </div>
+</li>

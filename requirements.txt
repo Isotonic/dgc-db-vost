@@ -1,6 +1,7 @@
 Flask==1.1.1
 psycopg2==2.8.4
 pyavagen==0.3.3
+eventlet==0.25.1
 gunicorn==20.0.4
 flask-wtf==0.14.2
 flask-login==0.4.1
@@ -8,8 +9,7 @@ flask-admin==1.5.4
 flask-moment==0.9.0
 flask-migrate==2.5.2
 python-dotenv==0.10.3
+flask_socketio==4.2.1
 flask_restplus==0.13.0
-python-socketio==4.4.0
 flask-sqlalchemy==2.4.1
-gevent-websocket==0.10.1
 flask-jwt-extended==3.24.1

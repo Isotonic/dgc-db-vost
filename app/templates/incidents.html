@@ -100,6 +100,7 @@
 						</th>
 						<th scope="col">
 							Assigned To
+						</th>
 						<th scope="col">
 							Tasks
 						</th>
@@ -111,12 +112,12 @@
 				</thead>
 				<tbody class="list">
 					{% for incident in incidents %}
-					<tr data-href="{{ url_for('view_incident', deployment_name=deployment_name, incident_name=incident.name, incident_id=incident.id) }}">
+					<tr data-href="{{ url_for('view_incident', deployment_name=deployment.name, incident_name=incident.name, incident_id=incident.id) }}">
 						<th scope="row">
 							{% if current_user in incident.pinned %}
-							<i class="fas fa-thumbtack"></i>
+							<i class="fas fa-bookmark"></i>
 							{% else %}
-							<i class="fas fa-thumbtack not-pinned"></i>
+							<i class="fas fa-bookmark not-pinned"></i>
 							{% endif %}
 						</th>
 						<td scope="row">
@@ -197,8 +198,13 @@
 							<div class="form-group mb-3">
 								<input class="form-control" name="location" placeholder="Location" type="text">
 							</div>
-							<textarea class="form-control" rows="3" name="description"
-								placeholder="Description"></textarea>
+							<textarea class="form-control" rows="3" name="description" placeholder="Description"></textarea>
+							<div class="form-group mt-3 mb-3">
+								<input class="form-control" name="reported_via" placeholder="Reported Via" type="text">
+							</div>
+							<div class="form-group mb-3">
+								<input class="form-control" name="reference" placeholder="Reference (Optional)" type="text">
+							</div>
 							<div class="text-center">
 								<button type="submit" class="btn btn-primary my-4">Submit</button>
 							</div>
@@ -213,28 +219,48 @@
 {% block scripts %}
 <script src="https://cdn.datatables.net/1.10.20/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.10.20/js/dataTables.bootstrap4.min.js"></script>
-<script>
-	//TODO
-	var csrf_token = "{{ csrf_token() }}";
+<script type="text/javascript" charset="utf-8">
+	var deployment_id = {{ deployment.id }}
+	var socket = io()
+
+    socket.on("connect", function() {
+        socket.emit("join", {'type': 0, 'deployment_id': deployment_id})
+    })
+
+	function recieve(data) {
+		if (data['code'] == 200) {
+			console.log(data)
+			return true
+		} else {
+			console.log(data['code'] + ': ' + data['message'])
+			return false
+		}
+	}
+
 	$('#newIncidentForm').submit( function(e) {
-	   e.preventDefault();
-	   $('#newIncidentModal').modal('hide')
-	
-	   $.ajax({
-	       data: $('#newIncidentForm').serialize(),
-	       type: "POST",
-	       url: "{{ url_for('add_incident', deployment_name=deployment_name) }}",
-	       beforeSend: function(xhr, settings) {
-	            if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
-	                xhr.setRequestHeader("X-CSRFToken", csrf_token)
-	            }
-	        },
-	       success: function(data){
-	           $('#newIncidentForm').get(0).reset()
-	           console.log(data);
-	       }
-	   });
-	 });
+	    e.preventDefault();
+	    $('#newIncidentModal').modal('hide')
+		socket.emit('create_incident', {'name': $(this).serializeArray()[0]['value'], 'location': $(this).serializeArray()[1]['value'], 'description': $(this).serializeArray()[2]['value'], 'reported_via': $(this).serializeArray()[3]['value'], 'reference': $(this).serializeArray()[4]['value'], 'deployment_id': deployment_id})
+		$('#newIncidentForm').get(0).reset()
+	})
+
+	//TODO
+	socket.on('create_incident', function(data) {
+		return;
+		if (recieve(data)) {
+			$('#dataTable').DataTable().row.add([
+            '<i class="fas fa-bookmark not-pinned"></i>',
+            data['name'],
+            data['location'],
+            data['priority'],
+            data['assigned_to'],
+            data['tasks'],
+            data['last_updated_timestamp'],
+            data['last_updated']
+        ] ).draw( false )
+		}
+	})
+
 	clock();
 	
 	$(document).on('click', 'td', function () {

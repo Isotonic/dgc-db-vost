@@ -31,14 +31,14 @@ class get_user(Resource):
     @jwt_required
     @ns_user.doc(security='access_token')
     @ns_user.response(200, 'Success', [user_model])
-    @ns_user.response(401, "User doesn't exist")
+    @ns_user.response(401, 'User doesn\'t exist')
     def get(self, user_id):
         """
                 Returns user info.
         """
         user = User.query.filter_by(id=user_id).first()
         if not user:
-            ns_user.abort(401, "User doesn't exist")
+            ns_user.abort(401, 'User doesn\'t exist')
         return {'id': user.id, 'firstname': user.firstname, 'surname': user.surname, 'avatar_url': url_for('static', filename=user.get_avatar(static=False), _external=True), 'group_id': user.group_id}, 200
 
 
@@ -67,7 +67,7 @@ class create_new_user(Resource):
         if 'group_id' in dgvost_api.payload.keys():
             group = Group.query.filter_by(id=payload['group_id']).first()
             if not group:
-                ns_user.abort(401, "Group doesn't exist")
+                ns_user.abort(401, 'Group doesn\'t exist')
 
         created_user = new_user(payload['firstname'], payload['surname'], payload['email'], group.id, current_user)
         return {'user_id': created_user.id, 'firstname': created_user.firstname, 'surname': created_user.surname, 'avatar_url': url_for('static', filename=created_user.get_avatar(static=False), _external=True), 'group_id': created_user.group_id}, 200

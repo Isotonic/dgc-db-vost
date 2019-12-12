@@ -30,14 +30,14 @@ class get_group(Resource):
     @jwt_required
     @ns_group.doc(security='access_token')
     @ns_group.response(200, 'Success', [group_model])
-    @ns_group.response(401, "Group doesn't exist")
+    @ns_group.response(401, 'Group doesn\'t exist')
     def get(self, id):
         """
                 Returns group info.
         """
         group = Group.query.filter_by(id=id).first()
         if not group:
-            ns_group.abort(401, "Group doesn't exist")
+            ns_group.abort(401, 'Group doesn\'t exist')
         return {'id': group.id, 'name': group.name, 'permissions': group.permissions}, 200
 
 

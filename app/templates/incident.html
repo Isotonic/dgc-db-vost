@@ -45,14 +45,13 @@
 				<div class="row no-gutters align-items-center">
 					<div class="col mr-2">
 						<div class="text-s font-weight-bold text-primary text-uppercase mb-1">Assigned To</div>
-						{% if incident.assigned_to %}
 						<div id="AssignedAvatars" class="avatar-group">
 							{% for user in incident.assigned_to %}
 							{% include 'assigned_to.html' %}
 							{% endfor %}
 						</div>
-						{% else %}
-						<div class="h5 mb-0 font-weight-bold text-gray-800">Unassigned</div>
+						{% if not incident.assigned_to %}
+						<div id="NotAssigned" class="h5 mb-0 font-weight-bold text-gray-800">Unassigned</div>
 						{% endif %}
 					</div>
 					<div class="col-auto">
@@ -176,15 +175,14 @@
 					<i class="fas fa-plus" data-toggle="tooltip" title="Add Task"></i>
 				</a>
 			</div>
-			{% if incident.tasks %}
 			<ul id="Tasks" class="list-group">
 				{% for task in incident.tasks|sort(attribute='created_at') %}
 				{% include 'task.html' %}
 				{% endfor %}
 			</ul>
-			{% else %}
+			{% if not incident.tasks %}
 			<div id="NoTasks" class="card-body">
-				<p class="card-text">No tasks currently.</p>
+				<p class="card-text text-center">No tasks currently.</p>
 			</div>
 			{% endif %}
 		</div>
@@ -211,24 +209,16 @@
 				</a>
 			</div>
 			<div class="card-body bg-light">
-				<ul class="list-unstyled">
+				<ul id="Comments" class="list-unstyled">
 				{% for comment in incident.comments|sort(attribute='sent_at') %}
-					<li class="update-log">
-						<div class="update-log-avatar">
-							<a href="#">
-								<img class="media-object rounded-circle" src="{{ comment.user.get_avatar() }}" alt="Avatar">
-							</a>
-							<div class="update-log-name text-muted">{{ comment.user }}</div>
-						</div>
-						<div class="update-log-text">
-							<span class="d-block">{{ comment.text }}</span>
-							<div class="update-body">{{ moment(comment.sent_at).fromNow(refresh=True) }}</div>
-						</div>
-					</li>
-					{% else %}
-					No updates currently.
-					{% endfor %}
+					{% include 'comment.html' %}
+				{% endfor %}
 				</ul>
+				{% if not incident.comments %}
+				<div id="NoComments">
+					<p class="card-text text-center">No updates currently.</p>
+				</div>
+				{% endif %}
 			</div>
 		</div>
 		<div class="card shadow mb-4">
@@ -236,24 +226,9 @@
 				<h6 class="m-0 font-weight-bold text-primary">Recent Activity</h6>
 			</div>
 			<div class="card-body bg-light">
-				<ul class="activity">
+				<ul id="Activity" class="activity">
 					{% for action in incident.actions|sort(attribute='occurred_at', reverse=True) %}
-					<li>
-						<div>
-							<i class="fas text-gray-300 fa-1fourx fa-plus-circle activity-icon"></i>
-							<div class="media">
-								<div class="media-left">
-									<a href="#">
-										<img class="media-object rounded-circle" src="{{ action.user.get_avatar() }}" alt="Avatar">
-									</a>
-								</div>
-								<div class="media-body">
-									{{ moment(action.occurred_at).fromNow(refresh=True) }}
-								</div>
-								<span class="card-text"><a href="#">{{ action.user }}</a> {{ action }}</span>
-							</div>
-						</div>
-                	</li>
+					{% include 'action.html' %}
 					{% endfor %}
 				</ul>
 			</div>
@@ -277,7 +252,7 @@
 					<div class="card-body">
 						<form id="changeAllocationForm" method="post" role="form">
 							<div class="form-group mb-3">
-								<select id="ChangeAllocationSelect" name="users" multiple="multiple" style="width: 100%">
+								<select id="changeAllocationSelect" name="users" multiple="multiple" style="width: 100%">
 									<option value="0"></option>
 									{% for group in groups %}
 									<optgroup label="{{ group[0] }}">
@@ -329,7 +304,7 @@
 								<input class="form-control was-validated" name="name" placeholder="Task Name" type="text" required>
 							</div>
 							<div class="form-group mb-3">
-								<select id="AssignTaskSelect" name="users" multiple="multiple" style="width: 100%">
+								<select id="addTaskSelect" name="users" multiple="multiple" style="width: 100%">
 									<option value="0"></option>
 									{% for group in groups %}
 									<optgroup label="{{ group[0] }}">
@@ -357,7 +332,7 @@
 			<div class="modal-body p-0">
 				<div class="card shadow">
 					<div class="card-header py-3 d-flex align-items-center justify-content-between">
-						<h6 class="m-0 font-weight-bold text-primary">Add Task</h6>
+						<h6 class="m-0 font-weight-bold text-primary">Add Update</h6>
 						<button class="close" type="button" data-dismiss="modal" aria-label="Close">
 						<span aria-hidden="true">×</span>
 						</button>
@@ -365,7 +340,7 @@
 					<div class="card-body">
 						<form id="addCommentForm" method="post" role="form">
 							<div class="form-group mb-3">
-								<input class="form-control was-validated" name="comment" placeholder="Comment" type="text" required>
+								<input class="form-control was-validated" name="comment" placeholder="Update text" type="text" required>
 							</div>
 							<div class="text-center">
 								<button type="submit" class="btn btn-primary my-4">Submit</button>
@@ -380,12 +355,26 @@
 {% endblock %}
 {% block scripts %}
 <script type="text/javascript" charset="utf-8">
-	var socket = io();
-    socket.on('connect', function() {
-        socket.emit('my event', {data: 'I\'m connected!'});
-    });
-</script>
-<script>
+	var deployment_id = {{ deployment.id }}
+	var incident_id = {{ incident.id }}
+	var socket = io()
+
+    socket.on("connect", function() {
+        socket.emit("join", {'type': 1, 'deployment_id': deployment_id, 'incident_id': incident_id})
+    })
+
+	function recieve(data) {
+		if (data['code'] == 200) {
+			console.log(data)
+			return true
+		} else {
+			console.log(data['code'] + ': ' + data['message'])
+			return false
+		}
+	}
+
+	function removeStartingWith(index, css) {return (css.match (/^text-\S+/g) || []).join(' ')}
+
 	var current_percentage = parseInt(($('#Tasks :checked').length/$('#Tasks :checkbox').length)*100)
 
 	<!-- TODO Update last updated on AJAX calls -->
@@ -395,7 +384,7 @@
 	    $('#ProgressPercentage').text(percentage + '%')
 	    $('.progress-bar').width(percentage + '%')
 	    $('.progress-bar').removeClass(function (index, css) {
-	        return (css.match (/\bbg-\S+/g) || []).join(' ');
+	        return (css.match (/\bbg-\S+/g) || []).join(' ')
 	    })
 	    if (percentage >= 80) {
 	       $('.progress-bar').addClass("bg-success");
@@ -408,149 +397,127 @@
 	    }
 	}
 
-	//TODO
-	var csrf_token = "{{ csrf_token() }}";
-	$('#addTaskForm').submit( function(e) {
-	   e.preventDefault();
-	   $('#addTaskModal').modal('hide')
-
-	   $.ajax({
-	       data: $('#addTaskForm').serialize(),
-	       type: "POST",
-	       url: "{{ url_for('add_task', deployment_name=deployment_name, incident_name=incident.name, incident_id=incident.id) }}",
-	       beforeSend: function(xhr, settings) {
-	            if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
-	                xhr.setRequestHeader("X-CSRFToken", csrf_token)
-	            }
-	        },
-	       success: function(data){
-	           $('#addTaskForm').get(0).reset()
-	           if ($('#NoTasks').length) {
-	                $('#NoTasks').remove()
-	           }
-	           $('#Tasks').append(data['html'])
-	           flask_moment_render_all()
-	           progressBar();
-	       },
-	       error: function(data) {
-	            console.log(data);
-	       }
-	   });
-	 });
+	$('#ChangeIncidentStatus').click( function(e) {
+		e.preventDefault();
+		socket.emit('change_incident_status', {'status': $(this).hasClass('btn-info'), 'deployment_id': deployment_id, 'incident_id': incident_id})
+	})
 
 	$('#changeAllocationForm').submit( function(e) {
 	    e.preventDefault();
 	    $('#changeAllocationModal').modal('hide')
-
-	    $.ajax({
-	       data: $('#changeAllocationForm').serialize(),
-	       type: "POST",
-	       url: "{{ url_for('change_allocation', deployment_name=deployment_name, incident_name=incident.name, incident_id=incident.id) }}",
-	       beforeSend: function(xhr, settings) {
-	            if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
-	                xhr.setRequestHeader("X-CSRFToken", csrf_token)
-	            }
-	        },
-	       success: function(data){
-	           $('#changeAllocationForm').get(0).reset()
-	           $('#AssignedAvatars').empty()
-	           for (var i = 0; i < data['html'].length; i++) {
-	                $('#AssignedAvatars').append(data['html'][i])
-	            }
-	       },
-	       error: function(data) {
-	           console.log(data);
-	       }
-	    });
-	});
-
-	$('#ChangeIncidentStatus').click( function(e) {
-		e.preventDefault();
-	    $.ajax({
-	       data: {'status': $('#ChangeIncidentStatus').hasClass('btn-info') ? 1 : 0},
-	       type: "POST",
-	       url: "{{ url_for('change_incident_status', deployment_name=deployment_name, incident_name=incident.name, incident_id=incident.id) }}",
-	       beforeSend: function(xhr, settings) {
-	            if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
-	                xhr.setRequestHeader("X-CSRFToken", csrf_token)
-	            }
-	        },
-	       success: function(data){
-	           if (data['status']) {
-	              $('#ChangeIncidentStatus').removeClass('btn-info').addClass('btn-success')
-	              $('#ChangeIncidentStatusText').text('Mark as Complete')
-	           } else {
-	                $('#ChangeIncidentStatus').removeClass('btn-success').addClass('btn-info')
-	                $('#ChangeIncidentStatusText').text('Mark as Incomplete')
-	           }
-	       },
-	       error: function(data) {
-	           console.log(data);
-	       }
-	    });
-	});
+		socket.emit('change_incident_allocation', {'users': $(this).val(), 'deployment_id': deployment_id, 'incident_id': incident_id})
+		$('#changeAllocationForm').get(0).reset()
+	})
 
     $('#PriorityDropdown a').click(function (e) {
         e.preventDefault();
-        var old_priority = $('#PriorityText').text()
-        $.ajax({
-			data: {'priority': $(this).text()},
-			type: "POST",
-			url: "{{ url_for('change_incident_priority', deployment_name=deployment_name, incident_name=incident.name, incident_id=incident.id) }}",
-			beforeSend: function(xhr, settings) {
-				if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
-					xhr.setRequestHeader("X-CSRFToken", csrf_token)
-				}
-			},
-			success: function(data){
-				var colours = {'Immediate': 'danger', 'Prompt': 'orange', 'Standard': 'warning'}
-				$('#PriorityBorder').removeClass('border-left-' + colours[old_priority])
-				$('#PriorityCog').removeClass('text-' + colours[old_priority])
-				$('#PriorityTitle').removeClass('text-' + colours[old_priority])
-				$('#PriorityIcon').removeClass('bg-' + colours[old_priority])
-				$('#Priority' + old_priority).removeClass('active')
+        old_priority = $('#PriorityText').text()
+        socket.emit('change_incident_priority', {'priority': $(this).text(), 'deployment_id': deployment_id, 'incident_id': incident_id})
+    })
+
+	$('#addTaskForm').submit( function(e) {
+	   e.preventDefault();
+	   $('#addTaskModal').modal('hide')
+        socket.emit('create_incident_task', {'name': $(this).serializeArray()[0]['value'], 'users': $('#addTaskSelect').val(), 'deployment_id': deployment_id, 'incident_id': incident_id})
+		$('#addTaskForm').get(0).reset()
+	})
+
+	$('#Tasks :checkbox').change(function () {
+		socket.emit('change_task_status', {'task_id':  $(this).val(), 'completed': $(this).is(':checked'), 'deployment_id': deployment_id, 'incident_id': incident_id})
+	})
+
+	$('#addCommentForm').submit( function(e) {
+	   e.preventDefault();
+	   $('#addCommentModal').modal('hide')
+        socket.emit('create_incident_comment', {'text': $(this).serializeArray()[0]['value'], 'deployment_id': deployment_id, 'incident_id': incident_id})
+	})
+
+	socket.on('change_incident_status', function(data) {
+		if (recieve(data)) {
+			if (data['status']) {
+				$('#ChangeIncidentStatus').removeClass('btn-info').addClass('btn-success')
+				$('#ChangeIncidentStatusText').text('Mark as Complete')
+			} else {
+				$('#ChangeIncidentStatus').removeClass('btn-success').addClass('btn-info')
+				$('#ChangeIncidentStatusText').text('Mark as Incomplete')
+			}
+		}
+	})
+
+	socket.on('change_incident_allocation', function(data) {
+		if (recieve(data)) {
+			if ($('#NotAssigned').length) {
+				$('#NotAssigned').remove()
+			}
+			$('#AssignedAvatars').empty()
+			for (var i = 0; i < data['html'].length; i++) {
+				$('#AssignedAvatars').append(data['html'][i])
+			}
+		}
+	})
+
+	socket.on('change_incident_priority', function(data) {
+		if (recieve(data)) {
+			var colours = {'Immediate': 'danger', 'Prompt': 'orange', 'Standard': 'warning'}
+				$('#PriorityBorder').removeClass('border-left-warning border-left-orange border-left-danger')
+				$('#PriorityCog').removeClass('text-warning text-orange text-danger')
+				$('#PriorityTitle').removeClass('text-warning text-orange text-danger')
+				$('#PriorityIcon').removeClass('bg-warning bg-orange bg-danger')
+				$("[id^=Priority].active").removeClass('active')
 				$('#PriorityText').text(data['priority'])
 				$('#PriorityBorder').addClass('border-left-' + colours[data['priority']])
 				$('#PriorityCog').addClass('text-' + colours[data['priority']])
 				$('#PriorityTitle').addClass('text-' + colours[data['priority']])
 				$('#PriorityIcon').addClass('bg-' + colours[data['priority']])
 				$('#Priority' + data['priority']).addClass('active')
-			},
-			error: function(data) {
-				console.log(data);
-			}
-	    });
-    });
+		}
+	})
 
-	$('#Tasks :checkbox').change(function () {
-	    if ($(this).prop('disabled')) {return;}
-	    var id = $(this).val();
-	    var completed = $(this).is(':checked');
-	    $.ajax({
-	       data: {'id': parseInt(id), 'completed': completed ? 1 : 0},
-	       type: "POST",
-	       url: "{{ url_for('change_task_status', deployment_name=deployment_name, incident_name=incident.name, incident_id=incident.id) }}",
-	       beforeSend: function(xhr, settings) {
-	            if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
-	                xhr.setRequestHeader("X-CSRFToken", csrf_token)
-	            }
-	        },
-	       success: function(data) {
-	            if (completed) {
-	                $('#TaskRow' + id).addClass('text-muted');
-	                $('#TaskDate' + id).html('Completed ' + data['timestamp'])
-	            } else {
-	                $('#TaskRow' + id).removeClass('text-muted');
-	                $('#TaskDate' + id).html('Created ' + data['timestamp'])
-	            }
-	            flask_moment_render_all()
-	            progressBar();
-	       },
-	       error: function(data) {
-	            console.log(data);
-	       }
-	   });
-	});
+	socket.on('create_incident_task', function(data) {
+		if (recieve(data)) {
+			if ($('#NoTasks').length) {
+				$('#NoTasks').remove()
+			}
+			$('#Tasks').append(data['html'])
+			flask_moment_render_all()
+			progressBar();
+		}
+	})
+
+	socket.on('change_task_status', function(data) {
+		if (recieve(data)) {
+			if (data['completed']) {
+				$('#TaskRow' + data['id']).addClass('text-muted');
+				$('#TaskDate' + data['id']).html('Completed ' + data['timestamp'])
+				$('#Task' + data['id']).prop('checked', true)
+			} else {
+				$('#TaskRow' + data['id']).removeClass('text-muted');
+				$('#TaskDate' + data['id']).html('Created ' + data['timestamp'])
+				$('#Task' + data['id']).prop('checked', false)
+			}
+			flask_moment_render_all()
+	    	progressBar();
+		}
+	})
+
+	socket.on('create_incident_comment', function(data) {
+		if (recieve(data)) {
+			$('#addCommentForm').get(0).reset()
+			if ($('#NoComments').length) {
+				$('#NoComments').remove()
+			}
+			$('#Comments').append(data['html'])
+			flask_moment_render_all()
+		}
+	})
+
+	socket.on('activity', function(data) {
+		for (var i = data['html'].length-1; i >= 0; i--) {
+			$('#Activity').prepend(data['html'][i])
+		}
+		flask_moment_render_all()
+	})
+
 
 	function format(state) {
 	    if (!state.id) return state.text;
@@ -559,13 +526,13 @@
 
 	$(document).ready(function() {
 	progressBar();
-	$('#AssignTaskSelect').select2({
+	$('#addTaskSelect').select2({
 	    allowClear: true,
 	    placeholder: {id:'0', text:'Assign to users, not required'},
 	    templateResult: format,
 	    templateSelection: format,
 	});
-	$('#ChangeAllocationSelect').select2({
+	$('#changeAllocationSelect').select2({
 	    allowClear: true,
 	    placeholder: {id:'0', text:'Choose which users to allocate this incident to'},
 	    templateResult: format,
