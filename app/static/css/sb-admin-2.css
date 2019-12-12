@@ -106,7 +106,10 @@ address {
   line-height: inherit;
 }
 
-ol,
+ol {
+  margin-bottom: 0px;
+}
+
 ul,
 dl {
   margin-top: 0;

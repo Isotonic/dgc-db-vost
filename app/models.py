@@ -1,11 +1,14 @@
 import pyavagen
 from string import Template
 from os import path, makedirs
-from flask_admin import Admin ##TODO Remove
+from flask_admin import Admin  ##TODO Remove
 from flask_login import UserMixin
 from app import app, db, login, argon2
 from datetime import datetime, timedelta
 from flask_admin.contrib.sqla import ModelView
+
+avatar_colours = ['#26de81', '#3867d6', '#eb3b5a', '#0fb9b1', '#f7b731', '#a55eea', '#fed330', '#45aaf2', '#fa8231',
+                  '#2bcbba', '#fd9644', '#2d98da', '#8854d0', '#20bf6b', '#fc5c65', '#4b7bec']
 
 deployment_user_junction = db.Table('deployment_users',
                                     db.Column('user_id', db.Integer, db.ForeignKey('user.id')),
@@ -45,6 +48,7 @@ def list_of_names(names):
         return str(names[0])
     return f'{", ".join([str(m) for m in names[:-1]])} and {str(names[-1])}'
 
+
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     firstname = db.Column(db.String(64))
@@ -70,9 +74,10 @@ class User(db.Model, UserMixin):
         return argon2.check_password_hash(self.password_hash, password)
 
     def create_avatar(self):
-        if not path.exists(f'./app/static/img/avatars'): ##TODO Move this to the start-up.
+        if not path.exists(f'./app/static/img/avatars'):  ##TODO Move this to the start-up.
             makedirs(f'./app/static/img/avatars')
-        avatar = pyavagen.Avatar(pyavagen.CHAR_AVATAR, size=128, font_size=65, string=f'{self.firstname} {self.surname}')
+        avatar = pyavagen.Avatar(pyavagen.CHAR_AVATAR, size=128, font_size=65,
+                                 string=f'{self.firstname} {self.surname}', color_list=avatar_colours)
         avatar.generate().save(f'./app/static/img/avatars/{self.id}_{self.firstname}_{self.surname}.png')
 
     def get_avatar(self, static=True):
@@ -121,7 +126,7 @@ class User(db.Model, UserMixin):
                 return True
 
     def has_incident_access(self, deployment_id, incident_id):
-        incident = Incident.query.filter(Deployment.id==deployment_id, Incident.id==incident_id).first()
+        incident = Incident.query.filter(Deployment.id == deployment_id, Incident.id == incident_id).first()
         if not self.has_deployment_access(incident.deployment):
             return False
         if self.has_permission('view_all_incidents') or self.id in incident.assigned_to:
@@ -187,14 +192,15 @@ class Deployment(db.Model):
             incidents = user.get_incidents(self)
         else:
             incidents = self.incidents
-        two_hours = len([m for m in incidents if (datetime.utcnow() - timedelta(hours=2)) <= m.created_at < (datetime.utcnow() - timedelta(hours=1))])
+        two_hours = len([m for m in incidents if (datetime.utcnow() - timedelta(hours=2)) <= m.created_at < (
+                    datetime.utcnow() - timedelta(hours=1))])
         one_hour = len([m for m in incidents if m.created_at >= (datetime.utcnow() - timedelta(hours=1))])
         if two_hours == one_hour:
             return ["primary", None, 0]
         elif one_hour > two_hours:
-            return ["danger", "plus", one_hour-two_hours]
+            return ["danger", "plus", one_hour - two_hours]
         else:
-            return ["success", "minus", two_hours-one_hour]
+            return ["success", "minus", two_hours - one_hour]
 
     def __repr__(self):
         return f'{self.name}'
@@ -211,7 +217,7 @@ class Incident(db.Model):
     name = db.Column(db.String(64), index=True)
     description = db.Column(db.String(256))
     reported_via = db.Column(db.String(256))
-    reference = db.Column(db.String(128)) ##TODO MAYBE CHANGE TO INT
+    reference = db.Column(db.String(128))  ##TODO MAYBE CHANGE TO INT
     incident_type = db.Column(db.Integer)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
@@ -241,6 +247,12 @@ class Incident(db.Model):
             return
         return int((sum([1 for m in self.tasks if m.completed]) / len(self.tasks)) * 100)
 
+    def task_string(self):
+        if not self.tasks:
+            return
+        completed = [m for m in self.tasks if m.completed]
+        return f'{len(completed)}/{len(self.tasks)}'
+
 
 class IncidentTask(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -258,6 +270,7 @@ class IncidentTask(db.Model):
 
     def __repr__(self):
         return f'{self.name}'
+
 
 class IncidentComment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -301,9 +314,12 @@ class IncidentLog(db.Model):
     action_values = {'create_incident': 1, 'create_task': 2, 'complete_task': 3, 'delete_task': 4, 'add_comment': 5,
                      'delete_comment': 6, 'incomplete_task': 7, 'assigned_user': 8, 'removed_user': 9,
                      'marked_complete': 10, 'marked_incomplete': 11, 'changed_priority': 12}  ##TODO RE-ORDER ONCE DONE
-    action_strings = {1: 'created incident', 2: 'created task $task', 3: 'marked $task as complete', 4: 'deleted task {task}',
-                      5: 'added update', 6: 'deleted update', 7: 'marked $task as incomplete', 8: 'assigned $target_users to incident',
-                      9: 'removed $target_users from incident', 10: 'marked incident as complete', 11: 'marked incident as incomplete', 12: 'changed priority to'}
+    action_strings = {1: 'created incident', 2: 'created task $task', 3: 'marked $task as complete',
+                      4: 'deleted task {task}',
+                      5: 'added update', 6: 'deleted update', 7: 'marked $task as incomplete',
+                      8: 'assigned $target_users to incident',
+                      9: 'removed $target_users from incident', 10: 'marked incident as complete',
+                      11: 'marked incident as incomplete', 12: 'changed priority to'}
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
@@ -324,7 +340,8 @@ class IncidentLog(db.Model):
                 target_users = list_of_names(self.target_users)
             else:
                 target_users = self.target_users[0]
-        msg = Template(self.action_strings[self.action_type]).substitute(target_users=target_users, task=self.task, extra=self.extra)
+        msg = Template(self.action_strings[self.action_type]).substitute(target_users=target_users, task=self.task,
+                                                                         extra=self.extra)
         return f'{msg}.'
 
 

@@ -175,7 +175,7 @@ def view_map(deployment_name):
     deployment = Deployment.query.filter(func.lower(Deployment.name) == func.lower(deployment_name)).first()
     if not deployment:
         return render_template('404.html', nosidebar=True), 404
-    return render_template('map.html', title=f'{deployment}', incident_locations=[[m.latitude, m.longitude, priority_colours[m.priority]] for m in deployment.incidents if m.longitude and m.latitude], deployment=deployment, map_active=True, back_url=url_for('view_incidents', deployment_name=deployment_name))
+    return render_template('map.html', title=f'{deployment}', incident_locations={m.id: [m.latitude, m.longitude, priority_colours[m.priority]] for m in deployment.incidents if m.longitude and m.latitude}, deployment=deployment, map_active=True, back_url=url_for('view_incidents', deployment_name=deployment_name))
 
 
 @app.route('/<deployment_name>/live-feed/', methods=['GET'])

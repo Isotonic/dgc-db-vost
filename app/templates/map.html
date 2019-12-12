@@ -48,17 +48,30 @@ $(document).ready(function() {
             map.flyTo(e.target.getLatLng(), 15, {
             animate: true,
             duration: 0.5
-          });
+          })
         }
 
-        var incident_locations = {{ incident_locations|safe }}
+        var incidents = {{ incident_locations|safe }}
         var latlng = []
-        for (var i = 0; i < incident_locations.length; i++) {
-			marker = new L.circleMarker([incident_locations[i][0],incident_locations[i][1]], {color: incident_locations[i][2]}).addTo(map).bindPopup("Marker " + i).on('click', clickZoom)
-		    latlng.push(L.latLng(incident_locations[i][0],incident_locations[i][1]))
-		}
+        Object.keys(incidents).forEach(function(key) {
+            marker = new L.circleMarker([incidents[key][0], incidents[key][1]], {color: incidents[key][2]}).addTo(map).bindPopup("Marker " + key).on('click', clickZoom)
+		    latlng.push(L.latLng(incidents[key][0], incidents[key][1]))
+        })
 		var bounds = new L.LatLngBounds(latlng)
         map.fitBounds(bounds)
+
+        $('.list-group-item.list-group-flush').click( function(e) {
+		var incident = incidents[$(this).data('incident-id')]
+		if (incident) {
+            map.flyTo(L.latLng(incident[0], incident[1]), 15, {
+            animate: true,
+            duration: 0.5
+          })
+          }
 	})
+	})
+
+
+
 </script>
 {% endblock %}

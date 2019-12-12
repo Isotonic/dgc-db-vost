@@ -353,6 +353,26 @@
 		</div>
 	</div>
 </div>
+<!-- Task Modal -->
+<div class="modal fade" id="taskModal" tabindex="-1" role="dialog" aria-labelledby="taskModal" aria-hidden="true">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-body p-0">
+				<div class="card shadow">
+					<div class="card-header py-3 d-flex align-items-center justify-content-between">
+						<h6 class="m-0 font-weight-bold text-primary">Task</h6>
+						<button class="close" type="button" data-dismiss="modal" aria-label="Close">
+						<span aria-hidden="true">×</span>
+						</button>
+					</div>
+					<div class="card-body">
+
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
 {% endblock %}
 {% block scripts %}
 <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js" integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew==" crossorigin=""></script>
@@ -426,7 +446,8 @@
 		$('#addTaskForm').get(0).reset()
 	})
 
-	$('#Tasks :checkbox').change(function () {
+	$('#Tasks :checkbox').on('click', function(e) {
+		e.stopPropagation()
 		socket.emit('change_task_status', {'task_id':  $(this).val(), 'completed': $(this).is(':checked'), 'deployment_id': deployment_id, 'incident_id': incident_id})
 	})
 
@@ -520,6 +541,9 @@
 		flask_moment_render_all()
 	})
 
+	$('.list-group-item.list-group-flush').click( function(e) {
+		$('#taskModal').modal('show')
+	})
 
 	function format(state) {
 	    if (!state.id) return state.text;
