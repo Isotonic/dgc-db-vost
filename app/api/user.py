@@ -11,7 +11,7 @@ ns_user = Namespace('User', description='Used to carry out operations related wi
 
 
 @ns_user.route('/list')
-class get_all_users(Resource):
+class GetAllUsers(Resource):
     @jwt_required
     @ns_user.doc(security='access_token')
     @ns_user.response(200, 'Success', [user_model])
@@ -27,7 +27,7 @@ class get_all_users(Resource):
 
 
 @ns_user.route('/get/<int:user_id>')
-class get_user(Resource):
+class GetUser(Resource):
     @jwt_required
     @ns_user.doc(security='access_token')
     @ns_user.response(200, 'Success', [user_model])
@@ -43,7 +43,7 @@ class get_user(Resource):
 
 
 @ns_user.route('/create')
-class create_new_user(Resource):
+class CreateNewUser(Resource):
     @jwt_required
     @ns_user.expect(new_user_model, validate=True)
     @ns_user.doc(security='access_token')

@@ -10,7 +10,7 @@ ns_group = Namespace('Group', description='Used to carry out operations related 
 
 
 @ns_group.route('/list')
-class get_all_groups(Resource):
+class GetAllGroups(Resource):
     @jwt_required
     @ns_group.doc(security='access_token')
     @ns_group.response(200, 'Success', [group_model])
@@ -25,13 +25,13 @@ class get_all_groups(Resource):
         return all_groups, 200
 
 
-@ns_group.route('/get/<int:id>')
-class get_group(Resource):
+@ns_group.route('/get/<int:group_id>')
+class GetGroup(Resource):
     @jwt_required
     @ns_group.doc(security='access_token')
     @ns_group.response(200, 'Success', [group_model])
     @ns_group.response(401, 'Group doesn\'t exist')
-    def get(self, id):
+    def get(self, group_id):
         """
                 Returns group info.
         """
@@ -42,7 +42,7 @@ class get_group(Resource):
 
 
 @ns_group.route('/create')
-class create_new_group(Resource):
+class CreateNewGroup(Resource):
     @jwt_required
     @ns_group.expect(new_group_model, validate=True)
     @ns_group.doc(security='access_token')

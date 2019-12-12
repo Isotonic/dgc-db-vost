@@ -10,7 +10,7 @@ ns_incident = Namespace('Incident', description='Used to carry out operations re
 
 
 @ns_incident.route('/<int:deployment_id>/list')
-class get_all_incidents(Resource):
+class GetAllIncidents(Resource):
     @jwt_required
     @ns_incident.doc(security='access_token')
     @ns_incident.response(200, 'Success', [incident_model])
@@ -33,17 +33,17 @@ class get_all_incidents(Resource):
         return all_incidents, 200
 
 
-@ns_incident.route('/<int:deployment_id>/get/<int:id>')
-class get_incident(Resource):
+@ns_incident.route('/<int:deployment_id>/get/<int:incident_id>')
+class GetIncident(Resource):
     @jwt_required
     @ns_incident.doc(security='access_token')
     @ns_incident.response(200, 'Success', [incident_model])
     @ns_incident.response(401, 'Incident doesn\'t exist')
-    def get(self, deployment_id, id):
+    def get(self, deployment_id, incident_id):
         """
                 Returns incident info.
         """
-        incident = Incident.query.filter(Deployment.id==deployment_id, id==id).first()
+        incident = Incident.query.filter(Deployment.id==deployment_id, id==incident_id).first()
         if not incident:
             ns_incident.abort(401, 'Incident doesn\'t exist')
         return {'id': incident.id, 'name': incident.name, 'description': incident.description,
@@ -54,7 +54,7 @@ class get_incident(Resource):
 
 
 @ns_incident.route('/<int:deployment_id>/create')
-class create_new_incident(Resource):
+class CreateNewIncident(Resource):
     @jwt_required
     @ns_incident.expect(new_incident_model, validate=True)
     @ns_incident.doc(security='access_token')

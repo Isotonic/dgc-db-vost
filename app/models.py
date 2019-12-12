@@ -138,8 +138,8 @@ class User(db.Model, UserMixin):
 
 
 @login.user_loader
-def load_user(id):
-    return User.query.get(int(id))
+def load_user(user_id):
+    return User.query.get(int(user_id))
 
 
 class Group(db.Model):
@@ -193,7 +193,7 @@ class Deployment(db.Model):
         else:
             incidents = self.incidents
         two_hours = len([m for m in incidents if (datetime.utcnow() - timedelta(hours=2)) <= m.created_at < (
-                    datetime.utcnow() - timedelta(hours=1))])
+                datetime.utcnow() - timedelta(hours=1))])
         one_hour = len([m for m in incidents if m.created_at >= (datetime.utcnow() - timedelta(hours=1))])
         if two_hours == one_hour:
             return ["primary", None, 0]

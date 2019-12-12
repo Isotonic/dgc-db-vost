@@ -11,7 +11,7 @@ ns_deployment = Namespace('Deployment', description='Used to carry out operation
 
 
 @ns_deployment.route('/list')
-class get_all_deployments(Resource):
+class GetAllDeployments(Resource):
     @jwt_required
     @ns_deployment.doc(security='access_token')
     @ns_deployment.response(200, 'Success', [deployment_model])
@@ -29,17 +29,17 @@ class get_all_deployments(Resource):
         return all_deployments, 200
 
 
-@ns_deployment.route('/get/<int:id>')
-class get_deployment(Resource):
+@ns_deployment.route('/get/<int:deployment_id>')
+class GetDeployment(Resource):
     @jwt_required
     @ns_deployment.doc(security='access_token')
     @ns_deployment.response(200, 'Success', [deployment_model])
     @ns_deployment.response(401, 'Deployment doen\'t exist')
-    def get(self, id):
+    def get(self, deployment_id):
         """
                 Returns deployment info.
         """
-        deployment = Deployment.query.filter_by(id=id).first()
+        deployment = Deployment.query.filter_by(id=deployment_id).first()
         if not deployment:
             ns_deployment.abort(401, 'Deployment doesn\'t exist')
         return {'id': deployment.id, 'name': deployment.name, 'description': deployment.description,
@@ -49,7 +49,7 @@ class get_deployment(Resource):
 
 
 @ns_deployment.route('/create')
-class create_new_deployment(Resource):
+class CreateNewDeployment(Resource):
     @jwt_required
     @ns_deployment.expect(new_deployment_model, validate=True)
     @ns_deployment.doc(security='access_token')

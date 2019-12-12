@@ -39,8 +39,9 @@ deployment_model = dgvost_api.model('Deployment',
 
 new_incident_model = dgvost_api.model('New Incident',
                                       {'name': fields.String(required=True),
-                                       'description': fields.String(required=True), ##TODO Convert to GEOJson
-                                       'location': fields.String(required=True), 'reported_via': fields.String(), 'reference': fields.String()})
+                                       'description': fields.String(required=True),
+                                       'location': fields.String(required=True), 'reported_via': fields.String(),
+                                       'reference': fields.String()})  ##TODO Convert to GEOJson
 
 incident_model = dgvost_api.model('Incident',
                                   {'id': fields.Integer(), 'name': fields.String(), 'description': fields.String(),

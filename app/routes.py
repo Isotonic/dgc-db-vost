@@ -57,9 +57,9 @@ def login():
         if user is None or not user.check_password(form.password.data):
             return render_template('login.html', title='Sign In', form=form, invalid=True)
         login_user(user, remember=form.remember_me.data)
-        next = request.args.get('next')
-        if next:
-            return redirect(next)
+        next_page = request.args.get('next')
+        if next_page:
+            return redirect(next_page)
         return redirect(url_for('view_deployments'))
     return render_template('login.html', title='Sign In', form=form, invalid=False)
 
@@ -108,7 +108,7 @@ def create_group():
                        "new_reports": form.new_reports.data, "create_deployments": form.create_deployments.data,
                        "decision_making_log": form.decision_making_log.data, "supervisor": form.supervisor.data}
         chosen_permissions = [k for k, v in permissions.items() if v]
-        group = new_group(form.name.data, chosen_permissions, current_user)
+        new_group(form.name.data, chosen_permissions, current_user)
         return redirect(url_for('create_new_user'))
     return render_template('base.html', title='Create New Group', form=form)
 
@@ -218,7 +218,7 @@ def on_join(data):
 @socketio.on('create_deployment')
 @login_required_sockets
 #@has_permission_sockets
-def create_incident(data):
+def create_deployment(data):
     print(data)
     try:
         name = data['name']

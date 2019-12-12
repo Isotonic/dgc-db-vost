@@ -2,7 +2,7 @@ import secrets
 from app import db, moment
 from flask_socketio import emit
 from flask import render_template
-from .actions import IncidentAction
+from .actions import incident_action
 from app.models import User, Group, Deployment, Incident, IncidentTask, IncidentComment, EmailLink, AuditLog, IncidentLog
 
 
@@ -54,7 +54,7 @@ def new_incident(name, description, location, reported_via, reference, deploymen
          {'name': incident.name, 'location': incident.location, 'priority': incident.priority, 'assigned_to': None,
           'last_updated': moment.create(incident.last_updated).fromNow(refresh=True), 'code': 200},
          room=f'{incident.deployment_id}-all')
-    IncidentAction(user=created_by, action_type=IncidentLog.action_values['create_incident'],
+    incident_action(user=created_by, action_type=IncidentLog.action_values['create_incident'],
                    incident=incident)
     return incident
 
@@ -65,7 +65,7 @@ def new_task(name, users, incident, created_by):
     db.session.commit()
     emit('create_incident_task', {'html': render_template('task.html', task=task), 'code': 200},
          room=f'{incident.deployment_id}-{incident.id}')
-    IncidentAction(user=created_by, action_type=IncidentLog.action_values['create_task'],
+    incident_action(user=created_by, action_type=IncidentLog.action_values['create_task'],
                    incident=incident, task=task, target_users=users)
     return task
 
@@ -76,6 +76,6 @@ def new_comment(text, highlight, incident, added_by):
     db.session.commit()
     emit('create_incident_comment', {'html': render_template('comment.html', comment=comment), 'code': 200},
          room=f'{incident.deployment_id}-{incident.id}')
-    IncidentAction(user=added_by, action_type=IncidentLog.action_values['add_comment'],
+    incident_action(user=added_by, action_type=IncidentLog.action_values['add_comment'],
                    incident=incident)
     return comment
