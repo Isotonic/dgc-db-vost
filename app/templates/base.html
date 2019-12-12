@@ -37,12 +37,19 @@
             <hr class="sidebar-divider">
             <!-- Heading -->
             <div class="sidebar-heading">
-                {{ deployment_name }}
+                {{ deployment.name }}
             </div>
+            {% if current_user.has_permission('view_all_incidents') %}
             <li class="nav-item{% if incidents_active is defined %} active{% endif %}">
-                <a class="nav-link" href="{{ url_for('view_incidents', deployment_name=deployment_name) }}">
+                <a class="nav-link" href="{{ url_for('view_incidents', deployment_name=deployment.name) }}">
                 <i class="fas fa-fw fa-clone"></i>
                 <span>Incidents</span></a>
+            </li>
+            {% endif %}
+             <li class="nav-item{% if assigned_incidents_active is defined %} active{% endif %}">
+                <a class="nav-link" href="{{ url_for('view_assigned_incidents', deployment_name=deployment.name) }}">
+                <i class="fas fa-fw fa-clone"></i>
+                <span>Assigned Incidents</span></a>
             </li>
             <li class="nav-item{% if notifications_active is defined %} active{% endif %}">
                 <a class="nav-link" href="{{ url_for('view_notifications') }}">
@@ -50,17 +57,17 @@
                 <span>Notifications</span></a>
             </li>
             <li class="nav-item{% if map_active is defined %} active{% endif %}">
-                <a class="nav-link" href="{{ url_for('view_map', deployment_name=deployment_name) }}">
+                <a class="nav-link" href="{{ url_for('view_map', deployment_name=deployment.name) }}">
                 <i class="fas fa-fw fa-map-marker-alt"></i>
                 <span>Map</span></a>
             </li>
             <li class="nav-item{% if live_feed_active is defined %} active{% endif %}">
-                <a class="nav-link" href="{{ url_for('view_live_feed', deployment_name=deployment_name) }}">
+                <a class="nav-link" href="{{ url_for('view_live_feed', deployment_name=deployment.name) }}">
                 <i class="fas fa-fw fa-rss"></i>
                 <span>Live Feed</span></a>
             </li>
             <li class="nav-item{% if decision_making_log_active is defined %} active{% endif %}">
-                <a class="nav-link" href="{{ url_for('view_decision_making_log', deployment_name=deployment_name) }}">
+                <a class="nav-link" href="{{ url_for('view_decision_making_log', deployment_name=deployment.name) }}">
                 <i class="fas fa-fw fa-pen"></i>
                 <span>Decision-Making Log</span></a>
             </li>
@@ -184,6 +191,7 @@
 <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
 <script src="/static/js/sb-admin-2.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.dev.js" integrity="sha256-OgiHfllOBEOiWQ2OcBsDncRG2k7QBW9Rs1dB7MH2N2s=" crossorigin="anonymous"></script>
 {{ moment.include_moment() }}
 {% block scripts %}
 {% endblock %}

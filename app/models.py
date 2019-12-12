@@ -4,6 +4,7 @@ from datetime import datetime
 from os import path, makedirs
 from app import app, db, login
 from flask_login import UserMixin
+from datetime import datetime, timedelta
 from flask_admin.contrib.sqla import ModelView
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -85,24 +86,22 @@ class User(db.Model, UserMixin):
     def get_deployments(self):
         deployments = []
         for x in Deployment.query.all():
-            if not x.groups and not x.users:
+            if self.has_deployment_access(x):
                 deployments.append(x)
-            else:
-                if self in x.users:
-                    deployments.append(x)
-                for y in x.groups:
-                    if y.id == self.group_id:
-                        deployments.append(x)
-                        continue
         return deployments
 
-    def get_incidents(self, deployment_id, open_only=True):
+    def get_incidents(self, deployment, open_only=True, ignore_permissions=False):
         incidents = []
-        deployment = Deployment.query.filter_by(id=deployment_id).first()
-        if self.group_id and Group.query.filter_by(id=self.group_id).first().has_permission('view_all_incidents'):
+        if not isinstance(deployment, Deployment):
+            deployment = Deployment.query.filter_by(id=deployment).first()
+        if not deployment:
+            return False
+        if not self.has_deployment_access(deployment):
+            return incidents
+        if not ignore_permissions and self.has_permission('view_all_incidents'):
             return [m for m in deployment.incidents if m.open_status] if open_only else deployment.incidents
         for x in deployment.incidents:
-            if (not open_only or (open_only and x.open_status)) and self.id in x.users:
+            if (not open_only or (open_only and x.open_status)) and self in x.assigned_to:
                 incidents.append(x)
         return incidents
 
@@ -110,6 +109,25 @@ class User(db.Model, UserMixin):
         if not self.group:
             return False
         return self.group.has_permission(permission)
+
+    def has_deployment_access(self, deployment):
+        if not isinstance(deployment, Deployment):
+            deployment = Deployment.query.filter_by(id=deployment).first()
+        if not deployment:
+            return False
+        if (not deployment.groups and not deployment.users) or self in deployment.users:
+            return True
+        for x in deployment.groups:
+            if x.id == self.group_id:
+                return True
+
+    def has_incident_access(self, deployment_id, incident_id):
+        incident = Incident.query.filter(Deployment.id==deployment_id, Incident.id==incident_id).first()
+        if not self.has_deployment_access(incident.deployment):
+            return False
+        if self.has_permission('view_all_incidents') or self.id in incident.assigned_to:
+            return True
+        return False
 
     def __repr__(self):
         return f'{self.firstname} {self.surname}'
@@ -165,6 +183,20 @@ class Deployment(db.Model):
     users = db.relationship('User', secondary=deployment_user_junction)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+    def calculate_incidents_stat(self, user=None):
+        if user:
+            incidents = user.get_incidents(self)
+        else:
+            incidents = self.incidents
+        two_hours = len([m for m in incidents if (datetime.utcnow() - timedelta(hours=2)) <= m.created_at < (datetime.utcnow() - timedelta(hours=1))])
+        one_hour = len([m for m in incidents if m.created_at >= (datetime.utcnow() - timedelta(hours=1))])
+        if two_hours == one_hour:
+            return ["primary", None, 0]
+        elif one_hour > two_hours:
+            return ["danger", "plus", one_hour-two_hours]
+        else:
+            return ["success", "minus", two_hours-one_hour]
+
 
 class Incident(db.Model):
     priority_values = {'standard': 1, 'prompt': 2, 'immediate': 3}
@@ -176,8 +208,8 @@ class Incident(db.Model):
     deployment_id = db.Column(db.Integer, db.ForeignKey('deployment.id'))
     name = db.Column(db.String(64), index=True)
     description = db.Column(db.String(256))
-    reporting = db.Column(db.String(256))
-    reference = db.Column(db.String(64)) ##TODO MAYBE CHANGE TO INT
+    reported_via = db.Column(db.String(256))
+    reference = db.Column(db.String(128)) ##TODO MAYBE CHANGE TO INT
     incident_type = db.Column(db.Integer)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
@@ -264,9 +296,9 @@ class IncidentLog(db.Model):
     action_values = {'create_incident': 1, 'create_task': 2, 'complete_task': 3, 'delete_task': 4, 'add_comment': 5,
                      'delete_comment': 6, 'incomplete_task': 7, 'assigned_user': 8, 'removed_user': 9,
                      'marked_complete': 10, 'marked_incomplete': 11, 'changed_priority': 12}  ##TODO RE-ORDER ONCE DONE
-    action_strings = {1: 'created this incident', 2: 'created task', 3: 'completed task', 4: 'deleted task',
-                      5: 'added comment', 6: 'deleted comment', 7: 'marked task as incomplete', 8: 'assigned user{0} to incident',
-                      9: 'removed user{0} from incident', 10: 'marked incident as complete', 11: 'marked incident as incomplete', 12: 'changed the priority to'}
+    action_strings = {1: 'created incident', 2: 'created task {0}', 3: 'marked {0} as complete', 4: 'deleted task {0}',
+                      5: 'added update', 6: 'deleted update', 7: 'marked {0} as incomplete', 8: 'assigned {0} to incident',
+                      9: 'removed {0} from incident', 10: 'marked incident as complete', 11: 'marked incident as incomplete', 12: 'changed priority to'}
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
@@ -285,9 +317,12 @@ class IncidentLog(db.Model):
             plural = ''
             if len(self.target_users) > 1:
                 plural = 's'
-            msg = f'{self.action_strings[self.action_type]} {list_of_names(self.target_users)}'.format(plural)
+            if '{0}' in self.action_strings[self.action_type]:
+                msg = f'{self.action_strings[self.action_type]}'.format(self.target_users[0])
+            else:
+                msg = f'{self.action_strings[self.action_type]} {list_of_names(self.target_users)}'.format(plural)
         elif self.task:
-            msg = f' {self.task.name}'
+            msg = f'{self.action_strings[self.action_type]}'.format(self.task.name)
         elif self.extra:
             msg = f'{self.action_strings[self.action_type]} {self.extra}'
         else:

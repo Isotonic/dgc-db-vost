@@ -303,3 +303,7 @@ li.update-log > .update-log-text:before {
   left: 44px;
   border-color: transparent #fff transparent transparent;
 }
+
+.select2-search__field {
+    width: 300% !important;
+}

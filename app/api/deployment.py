@@ -34,14 +34,14 @@ class get_deployment(Resource):
     @jwt_required
     @ns_deployment.doc(security='access_token')
     @ns_deployment.response(200, 'Success', [deployment_model])
-    @ns_deployment.response(401, "Deployment doen't exist")
+    @ns_deployment.response(401, 'Deployment doen\'t exist')
     def get(self, id):
         """
                 Returns deployment info.
         """
         deployment = Deployment.query.filter_by(id=id).first()
         if not deployment:
-            ns_deployment.abort(401, "Deployment doesn't exist")
+            ns_deployment.abort(401, 'Deployment doesn\'t exist')
         return {'id': deployment.id, 'name': deployment.name, 'description': deployment.description,
                 'open': deployment.open_status, 'created_at': deployment.created_at.timestamp(),
                 'group_ids': [m.id for m in deployment.groups], 'user_ids': [m.id for m in deployment.users],

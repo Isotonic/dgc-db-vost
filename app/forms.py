@@ -61,17 +61,3 @@ class CreateIncident(FlaskForm):
     name = StringField('Name', validators=[DataRequired()])
     description = StringField('Description', validators=[DataRequired()])
     location = StringField('Location', validators=[DataRequired()])
-
-
-class ChangeAllocation(FlaskForm):
-    users = SelectMultipleField('Users', coerce=int)
-
-
-class AddTask(FlaskForm):
-    name = StringField('Name', validators=[DataRequired()])
-    users = SelectMultipleField('Users', coerce=int)
-
-
-class AddComment(FlaskForm):
-    text = StringField('Comment', validators=[DataRequired()])
-    highlight = BooleanField("Highlight", default=False)

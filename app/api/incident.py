@@ -15,13 +15,13 @@ class get_all_incidents(Resource):
     @ns_incident.doc(security='access_token')
     @ns_incident.response(200, 'Success', [incident_model])
     @ns_incident.response(404, 'No incidents found')
-    @ns_incident.response(404, "Deployment doesn't exist")
+    @ns_incident.response(404, 'Deployment doesn\'t exist')
     def get(self, deployment_id):
         """
                 Returns all incidents the user has access to.
         """
         if not Deployment.query.filter_by(id=deployment_id).first():
-            ns_incident.abort(404, "Deployment doesn't exist")
+            ns_incident.abort(404, 'Deployment doesn\'t exist')
         current_user = User.query.filter_by(id=get_jwt_identity()).first()
         all_incidents = [{'id': m.id, 'name': m.name, 'description': m.description,
                           'location': m.location, 'open': m.open_status, 'public': m.public,
@@ -38,14 +38,14 @@ class get_incident(Resource):
     @jwt_required
     @ns_incident.doc(security='access_token')
     @ns_incident.response(200, 'Success', [incident_model])
-    @ns_incident.response(401, "Incident doesn't exist")
+    @ns_incident.response(401, 'Incident doesn\'t exist')
     def get(self, deployment_id, id):
         """
                 Returns incident info.
         """
         incident = Incident.query.filter(Deployment.id==deployment_id, id==id).first()
         if not incident:
-            ns_incident.abort(401, "Incident doesn't exist")
+            ns_incident.abort(401, 'Incident doesn\'t exist')
         return {'id': incident.id, 'name': incident.name, 'description': incident.description,
                 'location': incident.location, 'open': incident.open_status, 'public': incident.public,
                 'flagged': incident.flagged, 'type': incident.incident_type, 'priority': incident.priority,
@@ -60,18 +60,18 @@ class create_new_incident(Resource):
     @ns_incident.doc(security='access_token')
     @ns_incident.response(200, 'Success', incident_model)
     @ns_incident.response(401, 'Incorrect credentials')
-    @ns_incident.response(404, "Deployment doesn't exist")
+    @ns_incident.response(404, 'Deployment doesn\'t exist')
     def post(self, deployment_id):
         """
                 Creates a new incident.
         """
         deployment = Deployment.query.filter_by(id=deployment_id).first()
         if not deployment:
-            ns_incident.abort(404, "Deployment doesn't exist")
+            ns_incident.abort(404, 'Deployment doesn\'t exist')
         payload = dgvost_api.payload
         current_user = User.query.filter_by(id=get_jwt_identity()).first()
 
-        created_incident = new_incident(payload['name'], payload['description'], payload['location'], deployment, current_user)
+        created_incident = new_incident(payload['name'], payload['description'], payload['location'], payload['reported_via'], payload['reference'], deployment, current_user)
         return {'id': created_incident.id, 'name': created_incident.name, 'description': created_incident.description,
                 'location': created_incident.location, 'open': created_incident.open_status,
                 'public': created_incident.public,

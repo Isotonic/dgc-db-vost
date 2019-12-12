@@ -1,23 +1,33 @@
+import functools
 from sqlalchemy import func
-from app import app, db, moment
-from datetime import datetime, timedelta
-from flask import render_template, flash, redirect, url_for, request, jsonify
+from itertools import groupby
+from app import app, db, socketio
+from flask_socketio import emit, join_room, disconnect
+from flask import render_template, flash, redirect, url_for, request
 from flask_login import current_user, login_user, logout_user, login_required
+from app.forms import LoginForm, CreateUser, CreateGroup, SetPassword, CreateDeployment
 from app.utils.change import incident_status, allocation, incident_priority, task_status
 from app.models import User, Group, Deployment, Incident, IncidentTask, EmailLink, AuditLog
 from app.utils.create import new_user, new_group, new_deployment, new_incident, new_task, new_comment
-from app.forms import LoginForm, CreateUser, CreateGroup, SetPassword, CreateDeployment, CreateIncident, ChangeAllocation, AddTask, AddComment
 
 
-def calculate_incidents_stat(incidents):
-    two_hours = len([m for m in incidents if (datetime.utcnow() - timedelta(hours=2)) <= m.created_at < (datetime.utcnow() - timedelta(hours=1))])
-    one_hour = len([m for m in incidents if m.created_at >= (datetime.utcnow() - timedelta(hours=1))])
-    if two_hours == one_hour:
-        return ["primary", None, 0]
-    elif one_hour > two_hours:
-        return ["danger", "plus", one_hour-two_hours]
-    else:
-        return ["success", "minus", two_hours-one_hour]
+def login_required_sockets(f):
+    @functools.wraps(f)
+    def wrapped(*args, **kwargs):
+        if not current_user.is_authenticated:
+            disconnect()
+        else:
+            return f(*args, **kwargs)
+    return wrapped
+
+def has_permission_sockets(f):
+    @functools.wraps(f)
+    def wrapped(*args, **kwargs):
+        if not current_user.has_permission(None):
+            return emit('change_status', {'message': 'You don\'t have permission to change an incident\'s status.', 'code': 403})
+        else:
+            return f(*args, **kwargs)
+    return wrapped
 
 @app.errorhandler(404)
 @login_required
@@ -104,22 +114,10 @@ def create_group():
 @app.route('/deployments/', methods=['GET'])
 @login_required
 def view_deployments():
-    return render_template('deployments.html', title='Deployments', nosidebar=True, back_url=url_for('view_deployments'), deployments=current_user.get_deployments())
-
-
-@app.route('/create_deployment/', methods=['GET', 'POST'])
-@login_required
-def create_deployment():
-    groups_list = [(i.id, i.name) for i in Group.query.all()]
-    users_list = [(i.id, i.username) for i in User.query.all()]
-    form = CreateDeployment()
-    form.groups.choices = groups_list
-    form.users.choices = users_list
-    if form.validate_on_submit():
-        deployment = new_deployment(form.name.data, form.description.data, form.groups.data, form.users.data,
-                                    current_user)
-        return deployment.name
-    return render_template('base.html', title='Create New User', form=form)
+    groups = []
+    for k, g in groupby(User.query.all(), key=lambda item: item.group):
+        groups.append([[k.id, k.name], list(g)])
+    return render_template('deployments.html', title='Deployments', nosidebar=True, groups=groups, back_url=url_for('view_deployments'), deployments=current_user.get_deployments())
 
 
 @app.route('/deployments/<deployment_name>/incidents/', methods=['GET'])
@@ -129,23 +127,20 @@ def view_incidents(deployment_name):
     deployment = Deployment.query.filter(func.lower(Deployment.name) == func.lower(deployment_name)).first()
     if not deployment:
         return render_template('404.html', nosidebar=True), 404
-    incidents_stat = calculate_incidents_stat(deployment.incidents)
-    return render_template('incidents.html', title=f'{deployment.name}', deployment=deployment, deployment_name=deployment.name,
+    incidents_stat = deployment.calculate_incidents_stat()
+    return render_template('incidents.html', title=f'{deployment.name}', deployment=deployment,
                            incidents_active=True, incidents_stat=incidents_stat, incidents=current_user.get_incidents(deployment.id), back_url=url_for('view_deployments'))
 
-
-@app.route('/deployments/<deployment_name>/add_incident/', methods=['POST'])
+@app.route('/deployments/<deployment_name>/assigned_incidents/', methods=['GET'])
 @login_required
-def add_incident(deployment_name):
+def view_assigned_incidents(deployment_name):
     deployment_name = deployment_name.replace("-", " ")
     deployment = Deployment.query.filter(func.lower(Deployment.name) == func.lower(deployment_name)).first()
     if not deployment:
-        return jsonify(data='Unable to find deployment.'), 404
-    form = CreateIncident()
-    if form.validate_on_submit():
-        incident = new_incident(form.name.data, form.description.data, form.location.data, deployment, current_user)
-        return jsonify(data={'url': url_for("view_incident", deployment_name=deployment.name, incident_name=incident.name, incident_id=incident.id)}), 200
-    return jsonify(data=form.errors), 400
+        return render_template('404.html', nosidebar=True), 404
+    incidents_stat = deployment.calculate_incidents_stat(current_user)
+    return render_template('incidents.html', title=f'{deployment.name}', deployment=deployment,
+                           assigned_incidents_active=True, incidents_stat=incidents_stat, incidents=current_user.get_incidents(deployment.id, ignore_permissions=True), back_url=url_for('view_deployments'))
 
 
 @app.route('/deployments/<deployment_name>/incidents/<incident_name>-<int:incident_id>', methods=['GET', 'POST'])
@@ -156,120 +151,10 @@ def view_incident(deployment_name, incident_name, incident_id):
                                      Incident.id == incident_id).first()
     if not incident or incident.deployment.name.lower() != deployment_name.lower():
         return render_template('404.html', nosidebar=True), 404
-    from itertools import groupby
     groups = []
     for k, g in groupby(User.query.all(), key=lambda item: item.group):
         groups.append([k.name, list(g)])
-    return render_template('incident.html', incident=incident, deployment_name=incident.deployment.name, groups=groups, back_url=url_for('view_incidents', deployment_name=deployment_name), title=f'{deployment_name} - Incident {incident_id}')
-
-
-@app.route('/deployments/<deployment_name>/incidents/<incident_name>-<int:incident_id>/change_incident_status/', methods=['POST'])
-@login_required
-def change_incident_status(deployment_name, incident_name, incident_id):
-    if not current_user.has_permission('change_status'):
-        return jsonify(data="You don't have permission to change an incident's status."), 403
-    try:
-        status = bool(int(request.form['status']))
-    except:
-        return jsonify(data='Incorrect data supplied.'), 404
-    deployment_name = deployment_name.replace("-", " ")
-    incident = Incident.query.filter(func.lower(Incident.name) == func.lower(incident_name), Incident.id == incident_id).first()
-    if not incident or incident.deployment.name.lower() != deployment_name.lower():
-        return jsonify(data='Unable to find the deployment or incident.'), 404
-    if incident_status(current_user, incident, status) is False:
-        return jsonify(data="Incident already has this status."), 400
-    return jsonify(status=status), 200
-
-
-@app.route('/deployments/<deployment_name>/incidents/<incident_name>-<int:incident_id>/change_allocation/', methods=['POST'])
-@login_required
-def change_allocation(deployment_name, incident_name, incident_id):
-    if not current_user.has_permission('change_allocation'):
-        return jsonify(data="You don't have permission to change an incident's allocation."), 403
-    deployment_name = deployment_name.replace("-", " ")
-    incident = Incident.query.filter(func.lower(Incident.name) == func.lower(incident_name), Incident.id == incident_id).first()
-    if not incident or incident.deployment.name.lower() != deployment_name.lower():
-        return jsonify(data='Unable to find the deployment or incident.'), 404
-    users_list = [(i.id, str(i)) for i in User.query.all()]
-    form = ChangeAllocation()
-    form.users.choices = users_list
-    if form.validate_on_submit():
-        if allocation(current_user, incident, form.users.data) is False:
-            return jsonify(data="Didn't change assigned users."), 400
-        return jsonify(html=[render_template('assigned_to.html', user=m) for m in incident.assigned_to]), 200
-    return jsonify(data=form.errors), 400
-
-
-@app.route('/deployments/<deployment_name>/incidents/<incident_name>-<int:incident_id>/change_incident_priority/', methods=['POST'])
-@login_required
-def change_incident_priority(deployment_name, incident_name, incident_id):
-    if not current_user.has_permission('change_priority'):
-        return jsonify(data="You don't have permission to change an incident's priority."), 403
-    try:
-        priority = Incident.priority_values[request.form['priority'].lower()]
-    except:
-        return jsonify(data='Incorrect data supplied.'), 404
-    deployment_name = deployment_name.replace("-", " ")
-    incident = Incident.query.filter(func.lower(Incident.name) == func.lower(incident_name), Incident.id == incident_id).first()
-    if not incident or incident.deployment.name.lower() != deployment_name.lower():
-        return jsonify(data='Unable to find the deployment or incident.'), 404
-    if incident_priority(current_user, incident, priority) is False:
-        return jsonify(data="Incident already has this priority."), 400
-    return jsonify(priority=Incident.priorities[incident.priority].title()), 200
-
-
-@app.route('/deployments/<deployment_name>/incidents/<incident_name>-<int:incident_id>/add_task/', methods=['POST'])
-@login_required
-def add_task(deployment_name, incident_name, incident_id):
-    deployment_name = deployment_name.replace("-", " ")
-    incident = Incident.query.filter(func.lower(Incident.name) == func.lower(incident_name), Incident.id == incident_id).first()
-    if not incident or incident.deployment.name.lower() != deployment_name.lower():
-        return jsonify(data='Unable to find the deployment or incident.'), 404
-    users_list = [(i.id, str(i)) for i in User.query.all()]
-    form = AddTask()
-    form.users.choices = users_list
-    if form.validate_on_submit():
-        task = new_task(form.name.data, form.users.data, incident, current_user)
-        return jsonify(html=render_template('task.html', task=task)), 200
-    return jsonify(data=form.errors)
-
-
-@app.route('/deployments/<deployment_name>/incidents/<incident_name>-<int:incident_id>/change_task_status/', methods=['POST'])
-@login_required
-def change_task_status(deployment_name, incident_name, incident_id):
-    try:
-        task_id = request.form['id']
-        completed = bool(int(request.form['completed']))
-    except:
-        return jsonify(data='Incorrect data supplied.'), 404
-    deployment_name = deployment_name.replace("-", " ")
-    incident = Incident.query.filter(func.lower(Incident.name) == func.lower(incident_name), Incident.id == incident_id).first()
-    task = IncidentTask.query.filter_by(incident_id=incident.id, id=task_id).first()
-    if not incident or incident.deployment.name.lower() != deployment_name.lower() or not task:
-        return jsonify(data='Unable to find the deployment or incident.'), 404
-    if task.assigned_to and current_user not in task.assigned_to:
-        return jsonify(data='You are not assigned to this task.'), 403
-    if task_status(current_user, task, completed) is False:
-        return jsonify(data="Task already has this status."), 400
-    if task.completed:
-        return jsonify(timestamp=moment.create(task.completed_at).fromNow(refresh=True))
-    else:
-        return jsonify(timestamp=moment.create(task.created_at).fromNow(refresh=True))
-
-
-@app.route('/deployments/<deployment_name>/incidents/<incident_name>-<int:incident_id>/add_comment/', methods=['GET', 'POST'])
-@login_required
-def add_incident_comment(deployment_name, incident_name, incident_id):
-    deployment_name = deployment_name.replace("-", " ")
-    incident = Incident.query.filter(func.lower(Incident.name) == func.lower(incident_name),
-                                     Incident.id == incident_id).first()
-    if not incident or incident.deployment.name.lower() != deployment_name.lower():
-        return render_template('404.html', nosidebar=True), 404
-    form = AddComment()
-    if form.validate_on_submit():
-        comment = new_comment(form.text.data, form.highlight.data, incident, current_user)
-        return comment.text
-    return render_template('base.html', title=f'{incident.name}', form=form)
+    return render_template('incident.html', incident=incident, deployment=incident.deployment, groups=groups, back_url=url_for('view_incidents', deployment_name=deployment_name), title=f'{deployment_name} - Incident {incident_id}')
 
 
 @app.route('/notifications/', methods=['GET'])
@@ -294,3 +179,155 @@ def view_live_feed(deployment_name):
 @login_required
 def view_decision_making_log(deployment_name):
     pass
+
+@socketio.on('join')
+@login_required_sockets
+def on_join(data):
+    if data['type'] == 0:
+        join_room('deployments')
+        print('Joined Private Room: deployments')
+    if data['type'] == 1:
+        if current_user.has_deployment_access(data['deployment_id']):
+            if current_user.has_permission('view_all_incidents'):
+                join_room(f'{data["deployment_id"]}-all')
+                print(f'Joined Global Room: {data["deployment_id"]}-all')
+            else:
+                join_room(f'{data["deployment_id"]}-private')
+                print(f'Joined Private Room: {data["deployment_id"]}-private')
+        else:
+            disconnect()
+            print(f'Kicked from Room: {data["deployment_id"]}')
+    elif data['type'] == 2:
+        if current_user.has_incident_access(data['deployment_id'], data['incident_id']):
+            join_room(f'{data["deployment_id"]}-{data["incident_id"]}')
+            print(f'Joined Room: {data["deployment_id"]}-{data["incident_id"]}')
+        else:
+            disconnect()
+            print(f'Kicked from Room: {data["deployment_id"]}-{data["incident_id"]}')
+
+
+@socketio.on('create_deployment')
+@login_required_sockets
+#@has_permission_sockets
+def create_incident(data):
+    print(data)
+    try:
+        name = data['name']
+        description = data['description']
+        groups = data['groups']
+        users = data['users']
+    except:
+        return emit('create_incident', {'message': 'Incorrect data supplied.', 'code': 403})
+    new_deployment(name, description, groups, users, current_user)
+
+
+@socketio.on('create_incident')
+@login_required_sockets
+#@has_permission_sockets
+def create_incident(data):
+    print(data)
+    try:
+        name = data['name']
+        description = data['description']
+        location = data['location']
+        reported_via = data['reported_via']
+        reference = data['reference']
+    except:
+        return emit('create_incident', {'message': 'Incorrect data supplied.', 'code': 403})
+    deployment = Deployment.query.filter_by(id=data['deployment_id']).first()
+    if not deployment:
+        return emit('create_incident', {'message': 'Unable to find the deployment.', 'code': 404})
+    new_incident(name, description, location, reported_via, reference, deployment, current_user)
+
+
+@socketio.on('change_incident_status')
+@login_required_sockets
+#@has_permission_sockets
+def change_incident_status(data):
+    print(data)
+    try:
+        status = data["status"]
+    except:
+        return emit('change_incident_status', {'message': 'Incorrect data supplied.', 'code': 403})
+    incident = Incident.query.filter(Deployment.id==data['deployment_id'], Incident.id == data['incident_id']).first()
+    if not incident:
+        return emit('change_incident_status', {'message': 'Unable to find the deployment or incident.', 'code': 404})
+    if incident_status(current_user, incident, status) is False:
+        return emit('change_incident_status', {'message': 'Incident already has this status.', 'code': 400})
+
+
+@socketio.on('change_incident_allocation')
+@login_required_sockets
+#@has_permission_sockets
+def change_incident_allocation(data):
+    #if not current_user.has_permission('change_allocation'):
+    #    return jsonify(data='You don\'t have permission to change an incident\'s allocation.'), 403
+    print(data)
+    incident = Incident.query.filter(Deployment.id==data['deployment_id'], Incident.id == data['incident_id']).first()
+    if not incident:
+        return emit('change_incident_allocation', {'message': 'Unable to find the deployment or incident.', 'code': 404})
+    users = [n for n in [User.query.filter_by(id=int(m)).first() for m in data['users'] if m] if n and n.has_deployment_access(incident.deployment)]
+    if allocation(current_user, incident, users) is False:
+        return emit('change_incident_allocation', {'message': 'Didn\'t change assigned users.', 'code': 400})
+
+
+@socketio.on('change_incident_priority')
+@login_required_sockets
+#@has_permission_sockets
+def change_incident_priority(data):
+    print(data)
+    #if not current_user.has_permission('change_priority'):
+    #    return jsonify(data='You don\'t have permission to change an incident\'s priority.'), 403
+    try: ##TODO Add in function to get data
+        priority = Incident.priority_values[data['priority'].lower()]
+    except:
+        return emit('change_incident_priority', {'message': 'Incorrect data supplied.', 'code': 403})
+    incident = Incident.query.filter(Deployment.id == data['deployment_id'], Incident.id == data['incident_id']).first()
+    if not incident:
+        return emit('change_incident_priority', {'message': 'Unable to find the deployment or incident.', 'code': 404})
+    if incident_priority(current_user, incident, priority) is False:
+        return emit('change_incident_priority', {'message': 'Incident already has this priority.', 'code': 400})
+
+@socketio.on('create_incident_task')
+@login_required_sockets
+#@has_permission_sockets
+def create_incident_task(data):
+    print(data)
+    try: ##TODO Add in incident id and deployment id in here too
+        name = data['name']
+        users = [User.query.filter_by(id=int(m)).first() for m in data['users'] if m]
+    except:
+        return emit('create_incident_task', {'message': 'Incorrect data supplied.', 'code': 403})
+    incident = Incident.query.filter(Deployment.id == data['deployment_id'], Incident.id == data['incident_id']).first()
+    if not incident:
+        return emit('create_incident_task', {'message': 'Unable to find the deployment or incident.', 'code': 404})
+    users = [m for m in users if m and m in incident.assigned_to]
+    new_task(name, users, incident, current_user)
+
+
+@socketio.on('change_task_status')
+@login_required_sockets
+#@has_permission_sockets
+def change_task_status(data):
+    task_id = data['task_id']
+    completed = data['completed']
+       # return emit('change_task_status', {'message': 'Incorrect data supplied.', 'code': 403})
+    task = IncidentTask.query.filter_by(incident_id=data['incident_id'], id=task_id).first()
+    if not task or task.incident.deployment_id != data['deployment_id']:
+        return emit('change_task_status', {'message': 'Unable to find the deployment, incident or task.', 'code': 404})
+    if task_status(current_user, task, completed) is False:
+        return emit('change_task_status', {'message': 'Task already has this status.', 'code': 400})
+
+
+@socketio.on('create_incident_comment')
+@login_required_sockets
+#@has_permission_sockets
+def create_incident_comment(data):
+    try:
+        text = data['text']
+    except:
+        return emit('create_incident_comment', {'message': 'Incorrect data supplied.', 'code': 403})
+    incident = Incident.query.filter(Deployment.id == data['deployment_id'], Incident.id == data['incident_id']).first()
+    if not incident:
+        return emit('create_incident_comment', {'message': 'Unable to find the deployment or incident.', 'code': 404})
+    new_comment(text, False, incident, current_user)

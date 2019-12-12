@@ -1,8 +1,10 @@
-{% extends "base.html" %}
-
+{% extends 'base.html' %}
+{% block css %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.0.12/dist/css/select2.min.css" rel="stylesheet" />
+{% endblock %}
 {% block heading %}
 {% if current_user.has_permission('create_deployment') %}
-<a href="#newDeploymentModal" data-toggle="modal" data-target="newDeploymentModal" class="btn btn-icon-split btn-success mb-1 mt-2">
+<a href="#newDeploymentModal" data-toggle="modal" data-target="#newDeploymentModal" class="btn btn-icon-split btn-success mb-1 mt-2">
     <span class="btn-icon">
         <i class="fas fa-plus"></i>
     </span>
@@ -26,31 +28,65 @@
             </div>
         </div>
 </div>
-<div class="row">
+<div id="Deployments" class="row">
     {% for deployment in deployments %}
-    <div class="col-xl-4 col-lg-6">
-        <div class="card border-left-success shadow mb-4">
-            <div class="card-header d-flex align-items-center justify-content-between">
-                <h6 class="font-weight-bold text-primary">{{ deployment.name }}
-                    <p class="mb-0 mt-1 text-muted text-xs text-nowrap">Created {{ moment(deployment.created_at).fromNow(refresh=True) }}</p>
-                </h6>
-                <div class="dropdown no-arrow">
-                    <a class="dropdown-toggle" href="#" role="button" data-toggle="modal" data-target="#editDeploymentModal">
-                        <i class="fas fa-cog"></i>
-                    </a>
-                </div>
-            </div>
-            <div class="card-body text-center">
-                <p class="font-weight-bold text-left">{{ deployment.description }}</p>
-                <a href="{{ url_for('view_incidents', deployment_name=deployment.name) }}" class="btn {% if deployment.open_status %}btn-success{% else %}btn-danger{% endif %}">View Deployment</a>
-            </div>
-        </div>
-    </div>
+    {% include 'deployment_card.html' %}
     {% endfor %}
 </div>
 {% endblock %}
 
 {% block modals %}
+<!-- New Deployment Modal -->
+<div class="modal fade" id="newDeploymentModal" tabindex="-1" role="dialog" aria-labelledby="newDeploymentModal" aria-hidden="true">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-body p-0">
+				<div class="card shadow">
+					<div class="card-header py-3 d-flex align-items-center justify-content-between">
+						<h6 class="m-0 font-weight-bold text-primary">New Deployment</h6>
+						<button class="close" type="button" data-dismiss="modal" aria-label="Close">
+						<span aria-hidden="true">×</span>
+						</button>
+					</div>
+					<div class="card-body">
+						<form id="newDeploymentForm" method="post" role="form">
+							<div class="form-group mb-3">
+								<input class="form-control was-validated" name="name" placeholder="Deployment Name" type="text" required>
+							</div>
+                            <div class="form-group mb-3">
+								<input class="form-control was-validated" name="description" placeholder="Description" type="text" required>
+							</div>
+                            <div class="form-group mb-3">
+								<select id="newDeploymentGroupsSelect" name="groups" multiple="multiple" style="width: 100%">
+                                    <option></option>
+                                    {% for group in groups %}
+                                    <option value="{{ group[0][0] }}">{{ group[0][1] }}</option>
+									{% endfor %}
+								</select>
+							</div>
+							<div class="form-group mb-3">
+								<select id="newDeploymentUsersSelect" name="users" multiple="multiple" style="width: 100%">
+									<option value="0"></option>
+									{% for group in groups %}
+									<optgroup label="{{ group[0][1] }}">
+										{% for user in group[1] %}
+										<option value="{{ user.id }}" data-avatar-url="{{ user.get_avatar() }}">{{ user }}</option>
+										{% endfor %}
+									</optgroup>
+									{% endfor %}
+								</select>
+							</div>
+							<div class="text-center">
+								<button type="submit" class="btn btn-primary my-4">Submit</button>
+							</div>
+						</form>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<!-- Edit Deployment Modal -->
 <div class="modal fade" id="editDeploymentModal" tabindex="-1" role="dialog" aria-labelledby="editDeploymentModal" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
@@ -63,4 +99,58 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script type="text/javascript" charset="utf-8">
+    var socket = io()
+
+    socket.on("connect", function() {
+        socket.emit("join", {'type': 0})
+    })
+
+	function recieve(data) {
+		if (data['code'] == 200) {
+			console.log(data)
+			return true
+		} else {
+			console.log(data['code'] + ': ' + data['message'])
+			return false
+		}
+	}
+
+	$('#newDeploymentForm').submit( function(e) {
+	    e.preventDefault();
+	    $('#newDeploymentModal').modal('hide')
+		socket.emit('create_deployment', {'name': $(this).serializeArray()[0]['value'], 'description': $(this).serializeArray()[1]['value'], 'groups': $('#newDeploymentGroupsSelect').val(), 'users': $('#newDeploymentUsersSelect').val()})
+		$('#newDeploymentForm').get(0).reset()
+	})
+
+	socket.on('create_deployment', function(data) {
+		if (recieve(data)) {
+		    $('#Deployments').append(data['html'])
+		}
+	})
+
+	function format(state) {
+	    if (!state.id) return state.text;
+	    return $("<span><img class='rounded-circle avatar-sm' src='" + $(state.element).data('avatar-url') + "'/> " + state.text + "</span>");
+	}
+
+    $(document).ready(function() {
+        $('#newDeploymentGroupsSelect').select2({
+            allowClear: true,
+            placeholder: 'Allow access to groups, default allows everyone access.'
+
+        })
+        $('#newDeploymentUsersSelect').select2({
+            allowClear: true,
+            placeholder: {id:'0', text: 'Allow access to users, default allows everyone access.'},
+            templateResult: format,
+            templateSelection: format,
+        })
+        $.fn.modal.Constructor.prototype.enforceFocus = function() {};
+    })
+</script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.0.12/dist/js/select2.min.js"></script>
 {% endblock %}
