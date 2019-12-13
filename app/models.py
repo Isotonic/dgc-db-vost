@@ -253,6 +253,26 @@ class Incident(db.Model):
         completed = [m for m in self.tasks if m.completed]
         return f'{len(completed)}/{len(self.tasks)}'
 
+    def generate_geojson(self):
+        if not self.longitude or not self.latitude:
+            return
+        return {
+            'type': 'Feature',
+            'properties': {
+                'name': self.name,
+                'description': self.description,
+                'priority': self.get_priority(),
+                'created': self.created_at,
+                'location': self.location,
+                'tasks': self.task_string(),
+                'comments': len(self.comments)
+            },
+            'geometry': {
+                'type': 'Point',
+                'coordinates': [self.longitude, self.latitude]
+            }
+        }
+
 
 class IncidentTask(db.Model):
     id = db.Column(db.Integer, primary_key=True)

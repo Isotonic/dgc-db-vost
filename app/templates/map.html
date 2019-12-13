@@ -45,20 +45,25 @@ $(document).ready(function() {
 		}).addTo(map);
 
         function clickZoom(e) {
-            map.flyTo(e.target.getLatLng(), 15, {
+            map.flyTo(e.latlng, 15, {
             animate: true,
             duration: 0.5
           })
         }
 
-        var incidents = {{ incident_locations|safe }}
-        var latlng = []
-        Object.keys(incidents).forEach(function(key) {
-            marker = new L.circleMarker([incidents[key][0], incidents[key][1]], {color: incidents[key][2]}).addTo(map).bindPopup("Marker " + key).on('click', clickZoom)
-		    latlng.push(L.latLng(incidents[key][0], incidents[key][1]))
-        })
-		var bounds = new L.LatLngBounds(latlng)
-        map.fitBounds(bounds)
+        function onEachFeature(feature, layer) {
+            // does this feature have a property named popupContent?
+            if (feature.properties && feature.properties.description) {
+                layer.bindPopup(feature.properties.description);
+            }
+        }
+
+        var incidents_geojson = {{ geojson | tojson }}
+
+        var geojsonLayer = L.geoJSON(incidents_geojson, {
+            onEachFeature: onEachFeature
+        }).addTo(map).on('click', clickZoom)
+        map.fitBounds(geojsonLayer.getBounds())
 
         $('.list-group-item.list-group-flush').click( function(e) {
 		var incident = incidents[$(this).data('incident-id')]
