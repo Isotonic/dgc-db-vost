@@ -49,3 +49,19 @@ incident_model = dgvost_api.model('Incident',
                                    'flagged': fields.Boolean(), 'type': fields.Integer(), 'priority': fields.Integer(),
                                    'longitude': fields.Float(), 'latitude': fields.Float(),
                                    'created_at': fields.Float(description='UTC Timestamp.')})
+
+
+point_geometry = dgvost_api.model('PointGeometry', {
+    'type': fields.String(required=True, default="Point"),
+    'coordinates': fields.List(fields.Float, required=True, type="Array")
+})
+
+point_properties = dgvost_api.model('PointProperties', {
+    'address': fields.String(required=True)
+})
+
+point_feature = dgvost_api.model('PointFeature', {
+    'type': fields.String(default="Feature", require=True),
+    'geometry': fields.Nested(point_geometry, required=True),
+    'properties': fields.Nested(point_properties, required=True)
+})
