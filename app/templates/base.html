@@ -41,13 +41,13 @@
             </div>
             {% if current_user.has_permission('view_all_incidents') %}
             <li class="nav-item{% if incidents_active is defined %} active{% endif %}">
-                <a class="nav-link" href="{{ url_for('view_incidents', deployment_name=deployment.name) }}">
+                <a class="nav-link" href="{{ url_for('view_incidents', deployment_name=deployment.name, deployment_id=deployment.id) }}">
                 <i class="fas fa-fw fa-clone"></i>
                 <span>Incidents</span></a>
             </li>
             {% endif %}
              <li class="nav-item{% if assigned_incidents_active is defined %} active{% endif %}">
-                <a class="nav-link" href="{{ url_for('view_assigned_incidents', deployment_name=deployment.name) }}">
+                <a class="nav-link" href="{{ url_for('view_assigned_incidents', deployment_name=deployment.name, deployment_id=deployment.id) }}">
                 <i class="fas fa-fw fa-clone"></i>
                 <span>Assigned Incidents</span></a>
             </li>
@@ -57,17 +57,17 @@
                 <span>Notifications</span></a>
             </li>
             <li class="nav-item{% if map_active is defined %} active{% endif %}">
-                <a class="nav-link" href="{{ url_for('view_map', deployment_name=deployment.name) }}">
+                <a class="nav-link" href="{{ url_for('view_map', deployment_name=deployment.name, deployment_id=deployment.id) }}">
                 <i class="fas fa-fw fa-map-marker-alt"></i>
                 <span>Map</span></a>
             </li>
             <li class="nav-item{% if live_feed_active is defined %} active{% endif %}">
-                <a class="nav-link" href="{{ url_for('view_live_feed', deployment_name=deployment.name) }}">
+                <a class="nav-link" href="{{ url_for('view_live_feed', deployment_name=deployment.name, deployment_id=deployment.id) }}">
                 <i class="fas fa-fw fa-rss"></i>
                 <span>Live Feed</span></a>
             </li>
             <li class="nav-item{% if decision_making_log_active is defined %} active{% endif %}">
-                <a class="nav-link" href="{{ url_for('view_decision_making_log', deployment_name=deployment.name) }}">
+                <a class="nav-link" href="{{ url_for('view_decision_making_log', deployment_name=deployment.name, deployment_id=deployment.id) }}">
                 <i class="fas fa-fw fa-pen"></i>
                 <span>Decision-Making Log</span></a>
             </li>

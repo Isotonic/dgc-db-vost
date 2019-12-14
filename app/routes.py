@@ -120,43 +120,39 @@ def view_deployments():
     return render_template('deployments.html', title='Deployments', nosidebar=True, groups=groups, back_url=url_for('view_deployments'), deployments=current_user.get_deployments())
 
 
-@app.route('/deployments/<deployment_name>/incidents/', methods=['GET'])
+@app.route('/deployments/<deployment_name>-<int:deployment_id>/incidents/', methods=['GET'])
 @login_required
-def view_incidents(deployment_name):
-    deployment_name = deployment_name.replace("-", " ")
-    deployment = Deployment.query.filter(func.lower(Deployment.name) == func.lower(deployment_name)).first()
-    if not deployment:
+def view_incidents(deployment_name, deployment_id):
+    deployment = Deployment.query.filter_by(id=deployment_id).first()
+    if not deployment or not deployment.name_check(deployment_name):
         return render_template('404.html', nosidebar=True), 404
     incidents_stat = deployment.calculate_incidents_stat()
     return render_template('incidents.html', title=f'{deployment.name}', deployment=deployment,
                            incidents_active=True, incidents_stat=incidents_stat, incidents=current_user.get_incidents(deployment.id), back_url=url_for('view_deployments'))
 
-@app.route('/deployments/<deployment_name>/assigned_incidents/', methods=['GET'])
+@app.route('/deployments/<deployment_name>-<deployment_id>/assigned_incidents/', methods=['GET'])
 @login_required
-def view_assigned_incidents(deployment_name):
-    deployment_name = deployment_name.replace("-", " ")
-    deployment = Deployment.query.filter(func.lower(Deployment.name) == func.lower(deployment_name)).first()
-    if not deployment:
+def view_assigned_incidents(deployment_name, deployment_id):
+    deployment = Deployment.query.filter_by(id=deployment_id).first()
+    if not deployment or not deployment.name_check(deployment_name):
         return render_template('404.html', nosidebar=True), 404
     incidents_stat = deployment.calculate_incidents_stat(current_user)
     return render_template('incidents.html', title=f'{deployment.name}', deployment=deployment,
                            assigned_incidents_active=True, incidents_stat=incidents_stat, incidents=current_user.get_incidents(deployment.id, ignore_permissions=True), back_url=url_for('view_deployments'))
 
 
-@app.route('/deployments/<deployment_name>/incidents/<incident_name>-<int:incident_id>', methods=['GET', 'POST'])
+@app.route('/deployments/<deployment_name>-<deployment_id>/incidents/<incident_name>-<int:incident_id>/', methods=['GET', 'POST'])
 @login_required
-def view_incident(deployment_name, incident_name, incident_id):
-    deployment_name = deployment_name.replace("-", " ")
-    incident = Incident.query.filter(func.lower(Incident.name) == func.lower(incident_name),
-                                     Incident.id == incident_id).first()
-    if not incident or incident.deployment.name.lower() != deployment_name.lower():
+def view_incident(deployment_name, deployment_id, incident_name, incident_id):
+    incident = Incident.query.filter_by(id=incident_id, deployment_id=deployment_id).first()
+    if not incident or not incident.name_check(deployment_name, incident_name):
         return render_template('404.html', nosidebar=True), 404
     if not current_user.has_permission('view_all_incidents'):
-        return redirect(url_for('view_assigned_incidents', deployment_name=deployment_name))
+        return redirect(url_for('view_assigned_incidents', deployment_name=Incident.deployment.urlstring, deployment_id=Incident.deployment_id))
     groups = []
     for k, g in groupby(User.query.all(), key=lambda item: item.group):
         groups.append([k.name, list(g)])
-    return render_template('incident.html', incident=incident, deployment=incident.deployment, groups=groups, back_url=url_for('view_incidents', deployment_name=deployment_name), title=f'{incident.deployment.id} - Incident {incident_id}')
+    return render_template('incident.html', incident=incident, deployment=incident.deployment, groups=groups, back_url=url_for('view_incidents', deployment_name=incident.deployment.name, deployment_id=incident.deployment_id), title=f'{incident.deployment.id} - Incident {incident_id}')
 
 
 @app.route('/notifications/', methods=['GET'])
@@ -165,23 +161,22 @@ def view_notifications():
     pass
 
 
-@app.route('/<deployment_name>/map/', methods=['GET'])
+@app.route('/<deployment_name>-<deployment_id>/map/', methods=['GET'])
 @login_required
-def view_map(deployment_name):
-    deployment_name = deployment_name.replace("-", " ")
-    deployment = Deployment.query.filter(func.lower(Deployment.name) == func.lower(deployment_name)).first()
-    if not deployment:
+def view_map(deployment_name, deployment_id):
+    deployment = Deployment.query.filter_by(id=deployment_id).first()
+    if not deployment or not deployment.name_check(deployment_name):
         return render_template('404.html', nosidebar=True), 404
-    return render_template('map.html', title=f'{deployment}', deployment=deployment, geojson=list(filter(None, [m.generate_geojson() for m in current_user.get_incidents(deployment)])), map_active=True, back_url=url_for('view_incidents', deployment_name=deployment_name))
+    return render_template('map.html', title=f'{deployment}', deployment=deployment, geojson=list(filter(None, [m.generate_geojson() for m in current_user.get_incidents(deployment)])), map_active=True, back_url=url_for('view_incidents', deployment_name=deployment.name, deployment_id=deployment.id))
 
 
-@app.route('/<deployment_name>/live-feed/', methods=['GET'])
+@app.route('/<deployment_name>-<deployment_id>/live-feed/', methods=['GET'])
 @login_required
 def view_live_feed(deployment_name):
     pass
 
 
-@app.route('/<deployment_name>/decision-making-log/', methods=['GET'])
+@app.route('/<deployment_name>-<deployment_id>/decision-making-log/', methods=['GET'])
 @login_required
 def view_decision_making_log(deployment_name):
     pass

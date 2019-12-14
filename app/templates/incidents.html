@@ -112,7 +112,7 @@
 				</thead>
 				<tbody class="list">
 					{% for incident in incidents %}
-					<tr data-href="{{ url_for('view_incident', deployment_name=deployment.name, incident_name=incident.name, incident_id=incident.id) }}">
+					<tr data-href="{{ url_for('view_incident', deployment_name=deployment.name, deployment_id=deployment.id, incident_name=incident.name, incident_id=incident.id) }}">
 						<th scope="row">
 							{% if current_user in incident.pinned %}
 							<i class="fas fa-bookmark"></i>

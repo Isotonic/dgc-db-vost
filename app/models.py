@@ -188,6 +188,9 @@ class Deployment(db.Model):
     users = db.relationship('User', secondary=deployment_user_junction)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+    def name_check(self, deployment_name):
+        return self.name.lower() == deployment_name.lower()
+
     def calculate_incidents_stat(self, user=None):
         if user:
             incidents = user.get_incidents(self)
@@ -240,6 +243,9 @@ class Incident(db.Model):
     medias = db.relationship('IncidentMedia', backref='incident')
     actions = db.relationship('IncidentLog', backref='incident')
 
+    def name_check(self, deployment_name, incident_name):
+        return self.deployment.name.lower() == deployment_name.lower() and self.name.lower() == incident_name.lower()
+
     def get_priority(self):
         if not self.priority: return self.priorities[1].title()  ##TODO REMOVE
         return self.priorities[self.priority].title()
@@ -269,7 +275,7 @@ class Incident(db.Model):
                 'tasks': self.task_string(),
                 'comments': len(self.comments),
                 'colour': self.priority_colours[self.priority],
-                'url': url_for('view_incident', deployment_name=self.deployment, incident_name=self.name, incident_id=self.id)
+                'url': url_for('view_incident', deployment_name=self.deployment, deployment_id=self.deployment.id, incident_name=self.name, incident_id=self.id)
             },
             'geometry': {
                 'type': 'Point',
