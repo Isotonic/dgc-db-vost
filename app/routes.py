@@ -301,14 +301,16 @@ def create_incident_task(data):
     print(data)
     try: ##TODO Add in incident id and deployment id in here too
         name = data['name']
-        users = User.query.filter(User.id.in_(data['users'])).all()
+        users = data['users']
     except:
         return emit('create_incident_task', {'message': 'Incorrect data supplied.', 'code': 403})
     incident = Incident.query.filter(Deployment.id == data['deployment_id'], Incident.id == data['incident_id']).first()
     if not incident:
         return emit('create_incident_task', {'message': 'Unable to find the deployment or incident.', 'code': 404})
-    if set(users) - set(incident.assigned_to):
-        allocation(current_user, incident, users)
+    if users:
+        users = User.query.filter(User.id.in_(data['users'])).all()
+        if set(users) - set(incident.assigned_to):
+            allocation(current_user, incident, users)
     new_task(name, users, incident, current_user)
 
 
@@ -316,6 +318,7 @@ def create_incident_task(data):
 @login_required_sockets
 #@has_permission_sockets
 def change_task_status(data):
+    print(data)
     task_id = data['task_id']
     completed = data['completed']
        # return emit('change_task_status', {'message': 'Incorrect data supplied.', 'code': 403})

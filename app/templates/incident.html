@@ -131,7 +131,7 @@
 				<div class="row no-gutters align-items-center">
 					<div class="col mr-2">
 						<div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Last Updated</div>
-						<div class="h5 mb-0 font-weight-bold text-gray-800">{{ moment(incident.last_updated).fromNow(refresh=True) }}
+						<div id="LastUpdated" class="h5 mb-0 font-weight-bold text-gray-800">{{ moment(incident.last_updated).fromNow(refresh=True) }}
 						</div>
 					</div>
 					<div class="col-auto">
@@ -415,34 +415,40 @@
 	}
 
 	$('#ChangeIncidentStatus').click( function(e) {
-		e.preventDefault();
+		e.preventDefault()
 		socket.emit('change_incident_status', {'status': $(this).hasClass('btn-info'), 'deployment_id': deployment_id, 'incident_id': incident_id})
 	})
 
 	$('#changeAllocationForm').submit( function(e) {
-	    e.preventDefault();
+	    e.preventDefault()
 	    $('#changeAllocationModal').modal('hide')
 		socket.emit('change_incident_allocation', {'users': $('#changeAllocationSelect').val(), 'deployment_id': deployment_id, 'incident_id': incident_id})
 		$('#changeAllocationForm').get(0).reset()
 	})
 
     $('#PriorityDropdown a').click(function (e) {
-        e.preventDefault();
+        e.preventDefault()
         old_priority = $('#PriorityText').text()
         socket.emit('change_incident_priority', {'priority': $(this).text(), 'deployment_id': deployment_id, 'incident_id': incident_id})
     })
 
 	$('#addTaskForm').submit( function(e) {
-	   e.preventDefault();
+	   e.preventDefault()
 	   $('#addTaskModal').modal('hide')
         socket.emit('create_incident_task', {'name': $(this).serializeArray()[0]['value'], 'users': $('#addTaskSelect').val(), 'deployment_id': deployment_id, 'incident_id': incident_id})
 		$('#addTaskForm').get(0).reset()
 	})
 
-	$('#Tasks :checkbox').on('click', function(e) {
+	$('#Tasks').on('click', function(e) {
+		console.log(e)
 		e.stopPropagation()
-		socket.emit('change_task_status', {'task_id':  $(this).val(), 'completed': $(this).is(':checked'), 'deployment_id': deployment_id, 'incident_id': incident_id})
+		if (e.target.type == 'checkbox') {
+			socket.emit('change_task_status', {'task_id':  e.target.value, 'completed': $(e.target).prop("checked"), 'deployment_id': deployment_id, 'incident_id': incident_id})
+		} else {
+			$('#taskModal').modal('show')
+		}
 	})
+
 
 	$('#addCommentForm').submit( function(e) {
 	   e.preventDefault();
@@ -503,13 +509,14 @@
 
 	socket.on('change_task_status', function(data) {
 		if (recieve(data)) {
+			console.log(data['timestamp'])
 			if (data['completed']) {
 				$('#TaskRow' + data['id']).addClass('text-muted');
-				$('#TaskDate' + data['id']).html('Completed ' + data['timestamp'])
+				$('#TaskDate' + data['id']).html('Completed ' + moment.unix(data['timestamp']).fromNow(refresh=true))
 				$('#Task' + data['id']).prop('checked', true)
 			} else {
 				$('#TaskRow' + data['id']).removeClass('text-muted');
-				$('#TaskDate' + data['id']).html('Created ' + data['timestamp'])
+				$('#TaskDate' + data['id']).html('Created ' + moment.unix(data['timestamp']).fromNow(refresh=true))
 				$('#Task' + data['id']).prop('checked', false)
 			}
 			flask_moment_render_all()
@@ -530,11 +537,8 @@
 
 	socket.on('activity', function(data) {
 		$('#Activity').prepend(data['html'])
+		$('#LastUpdated').html(moment().fromNow(refresh=true))
 		flask_moment_render_all()
-	})
-
-	$('.list-group-item.list-group-flush').click( function(e) {
-		$('#taskModal').modal('show')
 	})
 
 	function format(state) {

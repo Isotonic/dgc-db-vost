@@ -29,13 +29,15 @@ def allocation(user, incident, allocated_to):
     removed = list(set(incident.assigned_to) - set(allocated_to))
     incident.assigned_to = allocated_to
     incident.last_updated = datetime.utcnow()
-    emit('change_incident_allocation', {'html': [render_template('assigned_to.html', user=m) for m in incident.assigned_to], 'code': 200}, room=f'{incident.deployment_id}-{incident.id}')
+    emit('change_incident_allocation',
+         {'html': [render_template('assigned_to.html', user=m) for m in incident.assigned_to], 'code': 200},
+         room=f'{incident.deployment_id}-{incident.id}')
     if removed:
         incident_action(user=user, action_type=IncidentLog.action_values['removed_user'],
-                             incident=incident, target_users=removed)
+                        incident=incident, target_users=removed)
     if added:
         incident_action(user=user, action_type=IncidentLog.action_values['assigned_user'],
-                             incident=incident, target_users=added)
+                        incident=incident, target_users=added)
 
 
 def incident_priority(user, incident, priority):
@@ -43,9 +45,10 @@ def incident_priority(user, incident, priority):
         return False
     incident.priority = priority
     incident.last_updated = datetime.utcnow()
-    emit('change_incident_priority', {'priority': Incident.priorities[incident.priority].title(), 'code': 200}, room=f'{incident.deployment_id}-{incident.id}')
+    emit('change_incident_priority', {'priority': Incident.priorities[incident.priority].title(), 'code': 200},
+         room=f'{incident.deployment_id}-{incident.id}')
     incident_action(user=user, action_type=IncidentLog.action_values['changed_priority'],
-                         incident=incident, extra=Incident.priorities[priority])
+                    incident=incident, extra=Incident.priorities[priority])
 
 
 def task_status(user, task, status):
@@ -59,6 +62,8 @@ def task_status(user, task, status):
         task.completed_at = None
         action_type = 'incomplete_task'
     task.incident.last_updated = datetime.utcnow()
-    emit('change_task_status', {'id': task.id, 'completed': task.completed, 'timestamp': moment.create(task.completed_at if task.completed else task.created_at).fromNow(refresh=True), 'code': 200}, room=f'{task.incident.deployment_id}-{task.incident.id}')
+    emit('change_task_status', {'id': task.id, 'completed': task.completed,
+                                'timestamp': task.completed_at.timestamp() if task.completed else task.created_at.timestamp(),
+                                'code': 200}, room=f'{task.incident.deployment_id}-{task.incident.id}')
     incident_action(user=user, action_type=IncidentLog.action_values[action_type],
-                         incident=task.incident, task=task)
+                    incident=task.incident, task=task)

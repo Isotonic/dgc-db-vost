@@ -210,7 +210,7 @@ class Deployment(db.Model):
 class Incident(db.Model):
     priority_values = {'standard': 1, 'prompt': 2, 'immediate': 3}
     priorities = {1: 'standard', 2: 'prompt', 3: 'immediate'}
-    priority_colours = {1: '#f6c23e', 2: '#fd7e14', 3: '#e74a3b'}
+    priority_colours = {1: '#FFC312', 2: '#fa8231', 3: '#e74c3c'}
     incident_types = {}  ##TODO Get incident types.
 
     # TODO Add who has this pinned.

@@ -28,48 +28,47 @@
 }
 
 .bg-dark-blue {
-    background: #1c1e2f;
+  background: #1c1e2f;
 }
 
 .icon-shape {
-    padding: 12px;
-    text-align: center;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
+  padding: 12px;
+  text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
 
 }
 .icon {
-    width: 3rem;
-    height: 3rem;
-
+  width: 3rem;
+  height: 3rem;
 }
 
 .fa-1fourx {
-    font-size: 1.4em;
+  font-size: 1.4em;
 }
 
 .btn.btn-icon-split {
-    margin-right: 0.2rem;
+  margin-right: 0.2rem;
 }
 
 .edit-opacity {
-    opacity: 0.8;
+  opacity: 0.8;
 }
 
-.edit-margin {
-    margin-right: 0.4rem;
+.task-checkbox {
+  margin-right: 0.4rem;
 }
 
 .deployments_brand_img {
-    height: 80%;
+  height: 80%;
 }
 
 .incident-cog {
-    margin-bottom: -1.2rem;
-    margin-right: 0.4rem;
-    z-index: 999;
+  margin-bottom: -1.2rem;
+  margin-right: 0.4rem;
+  z-index: 999;
 }
 
 input[type=checkbox][disabled]{
@@ -78,13 +77,13 @@ input[type=checkbox][disabled]{
 
 .list-group-item.list-group-flush:hover,
 tr:hover {
-    cursor: pointer;
-    background-color: #f6f8fe !important;
+  cursor: pointer;
+  background-color: #f6f8fe !important;
 }
 
 .not-pinned {
-    text-shadow: 0px 0px 1px black, 0px 0px 1px black;
-    color: white;
+  text-shadow: 0px 0px 1px black, 0px 0px 1px black;
+  color: white;
 }
 
 /*!
