@@ -1,4 +1,5 @@
 import pyavagen
+from flask import url_for
 from string import Template
 from os import path, makedirs
 from flask_admin import Admin  ##TODO Remove
@@ -209,6 +210,7 @@ class Deployment(db.Model):
 class Incident(db.Model):
     priority_values = {'standard': 1, 'prompt': 2, 'immediate': 3}
     priorities = {1: 'standard', 2: 'prompt', 3: 'immediate'}
+    priority_colours = {1: '#f6c23e', 2: '#fd7e14', 3: '#e74a3b'}
     incident_types = {}  ##TODO Get incident types.
 
     # TODO Add who has this pinned.
@@ -262,10 +264,12 @@ class Incident(db.Model):
                 'name': self.name,
                 'description': self.description,
                 'priority': self.get_priority(),
-                'created': self.created_at,
+                'created_at': self.created_at.timestamp(),
                 'location': self.location,
                 'tasks': self.task_string(),
-                'comments': len(self.comments)
+                'comments': len(self.comments),
+                'colour': self.priority_colours[self.priority],
+                'url': url_for('view_incident', deployment_name=self.deployment, incident_name=self.name, incident_id=self.id)
             },
             'geometry': {
                 'type': 'Point',
@@ -335,11 +339,11 @@ class IncidentLog(db.Model):
                      'delete_comment': 6, 'incomplete_task': 7, 'assigned_user': 8, 'removed_user': 9,
                      'marked_complete': 10, 'marked_incomplete': 11, 'changed_priority': 12}  ##TODO RE-ORDER ONCE DONE
     action_strings = {1: 'created incident', 2: 'created task $task', 3: 'marked $task as complete',
-                      4: 'deleted task {task}',
+                      4: 'deleted task $task',
                       5: 'added update', 6: 'deleted update', 7: 'marked $task as incomplete',
                       8: 'assigned $target_users to incident',
                       9: 'removed $target_users from incident', 10: 'marked incident as complete',
-                      11: 'marked incident as incomplete', 12: 'changed priority to'}
+                      11: 'marked incident as incomplete', 12: 'changed priority to $extra'}
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))

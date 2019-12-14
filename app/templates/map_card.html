@@ -1,12 +1,4 @@
-{% set priority = incident.get_priority() %}
-{% if priority == 'Standard' %}
-{% set priority_colour = 'warning' %}
-{% elif priority == 'Prompt' %}
-{% set priority_colour = 'orange' %}
-{% else %}
-{% set priority_colour = 'danger' %}
-{% endif %}
-<li id="Incident{{ incident.id }}" class="list-group-item list-group-flush border-left-{{ priority_colour }}" data-incident-id="{{ incident.id }}">
+<li id="Incident{{ incident.id }}" class="list-group-item list-group-flush" data-longitude="{{ incident.longitude }}" data-latitude="{{ incident.latitude }}">
     <div class="row align-items-center no-gutters">
         <div class="col mr-2">
             <h6 class="mb-0">

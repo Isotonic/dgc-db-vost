@@ -11,9 +11,6 @@ from app.models import User, Group, Deployment, Incident, IncidentTask, EmailLin
 from app.utils.create import new_user, new_group, new_deployment, new_incident, new_task, new_comment
 
 
-priority_colours = {1: '#f6c23e', 2: '#fd7e14', 3: '#e74a3b'}
-
-
 def login_required_sockets(f):
     @functools.wraps(f)
     def wrapped(*args, **kwargs):

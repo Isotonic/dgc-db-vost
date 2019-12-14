@@ -3,13 +3,13 @@
 {% block css %}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css" integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ==" crossorigin=""/>
 <link href='https://api.mapbox.com/mapbox-gl-js/v1.4.1/mapbox-gl.css' rel='stylesheet' />
+<link href='/static/css/L.Icon.Pulse.css' rel='stylesheet' />
 {% endblock %}
 
 {% block body %}
 <div class="row">
 <div class="col-xl-12">
     		<div class="card">
-
             <div class="card-header d-flex flex-row align-items-center justify-content-between">
 				<h6 class="m-0 font-weight-bold text-primary">Map</h6>
             </div>
@@ -17,7 +17,9 @@
                 <div class="col-sm-3 overflow-auto pr-0">
         <div class="mb-4">
             {% for incident in deployment.incidents %}
+            {% if incident.longitude and incident.latitude %}
             {% include 'map_card.html' %}
+            {% endif %}
             {% endfor %}
         </div>
     </div>
@@ -33,6 +35,7 @@
 {% block scripts %}
 <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js" integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew==" crossorigin=""></script>
 <script src='https://api.mapbox.com/mapbox-gl-js/v1.4.1/mapbox-gl.js'></script>
+<script src='/static/js/L.Icon.Pulse.js'></script>
 <script>
 $(document).ready(function() {
 		  var map = L.map('Map').setView({lat: 55.872326, lng: -4.288094}, 15)
@@ -44,36 +47,48 @@ $(document).ready(function() {
 			accessToken: '{{ config['MAPBOX_API_KEY'] }}'
 		}).addTo(map);
 
-        function clickZoom(e) {
-            map.flyTo(e.latlng, 15, {
+        function clickZdoom(e) {
+            map.flyTo(e.latlng, {
             animate: true,
             duration: 0.5
           })
         }
 
         function onEachFeature(feature, layer) {
-            // does this feature have a property named popupContent?
-            if (feature.properties && feature.properties.description) {
-                layer.bindPopup(feature.properties.description);
+            if (feature.properties) {
+                layer.bindPopup(
+                `<div class="card shadow">
+                    <div class="card-header bg-` + feature.properties.priority + ` d-flex flex-row align-items-center justify-content-between">
+                        <h6 class="m-0 font-weight-bold text-light">` + feature.properties.name + `</h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text"><b>Created:</b> ` + moment.unix(feature.properties.created_at).fromNow() + `</p>
+                        <p class="card-text"><b>Location:</b> ` + feature.properties.location + `</p>
+                        <p class="card-text"><b>Description:</b> ` + feature.properties.description + `</p>
+                        <div class="text-center">
+                            <a class="btn btn-` + feature.properties.priority + ` text-light" href="` + feature.properties.url + `">Go To Incident</a>
+                        </div>
+                    </div>
+                </div>`)
             }
         }
 
         var incidents_geojson = {{ geojson | tojson }}
 
         var geojsonLayer = L.geoJSON(incidents_geojson, {
-            onEachFeature: onEachFeature
-        }).addTo(map).on('click', clickZoom)
+            onEachFeature: onEachFeature,
+            pointToLayer: function (geoJsonPoint, latlng) {
+                return L.marker(latlng, {icon: L.icon.pulse({iconSize:[10,10], color: geoJsonPoint.properties.colour, fillColor: geoJsonPoint.properties.colour})})
+            }
+        }).addTo(map)
         map.fitBounds(geojsonLayer.getBounds())
 
         $('.list-group-item.list-group-flush').click( function(e) {
-		var incident = incidents[$(this).data('incident-id')]
-		if (incident) {
-            map.flyTo(L.latLng(incident[0], incident[1]), 15, {
-            animate: true,
-            duration: 0.5
-          })
-          }
-	})
+            map.flyTo(L.latLng($(this).data('latitude'), $(this).data('longitude')), 12, {
+                animate: true,
+                duration: 0.5
+            })
+        })
 	})
 
 

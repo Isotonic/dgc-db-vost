@@ -67,16 +67,9 @@
 	</div>
 	<div class="col-xl-3 col-md-6 mb-4">
 		{% set priority = incident.get_priority() %}
-		{% if priority == 'Standard' %}
-		{% set priority_colour = 'warning' %}
-		{% elif priority == 'Prompt' %}
-		{% set priority_colour = 'orange' %}
-		{% else %}
-		{% set priority_colour = 'danger' %}
-		{% endif %}
 		{% if current_user.has_permission('change_priority') %}
-		<div id="PriorityBorder" class="card border-left-{{ priority_colour }} shadow h-100 py-2">
-			<a id="PriorityCog" class="incident-cog text-{{ priority_colour }}" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+		<div id="PriorityBorder" class="card border-left-{{ priority }} shadow h-100 py-2">
+			<a id="PriorityCog" class="incident-cog text-{{ priority }}" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 			    <i class="fas fa-cog float-right" data-toggle="tooltip" title="Change Priority"></i>
 			</a>
 			<div id="PriorityDropdown" class="dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="dropdownPriorityMenu">
@@ -88,11 +81,11 @@
 			<div class="card-body">
 				<div class="row no-gutters align-items-center">
 					<div class="col mr-2">
-						<div id="PriorityTitle" class="text-s font-weight-bold text-{{ priority_colour }} text-uppercase mb-1">Priority</div>
+						<div id="PriorityTitle" class="text-s font-weight-bold text-{{ priority }} text-uppercase mb-1">Priority</div>
 						<div id="PriorityText" class="h5 mb-0 font-weight-bold text-gray-800">{{ priority }}</div>
 					</div>
 					<div class="col-auto">
-						<div id="PriorityIcon" class="icon icon-shape bg-{{ priority_colour }} text-white rounded-circle shadow">
+						<div id="PriorityIcon" class="icon icon-shape bg-{{ priority }} text-white rounded-circle shadow">
 							<!-- TODO Add different types of incidents. -->
 							<i class="fas fa-exclamation fa-1fourx"></i>
 						</div>
@@ -247,7 +240,7 @@
 					<div class="card-header py-3 d-flex align-items-center justify-content-between">
 						<h6 class="m-0 font-weight-bold text-primary">Change Allocation</h6>
 						<button class="close" type="button" data-dismiss="modal" aria-label="Close">
-						<span aria-hidden="true">×</span>
+							<span aria-hidden="true">×</span>
 						</button>
 					</div>
 					<div class="card-body">
@@ -483,18 +476,17 @@
 
 	socket.on('change_incident_priority', function(data) {
 		if (recieve(data)) {
-			var colours = {'Immediate': 'danger', 'Prompt': 'orange', 'Standard': 'warning'}
-				$('#PriorityBorder').removeClass('border-left-warning border-left-orange border-left-danger')
-				$('#PriorityCog').removeClass('text-warning text-orange text-danger')
-				$('#PriorityTitle').removeClass('text-warning text-orange text-danger')
-				$('#PriorityIcon').removeClass('bg-warning bg-orange bg-danger')
-				$("[id^=Priority].active").removeClass('active')
-				$('#PriorityText').text(data['priority'])
-				$('#PriorityBorder').addClass('border-left-' + colours[data['priority']])
-				$('#PriorityCog').addClass('text-' + colours[data['priority']])
-				$('#PriorityTitle').addClass('text-' + colours[data['priority']])
-				$('#PriorityIcon').addClass('bg-' + colours[data['priority']])
-				$('#Priority' + data['priority']).addClass('active')
+			$('#PriorityBorder').removeClass('border-left-Standard border-left-Prompt border-left-Immediate')
+			$('#PriorityCog').removeClass('text-Standard text-Prompt text-Immediate')
+			$('#PriorityTitle').removeClass('text-Standard text-Prompt text-Immediate')
+			$('#PriorityIcon').removeClass('bg-Standard bg-Prompt bg-Immediate')
+			$("[id^=Priority].active").removeClass('active')
+			$('#PriorityText').text(data['priority'])
+			$('#PriorityBorder').addClass('border-left-' + data['priority'])
+			$('#PriorityCog').addClass('text-' + data['priority'])
+			$('#PriorityTitle').addClass('text-' + data['priority'])
+			$('#PriorityIcon').addClass('bg-' + data['priority'])
+			$('#Priority' + data['priority']).addClass('active')
 		}
 	})
 

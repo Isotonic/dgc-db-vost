@@ -346,3 +346,15 @@ li.update-log > .update-log-text:before {
   width: 28px;
   height: 28px;
 }
+
+.leaflet-popup-close-button {
+  display: none;
+}
+
+.leaflet-popup-content {
+    margin: 0px !important;
+}
+
+.leaflet-popup-content-wrapper {
+    padding: 0px !important;
+}
