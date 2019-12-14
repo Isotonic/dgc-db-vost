@@ -461,6 +461,7 @@
 			if (data['status']) {
 				$('#ChangeIncidentStatus').removeClass('btn-info').addClass('btn-success')
 				$('#ChangeIncidentStatusText').text('Mark as Complete')
+				clock()
 			} else {
 				$('#ChangeIncidentStatus').removeClass('btn-success').addClass('btn-info')
 				$('#ChangeIncidentStatusText').text('Mark as Incomplete')

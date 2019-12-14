@@ -357,3 +357,15 @@ li.update-log > .update-log-text:before {
 .leaflet-popup-content-wrapper {
     padding: 0px !important;
 }
+
+.clock-text {
+  display: inline-block;
+  list-style-type: none;
+  padding-right: 0.4em;
+  text-transform: uppercase;
+  font-weight: 550;
+}
+
+.clock-time {
+  display: block;
+}

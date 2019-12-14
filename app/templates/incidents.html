@@ -55,27 +55,6 @@
 			</div>
 		</div>
 	</div>
-	<div class="col-xl-3 col-md-6 mb-4">
-		<div class="card border-left-success shadow">
-			<div class="card-body">
-				<div class="row no-gutters align-items-center">
-					<div class="col mr-2">
-						<!-- TODO Add closed deployment logic -->
-						<div class="text-s font-weight-bold text-success text-uppercase mb-1">Active For</div>
-						<div class="h5 clock mb-0 font-weight-bold text-gray-800"></div>
-					</div>
-					<div class="col-auto">
-						<div class="icon icon-shape bg-success text-white rounded-circle shadow">
-							<i class="fas fa-1fourx fa-stopwatch"></i>
-						</div>
-					</div>
-				</div>
-				<p class="mt-3 mb-0 text-muted text-s">
-					<span class="text-nowrap">Created {{ moment(deployment.created_at).format('Do MMMM YYYY, h:mma') }}</span>
-				</p>
-			</div>
-		</div>
-	</div>
 </div>
 <div class="card shadow mb-4">
 	<div class="card-header py-3">
@@ -261,29 +240,10 @@
 		}
 	})
 
-	clock();
-	
 	$(document).on('click', 'td', function () {
-	     window.location = $(this).parent().data("href");
-	 });
-	
-	function clock() {
-	    var zero = moment.unix(0)
-	    setInterval(function() {
-	            var seconds = Math.round(new Date().getTime()/1000) - {{ deployment.created_at.timestamp() }}
-	            if (seconds < 60){
-	                var timeString = moment.unix(seconds).format('ss')
-	            } else if (seconds < 3600){
-	                var timeString = moment.unix(seconds).format('mm:ss')
-	            } else if (seconds < 86400){
-	                var timeString = moment.unix(seconds).format('hh:mm:ss')
-	            } else {
-	                var momentVar = moment.unix(seconds)
-	                var timeString = momentVar.diff(zero, 'days') + ':' + momentVar.format('hh:mm:ss')
-	            }
-	        $(".clock").html(timeString);
-	    }, 1000);
-	};
+	     window.location = $(this).parent().data("href")
+	 })
+
 </script>
 <script>
 	// Call the dataTables jQuery plugin
