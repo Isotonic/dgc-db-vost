@@ -5,7 +5,7 @@ from app.models import User, Group
 from app.utils.create import new_user
 from flask_restplus import Resource, Namespace
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from app.api.utils.models import new_user_model, user_model
+from app.api.utils.models import new_user_model, user_model, incident_model
 
 ns_user = Namespace('User', description='Used to carry out operations related with users.', path='/user')
 
@@ -71,3 +71,22 @@ class CreateNewUser(Resource):
 
         created_user = new_user(payload['firstname'], payload['surname'], payload['email'], group.id, current_user)
         return {'user_id': created_user.id, 'firstname': created_user.firstname, 'surname': created_user.surname, 'avatar_url': url_for('static', filename=created_user.get_avatar(static=False), _external=True), 'group_id': created_user.group_id}, 200
+
+@ns_user.route('/openincidents')
+class GetAllOpenIncidents(Resource):
+    @jwt_required
+    @ns_user.doc(security='access_token')
+    @ns_user.response(200, 'Success', [incident_model])
+    def get(self):
+        """
+                Returns all open incidents the user has access to.
+        """
+        current_user = User.query.filter_by(id=get_jwt_identity()).first()
+        deployments = current_user.get_deployments()
+        incidents = [o for n in [current_user.get_incidents(m) for m in deployments] for o in n]
+        all_incidents = [{'id': m.id, 'name': m.name, 'description': m.description,
+                          'location': m.location, 'open': m.open_status, 'public': m.public,
+                          'flagged': m.flagged, 'type': m.incident_type, 'priority': m.priority,
+                          'longitude': m.longitude, 'latitude': m.latitude,
+                          'created_at': m.created_at.timestamp()} for m in incidents if m.longitude and m.latitude] ##TODO remove this check.
+        return all_incidents, 200

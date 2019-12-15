@@ -14,7 +14,6 @@ class GetAllIncidents(Resource):
     @jwt_required
     @ns_incident.doc(security='access_token')
     @ns_incident.response(200, 'Success', [incident_model])
-    @ns_incident.response(404, 'No incidents found')
     @ns_incident.response(404, 'Deployment doesn\'t exist')
     def get(self, deployment_id):
         """
@@ -28,8 +27,6 @@ class GetAllIncidents(Resource):
                           'flagged': m.flagged, 'type': m.incident_type, 'priority': m.priority,
                           'longitude': m.longitude, 'latitude': m.latitude,
                           'created_at': m.created_at.timestamp()} for m in current_user.get_incidents(deployment_id) if m.longitude and m.latitude] ##TODO remove this check.
-        if not all_incidents:
-            ns_incident.abort(404, 'No incidents found')
         return all_incidents, 200
 
 
