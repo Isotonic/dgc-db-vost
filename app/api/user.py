@@ -2,7 +2,7 @@ from flask import url_for
 from sqlalchemy import func
 from app.api import dgvost_api
 from app.models import User, Group
-from app.utils.create import new_user
+from app.utils.create import create_user
 from flask_restplus import Resource, Namespace
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.api.utils.models import new_user_model, user_model, incident_model
@@ -69,7 +69,7 @@ class CreateNewUser(Resource):
             if not group:
                 ns_user.abort(401, 'Group doesn\'t exist')
 
-        created_user = new_user(payload['firstname'], payload['surname'], payload['email'], group.id, current_user)
+        created_user = create_user(payload['firstname'], payload['surname'], payload['email'], group.id, current_user)
         return {'user_id': created_user.id, 'firstname': created_user.firstname, 'surname': created_user.surname, 'avatar_url': url_for('static', filename=created_user.get_avatar(static=False), _external=True), 'group_id': created_user.group_id}, 200
 
 @ns_user.route('/openincidents')

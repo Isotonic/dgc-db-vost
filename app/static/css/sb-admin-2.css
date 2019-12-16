@@ -5639,6 +5639,9 @@ a.close.disabled {
 }
 
 @media (min-width: 576px) {
+  .modal-bigger {
+    max-width: 700px !important;
+  }
   .modal-dialog {
     max-width: 500px;
     margin: 1.75rem auto;

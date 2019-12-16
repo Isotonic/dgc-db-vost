@@ -1,7 +1,7 @@
 from sqlalchemy import func
 from app.api import dgvost_api
 from app.models import User, Deployment
-from app.utils.create import new_deployment
+from app.utils.create import create_deployment
 from flask_restplus import Resource, Namespace
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.api.utils.models import new_deployment_model, deployment_model
@@ -70,7 +70,7 @@ class CreateNewDeployment(Resource):
         if deployment is not None:
             ns_deployment.abort(409, 'Deployment already exists')
 
-        created_deployment = new_deployment(payload['name'], payload['description'], payload['groups'],
+        created_deployment = create_deployment(payload['name'], payload['description'], payload['groups'],
                                             payload['users'], current_user)
         return {'id': created_deployment.id, 'name': created_deployment.name,
                 'description': created_deployment.description, 'open': created_deployment.open_status,

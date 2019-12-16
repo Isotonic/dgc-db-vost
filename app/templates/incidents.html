@@ -96,7 +96,7 @@
 							{% if current_user in incident.pinned %}
 							<i class="fas fa-bookmark"></i>
 							{% else %}
-							<i class="fas fa-bookmark not-pinned"></i>
+							<i class="far fa-bookmark"></i>
 							{% endif %}
 						</th>
 						<td scope="row">
@@ -228,7 +228,7 @@
 		return;
 		if (recieve(data)) {
 			$('#dataTable').DataTable().row.add([
-            '<i class="fas fa-bookmark not-pinned"></i>',
+            '<i class="far fa-bookmark"></i>',
             data['name'],
             data['location'],
             data['priority'],

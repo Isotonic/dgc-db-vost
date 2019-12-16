@@ -2,11 +2,12 @@ import secrets
 from app import db, moment
 from flask_socketio import emit
 from flask import render_template
-from .actions import incident_action
-from app.models import User, Group, Deployment, Incident, IncidentTask, IncidentComment, EmailLink, AuditLog, IncidentLog
+from .change import change_task_status
+from .actions import incident_action, task_action
+from app.models import User, Group, Deployment, Incident, IncidentTask, IncidentSubTask, TaskComment, IncidentComment, EmailLink, AuditLog, IncidentLog, TaskLog
 
 
-def new_user(firstname, surname, email, groupid, created_by):
+def create_user(firstname, surname, email, groupid, created_by):
     user = User(firstname=firstname, surname=surname, email=email, group_id=groupid)
     db.session.add(user)
     db.session.commit()
@@ -19,7 +20,7 @@ def new_user(firstname, surname, email, groupid, created_by):
     return user
 
 
-def new_group(name, permission_list, created_by):
+def create_group(name, permission_list, created_by):
     group = Group(name=name)
     group.set_permissions(permission_list)
     db.session.add(group)
@@ -31,7 +32,7 @@ def new_group(name, permission_list, created_by):
     return group
 
 
-def new_deployment(name, description, group_ids, user_ids, created_by):
+def create_deployment(name, description, group_ids, user_ids, created_by):
     groups = Group.query.filter(Group.id.in_(group_ids)).all()
     users = User.query.filter(User.id.in_(user_ids)).all()
     deployment = Deployment(name=name, description=description, groups=groups, users=users)
@@ -45,7 +46,7 @@ def new_deployment(name, description, group_ids, user_ids, created_by):
     return deployment
 
 
-def new_incident(name, description, location, reported_via, reference, deployment, created_by):
+def create_incident(name, description, location, reported_via, reference, deployment, created_by):
     incident = Incident(name=name, description=description, location=location, reported_via=reported_via,
                         reference=reference, deployment=deployment, created_by=created_by.id)
     db.session.add(incident)
@@ -59,8 +60,8 @@ def new_incident(name, description, location, reported_via, reference, deploymen
     return incident
 
 
-def new_task(name, users, incident, created_by):
-    task = IncidentTask(name=name, assigned_to=users, incident=incident)
+def create_task(name, users, description, incident, created_by):
+    task = IncidentTask(name=name, assigned_to=users, description=description, incident=incident)
     db.session.add(task)
     db.session.commit()
     emit('create_incident_task', {'html': render_template('task.html', task=task), 'code': 200},
@@ -70,8 +71,31 @@ def new_task(name, users, incident, created_by):
     return task
 
 
-def new_comment(text, highlight, incident, added_by):
-    comment = IncidentComment(text=text, highlight=highlight, user_id=added_by.id, incident=incident)
+def create_subtask(name, users, task, created_by):
+    subtask = IncidentSubTask(name=name, assigned_to=users, task=task)
+    db.session.add(task)
+    db.session.commit()
+    #emit('create_incident_task', {'html': render_template('task.html', task=task), 'code': 200},
+    #     room=f'{task.incident.deployment_id}-{task.incident.id}')
+    task_action(user=created_by, action_type=TaskLog.action_values['create_subtask'], task=task, subtask=subtask, target_users=users)
+    if len([m for m in task.subtasks if m.completed]) != len(task.subtasks) and  task.completed:
+        change_task_status(task, False, created_by)
+    return task
+
+
+def create_task_comment(text, task, added_by):
+    comment = TaskComment(text=text, user=added_by, task=task)
+    db.session.add(comment)
+    db.session.commit()
+    #emit('create_task_comment', {'html': render_template('comment.html', comment=comment), 'code': 200},
+    #     room=f'{task.incident.deployment_id}-{task.incident.id}')
+    task_action(user=added_by, action_type=IncidentLog.action_values['add_comment'],
+                   task=task)
+    return comment
+
+
+def create_comment(text, incident, added_by):
+    comment = IncidentComment(text=text, user_id=added_by.id, incident=incident)
     db.session.add(comment)
     db.session.commit()
     emit('create_incident_comment', {'html': render_template('comment.html', comment=comment), 'code': 200},

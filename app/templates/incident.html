@@ -104,11 +104,11 @@
 						<div class="text-s font-weight-bold text-success text-uppercase mb-1">Tasks</div>
 						<div class="row no-gutters align-items-center">
 							<div class="col-auto">
-								<div id="ProgressPercentage" class="h5 mb-0 mr-3 font-weight-bold text-gray-800">{{ percentage }}%</div>
+								<div id="IncidentProgressPercentage" class="h5 mb-0 mr-3 font-weight-bold text-gray-800">{{ percentage }}%</div>
 							</div>
 							<div class="col">
 								<div class="progress progress-sm mr-2">
-									<div class="progress-bar bg-success" role="progressbar"
+									<div id="IncidentProgressBar" class="progress-bar bg-success"
 										style="width: 0%" aria-valuenow="{{ percentage }}"
 										aria-valuemin="0" aria-valuemax="100"></div>
 								</div>
@@ -244,7 +244,7 @@
 						</button>
 					</div>
 					<div class="card-body">
-						<form id="changeAllocationForm" method="post" role="form">
+						<form id="changeAllocationForm" role="form">
 							<div class="form-group mb-3">
 								<select id="changeAllocationSelect" name="users" multiple="multiple" style="width: 100%">
 									<option value="0"></option>
@@ -293,7 +293,7 @@
 						</button>
 					</div>
 					<div class="card-body">
-						<form id="addTaskForm" method="post" role="form">
+						<form id="addTaskForm" role="form">
 							<div class="form-group mb-3">
 								<input class="form-control was-validated" name="name" placeholder="Task Name" type="text" required>
 							</div>
@@ -309,6 +309,7 @@
 									{% endfor %}
 								</select>
 							</div>
+							<textarea class="form-control" rows="3" name="description" placeholder="Description"></textarea>
 							<div class="text-center">
 								<button type="submit" class="btn btn-primary my-4">Submit</button>
 							</div>
@@ -318,6 +319,9 @@
 			</div>
 		</div>
 	</div>
+</div>
+<!-- Add Sub-Task Modal -->
+<div class="modal fade" id="taskModal" tabindex="-1" role="dialog" aria-labelledby="taskModal" aria-hidden="true">
 </div>
 <!-- Add Comment Modal -->
 <div class="modal fade" id="addCommentModal" tabindex="-1" role="dialog" aria-labelledby="addCommentModal" aria-hidden="true">
@@ -332,9 +336,9 @@
 						</button>
 					</div>
 					<div class="card-body">
-						<form id="addCommentForm" method="post" role="form">
+						<form id="addCommentForm" role="form">
 							<div class="form-group mb-3">
-								<input class="form-control was-validated" name="comment" placeholder="Update text" type="text" required>
+								<input class="form-control was-validated" name="comment" placeholder="Write an update..." type="text" required>
 							</div>
 							<div class="text-center">
 								<button type="submit" class="btn btn-primary my-4">Submit</button>
@@ -346,201 +350,383 @@
 		</div>
 	</div>
 </div>
-<!-- Task Modal -->
-<div class="modal fade" id="taskModal" tabindex="-1" role="dialog" aria-labelledby="taskModal" aria-hidden="true">
-	<div class="modal-dialog" role="document">
-		<div class="modal-content">
-			<div class="modal-body p-0">
-				<div class="card shadow">
-					<div class="card-header py-3 d-flex align-items-center justify-content-between">
-						<h6 class="m-0 font-weight-bold text-primary">Task</h6>
-						<button class="close" type="button" data-dismiss="modal" aria-label="Close">
-						<span aria-hidden="true">×</span>
-						</button>
+{% endblock %}
+{% block scripts %}
+<script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js" integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew==" crossorigin=""></script>
+<script src='https://api.mapbox.com/mapbox-gl-js/v1.4.1/mapbox-gl.js'></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.0.12/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/handlebars@latest/dist/handlebars.js"></script>
+<script id = "Task-Modal-Template" type="text/x-handlebars-template">
+{% raw %}
+<div class="modal-dialog modal-bigger" role="document">
+	<div class="modal-content">
+		<div class="modal-body p-0">
+			<div class="card shadow">
+				<div class="card-header py-3 d-flex align-items-center justify-content-between">
+					<h6 class="m-0 font-weight-bold text-primary">{{ name }}</h6>
+					<button class="close" type="button" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">×</span>
+					</button>
+				</div>
+				<div class="card-body bg-light">
+					<div class="row">
+						<div class="col-xl-7 col-sm-8 mb-4">
+							<h5><i class="fas fa-align-left"></i> Description</h5>
+							<input id="TaskModalDescriptionText" class="form-control-plaintext" name="description" placeholder="{{#if description}}{{ description }}{{else}}Add a description...{{/if}}" type="text">
+							<button id="TaskModalDescriptionSaveBtn" type="submit" class="btn btn-primary float-right mt-3 d-none">Save</button>
+						</div>
 					</div>
-					<div class="card-body">
-
+					<div class="row">
+						<div class="col-xl-12 col-sm-8 mb-4">
+							<h5><i class="fas fa-tasks"></i> Tasks</h5>
+							<div class="row">
+								<div class="col-auto"><div id="TaskProgressPercentage" class="h5 mb-0 mr-3 font-weight-bold text-gray-800">20%</div></div>
+								<div class="col">
+									<div class="progress progress-sm mr-2">
+										<div id="TaskProgressBar" class="progress-bar bg-success"
+											style="width: 20%" aria-valuenow="{{ percentage }}"
+											aria-valuemin="0" aria-valuemax="100"></div>
+									</div>
+								</div>
+							</div>
+							<ul id="SubTasks" class="list-group">
+							{{#each subtasks}}
+								<li id="SubTaskRow{{ id }}" class="list-group-item list-group-flush{{#if completed}} text-muted{{/if}}" value="{{ id }}">
+									<div class="row align-items-center no-gutters">
+										<div class="col mr-2">
+											<h6 class="mb-0">
+												<strong>{{ name }} </strong><span id="SubTaskDate{{ id }}" class="text-xs">{{#if completed}}Completed {{else}}Created {{/if}}{{{ timestamp }}}</span>
+											</h6>
+											{{#if assigned_to}}
+											<span id="SubTask{{ id }}Assigned" class="text-xs">Assigned to {{ assigned_to }}</span>
+											{{/if}}
+										</div>
+										<div class="col-auto">
+											<div>
+												<input class="task-checkbox" id="SubTask{{ id }}"  value="{{ id }}" type="checkbox" {{#if completed}}checked{{/if}}>
+												<i class="fas fa-trash-alt btn-opacity text-danger" data-toggle="tooltip" title="Delete Sub-Task" data-id="{{ id }}"></i>
+											</div>
+										</div>
+									</div>
+								</li>
+							{{/each}}
+							</ul>
+							<div>
+								<form id="addSubTaskForm" role="form">
+									<div class="form-group mb-3">
+										<input id="TaskModalSubTaskAdd" class="form-control was-validated" name="name" placeholder="Sub-task Name" type="text" required>
+									</div>
+									<div class="form-group mb-3">
+									<select id="addSubTaskSelect" name="users" multiple="multiple" style="width: 100%">
+										<option value="0"></option>
+										{% endraw %}
+										{% for group in groups %}
+										<optgroup label="{{ group[0] }}">
+											{% for user in group[1] %}
+											<option value="{{ user.id }}" data-avatar-url="{{ user.get_avatar() }}">{{ user }}</option>
+											{% endfor %}
+										</optgroup>
+										{% endfor %}
+										{% raw %}
+									</select>
+									</div>
+									<div class="text-center">
+										<button id="AddSubTaskBtn" type="button" class="btn btn-primary my-4">Submit</button>
+									</div>
+								</form>
+							</div>
+							<ul id="TaskModalComments" class="list-group list-unstyled">
+								{{#each comments}}
+								<li class="update-log">
+									<div class="update-log-avatar">
+										<a href="#">
+											<img class="media-object rounded-circle" src="{{ user_avatar }}" alt="Avatar">
+										</a>
+										<div class="update-log-name text-muted">{{ user }}</div>
+									</div>
+									<div class="update-log-text">
+										<span class="d-block">{{ text }}</span>
+										<div class="update-body">{{{ timestamp }}}</div>
+									</div>
+								</li>
+								{{/each}}
+							</ul>
+							<form id="addTaskCommentForm" role="form">
+								<div class="form-group mb-3">
+									<input id="TaskModalCommentAdd" class="form-control was-validated" name="comment" placeholder="Write a comment..." type="text" required>
+								</div>
+								<div class="text-center">
+									<button id="AddTaskCommentBtn" type="button" class="btn btn-primary my-4">Submit</button>
+								</div>
+							</form>
+							<ul class="activity">
+								{{#each actions}}
+								<li>
+									<div>
+										<i class="fas text-gray-300 fa-1fourx fa-plus-circle activity-icon"></i>
+										<div class="media">
+											<div class="media-left">
+												<a href="#">
+													<img class="media-object rounded-circle" src="{{ user_avatar }}" alt="Avatar">
+												</a>
+											</div>
+											<div class="media-body">
+												{{{ timestamp }}}
+											</div>
+											<span class="card-text"><a href="#">{{ user }}</a> {{ text }}</span>
+										</div>
+									</div>
+								</li>
+								{{/each}}
+							</ul>
+						</div>
 					</div>
 				</div>
 			</div>
 		</div>
 	</div>
 </div>
-{% endblock %}
-{% block scripts %}
-<script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js" integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew==" crossorigin=""></script>
-<script src='https://api.mapbox.com/mapbox-gl-js/v1.4.1/mapbox-gl.js'></script>
-<script src="https://cdn.jsdelivr.net/npm/select2@4.0.12/dist/js/select2.min.js"></script>
+{% endraw %}
+</script>
 <script type="text/javascript" charset="utf-8">
-	var deployment_id = {{ deployment.id }}
-	var incident_id = {{ incident.id }}
-	var socket = io()
+	var deployment_id = {{ deployment.id }};
+	var incident_id = {{ incident.id }};
+	var socket = io();
+	var taskModalScript = Handlebars.compile($('#Task-Modal-Template').html());
 
     socket.on("connect", function() {
-        socket.emit("join", {'type': 2, 'deployment_id': deployment_id, 'incident_id': incident_id})
-    })
+        socket.emit("join", {'type': 2, 'deployment_id': deployment_id, 'incident_id': incident_id});
+    });
 
 	function recieve(data) {
 		if (data['code'] == 200) {
-			console.log(data)
-			return true
+			console.log(data);
+			return true;
 		} else {
-			console.log(data['code'] + ': ' + data['message'])
-			return false
+			console.log(data['code'] + ': ' + data['message']);
+			return false;
 		}
 	}
 
-	function removeStartingWith(index, css) {return (css.match (/^text-\S+/g) || []).join(' ')}
+	function removeStartingWith(index, css) {return (css.match (/^text-\S+/g) || []).join(' ')};
 
-	var current_percentage = parseInt(($('#Tasks :checked').length/$('#Tasks :checkbox').length)*100)
-
-	<!-- TODO Update last updated on AJAX calls -->
-	function progressBar(current_percentage) {
-	    var percentage = parseInt(($('#Tasks :checked').length/$('#Tasks :checkbox').length)*100)
-	    if (current_percentage == percentage) {return;}
-	    $('#ProgressPercentage').text(percentage + '%')
-	    $('.progress-bar').width(percentage + '%')
-	    $('.progress-bar').removeClass(function (index, css) {
-	        return (css.match (/\bbg-\S+/g) || []).join(' ')
-	    })
+	function updateProgressBar(check_element, progress_text, progress_bar) {
+		var percentage = parseInt(($(check_element + ' :checked').length/$(check_element + ' :checkbox').length)*100)
+	    progress_text.text(percentage + '%');
+	    progress_bar.width(percentage + '%');
+	    progress_bar.removeClass(function (index, css) {
+	        return (css.match (/\bbg-\S+/g) || []).join(' ');
+	    });
 	    if (percentage >= 80) {
-	       $('.progress-bar').addClass("bg-success");
+	       progress_bar.addClass("bg-success");
 	    } else if (percentage >= 50) {
-	        $('.progress-bar').addClass("bg-orange");
+	        progress_bar.addClass("bg-orange");
 	    } else if (percentage >= 25) {
-	        $('.progress-bar').addClass("bg-warning");
+	        progress_bar.addClass("bg-warning");
 	    } else {
-	        $('.progress-bar').addClass("bg-danger");
+	        progress_bar.addClass("bg-danger");
 	    }
 	}
 
 	$('#ChangeIncidentStatus').click( function(e) {
-		e.preventDefault()
-		socket.emit('change_incident_status', {'status': $(this).hasClass('btn-info'), 'deployment_id': deployment_id, 'incident_id': incident_id})
-	})
+		e.preventDefault();
+		socket.emit('change_incident_status', {'status': $(this).hasClass('btn-info'), 'deployment_id': deployment_id, 'incident_id': incident_id});
+	});
 
 	$('#changeAllocationForm').submit( function(e) {
-	    e.preventDefault()
-	    $('#changeAllocationModal').modal('hide')
-		socket.emit('change_incident_allocation', {'users': $('#changeAllocationSelect').val(), 'deployment_id': deployment_id, 'incident_id': incident_id})
-		$('#changeAllocationForm').get(0).reset()
-	})
+	    e.preventDefault();
+	    $('#changeAllocationModal').modal('hide');
+		socket.emit('change_incident_allocation', {'users': $('#changeAllocationSelect').val(), 'deployment_id': deployment_id, 'incident_id': incident_id});
+		$('#changeAllocationForm').get(0).reset();
+	});
 
     $('#PriorityDropdown a').click(function (e) {
-        e.preventDefault()
-        old_priority = $('#PriorityText').text()
-        socket.emit('change_incident_priority', {'priority': $(this).text(), 'deployment_id': deployment_id, 'incident_id': incident_id})
-    })
+        e.preventDefault();
+        old_priority = $('#PriorityText').text();
+        socket.emit('change_incident_priority', {'priority': $(this).text(), 'deployment_id': deployment_id, 'incident_id': incident_id});
+    });
 
 	$('#addTaskForm').submit( function(e) {
-	   e.preventDefault()
-	   $('#addTaskModal').modal('hide')
-        socket.emit('create_incident_task', {'name': $(this).serializeArray()[0]['value'], 'users': $('#addTaskSelect').val(), 'deployment_id': deployment_id, 'incident_id': incident_id})
-		$('#addTaskForm').get(0).reset()
-	})
+	   e.preventDefault();
+	   $('#addTaskModal').modal('hide');
+        socket.emit('create_incident_task', {'name': $(this).serializeArray()[0]['value'], 'users': $('#addTaskSelect').val(), 'description': $(this).serializeArray()[2]['value'], 'deployment_id': deployment_id, 'incident_id': incident_id});
+		$('#addTaskForm').get(0).reset();
+	});
 
-	$('#Tasks').on('click', function(e) {
-		console.log(e)
-		e.stopPropagation()
+	$('#Tasks').on('click', '.list-group-item.list-group-flush', function(e) {
+		e.stopPropagation();
 		if (e.target.type == 'checkbox') {
-			socket.emit('change_task_status', {'task_id':  e.target.value, 'completed': $(e.target).prop("checked"), 'deployment_id': deployment_id, 'incident_id': incident_id})
+			socket.emit('change_task_status', {'task_id':  e.currentTarget.value, 'completed': $(e.target).prop("checked"), 'deployment_id': deployment_id, 'incident_id': incident_id});
 		} else {
-			$('#taskModal').modal('show')
+			console.log(e)
+			socket.emit('view_task', {'task_id':  e.currentTarget.value, 'deployment_id': deployment_id, 'incident_id': incident_id});
 		}
-	})
+	});
 
+	$('#taskModal').on('click', function (e) {
+		console.log(e.target)
+		if ($(e.target).attr('id') == 'TaskModalDescriptionText') {
+			$('#TaskModalDescriptionSaveBtn').removeClass('d-none');
+		} else if ($(e.target).attr('id') == 'TaskModalDescriptionSaveBtn') {
+			$(e.target).addClass('d-none');
+			socket.emit('change_task_description', {'task_id':  e.currentTarget.value, 'description': $('#TaskModalDescriptionText').val(),  'deployment_id': deployment_id, 'incident_id': incident_id});
+		} else if ($(e.target).attr('id') == 'AddSubTaskBtn') {
+			socket.emit('create_incident_subtask', {'task_id':  e.currentTarget.value, 'name': $('#TaskModalSubTaskAdd').val(), 'users': $('#addSubTaskSelect').val(), 'deployment_id': deployment_id, 'incident_id': incident_id});
+		} else if ($(e.target).hasClass('task-checkbox')) {
+			socket.emit('change_subtask_status', {'subtask_id':  e.target.value, 'completed': $(e.target).prop("checked"), 'deployment_id': deployment_id, 'incident_id': incident_id, 'task_id': e.currentTarget.value});
+		} else if ($(e.target).hasClass('fa-trash-alt')) {
+			socket.emit('delete_subtask', {'subtask_id':  $(e.target).data('id'), 'deployment_id': deployment_id, 'incident_id': incident_id, 'task_id': e.currentTarget.value});
+		} else if ($(e.target).attr('id') == 'AddTaskCommentBtn') {
+			socket.emit('create_task_comment', {'task_id':  e.currentTarget.value, 'text': $('#TaskModalCommentAdd').val(), 'deployment_id': deployment_id, 'incident_id': incident_id});
+		}
+	});
 
 	$('#addCommentForm').submit( function(e) {
 	   e.preventDefault();
-	   $('#addCommentModal').modal('hide')
-        socket.emit('create_incident_comment', {'text': $(this).serializeArray()[0]['value'], 'deployment_id': deployment_id, 'incident_id': incident_id})
-	})
+	   $('#addCommentModal').modal('hide');
+        socket.emit('create_incident_comment', {'text': $(this).serializeArray()[0]['value'], 'deployment_id': deployment_id, 'incident_id': incident_id});
+	});
 
 	socket.on('change_incident_status', function(data) {
 		if (recieve(data)) {
 			if (data['status']) {
-				$('#ChangeIncidentStatus').removeClass('btn-info').addClass('btn-success')
-				$('#ChangeIncidentStatusText').text('Mark as Complete')
-				clock()
+				$('#ChangeIncidentStatus').removeClass('btn-info').addClass('btn-success');
+				$('#ChangeIncidentStatusText').text('Mark as Complete');
+				clock();
 			} else {
-				$('#ChangeIncidentStatus').removeClass('btn-success').addClass('btn-info')
-				$('#ChangeIncidentStatusText').text('Mark as Incomplete')
+				$('#ChangeIncidentStatus').removeClass('btn-success').addClass('btn-info');
+				$('#ChangeIncidentStatusText').text('Mark as Incomplete');
 			}
 		}
-	})
+	});
 
 	socket.on('change_incident_allocation', function(data) {
 		if (recieve(data)) {
 			if ($('#NotAssigned').length) {
-				$('#NotAssigned').remove()
+				$('#NotAssigned').remove();
 			}
-			$('#AssignedAvatars').empty()
+			$('#AssignedAvatars').empty();
 			for (var i = 0; i < data['html'].length; i++) {
-				$('#AssignedAvatars').append(data['html'][i])
+				$('#AssignedAvatars').append(data['html'][i]);
 			}
 		}
-	})
+	});
 
 	socket.on('change_incident_priority', function(data) {
 		if (recieve(data)) {
-			$('#PriorityBorder').removeClass('border-left-Standard border-left-Prompt border-left-Immediate')
-			$('#PriorityCog').removeClass('text-Standard text-Prompt text-Immediate')
-			$('#PriorityTitle').removeClass('text-Standard text-Prompt text-Immediate')
-			$('#PriorityIcon').removeClass('bg-Standard bg-Prompt bg-Immediate')
-			$("[id^=Priority].active").removeClass('active')
-			$('#PriorityText').text(data['priority'])
-			$('#PriorityBorder').addClass('border-left-' + data['priority'])
-			$('#PriorityCog').addClass('text-' + data['priority'])
-			$('#PriorityTitle').addClass('text-' + data['priority'])
-			$('#PriorityIcon').addClass('bg-' + data['priority'])
-			$('#Priority' + data['priority']).addClass('active')
+			$('#PriorityBorder').removeClass('border-left-Standard border-left-Prompt border-left-Immediate');
+			$('#PriorityCog').removeClass('text-Standard text-Prompt text-Immediate');
+			$('#PriorityTitle').removeClass('text-Standard text-Prompt text-Immediate');
+			$('#PriorityIcon').removeClass('bg-Standard bg-Prompt bg-Immediate');
+			$("[id^=Priority].active").removeClass('active');
+			$('#PriorityText').text(data['priority']);
+			$('#PriorityBorder').addClass('border-left-' + data['priority']);
+			$('#PriorityCog').addClass('text-' + data['priority']);
+			$('#PriorityTitle').addClass('text-' + data['priority']);
+			$('#PriorityIcon').addClass('bg-' + data['priority']);
+			$('#Priority' + data['priority']).addClass('active');
 		}
-	})
+	});
 
 	socket.on('create_incident_task', function(data) {
 		if (recieve(data)) {
 			if ($('#NoTasks').length) {
-				$('#NoTasks').remove()
+				$('#NoTasks').remove();
 			}
-			$('#Tasks').append(data['html'])
-			flask_moment_render_all()
-			progressBar()
+			$('#Tasks').append(data['html']);
+			flask_moment_render_all();
+			updateProgressBar('#Tasks', $('#IncidentProgressPercentage'), $('#IncidentProgressBar'));
 		}
-	})
+	});
 
 	socket.on('change_task_status', function(data) {
 		if (recieve(data)) {
-			console.log(data['timestamp'])
 			if (data['completed']) {
 				$('#TaskRow' + data['id']).addClass('text-muted');
-				$('#TaskDate' + data['id']).html('Completed ' + moment.unix(data['timestamp']).fromNow(refresh=true))
-				$('#Task' + data['id']).prop('checked', true)
+				$('#TaskDate' + data['id']).html('Completed ' + moment.unix(data['timestamp']).fromNow(refresh=true));
+				$('#Task' + data['id']).prop('checked', true);
 			} else {
 				$('#TaskRow' + data['id']).removeClass('text-muted');
-				$('#TaskDate' + data['id']).html('Created ' + moment.unix(data['timestamp']).fromNow(refresh=true))
-				$('#Task' + data['id']).prop('checked', false)
+				$('#TaskDate' + data['id']).html('Created ' + moment.unix(data['timestamp']).fromNow(refresh=true));
+				$('#Task' + data['id']).prop('checked', false);
 			}
-			flask_moment_render_all()
-	    	progressBar()
+			flask_moment_render_all();
+			updateProgressBar('#Tasks', $('#IncidentProgressPercentage'), $('#IncidentProgressBar'));
 		}
-	})
+	});
+
+	socket.on('change_task_assigned', function(data) {
+		if (recieve(data)) {
+			$('#Task' + data['id'] + 'Assigned').text(data['text'])
+		}
+	});
+
+	socket.on('view_task', function(data) {
+		if (recieve(data)) {
+			var html = taskModalScript(data);
+			$('#taskModal').html(html);
+			$('#taskModal').val(data['id']);
+			$('#addSubTaskSelect').select2({
+				allowClear: true,
+				placeholder: {id:'0', text: 'Assign to users, not required'},
+				templateResult: format,
+				templateSelection: format,
+			});
+			flask_moment_render_all();
+			if ($('#TaskProgressBar').length) {
+				updateProgressBar('#SubTasks', $('#TaskProgressPercentage'), $('#TaskProgressBar'));
+			}
+			socket.emit("join", {'type': 3, 'deployment_id': deployment_id, 'incident_id': incident_id, 'task_id': data['id']});
+			$('#taskModal').modal('show');
+		}
+	});
+
+	socket.on('delete_subtask', function(data) {
+		if (recieve(data)) {
+			if ($('#SubTaskRow' + data['id']).length) {
+				$('#SubTaskRow' + data['id']).remove();
+			}
+		}
+	});
+
+	socket.on('create_incident_subtask', function(data) {
+		if (recieve(data)) {
+			console.log(true);
+		}
+	});
+
+	socket.on('change_subtask_status', function(data) {
+		if (recieve(data) && $('#SubTask' + data['id']).length) {
+			if (data['completed']) {
+				$('#SubTaskRow' + data['id']).addClass('text-muted');
+				$('#SubTaskDate' + data['id']).html('Completed ' + moment.unix(data['timestamp']).fromNow(refresh=true));
+				$('#SubTask' + data['id']).prop('checked', true);
+			} else {
+				$('#SubTaskRow' + data['id']).removeClass('text-muted');
+				$('#SubTaskDate' + data['id']).html('Created ' + moment.unix(data['timestamp']).fromNow(refresh=true));
+				$('#SubTask' + data['id']).prop('checked', false);
+			}
+			flask_moment_render_all();
+			updateProgressBar('#SubTasks', $('#TaskProgressPercentage'), $('#TaskProgressBar'));
+		}
+	});
 
 	socket.on('create_incident_comment', function(data) {
 		if (recieve(data)) {
-			$('#addCommentForm').get(0).reset()
+			$('#addCommentForm').get(0).reset();
 			if ($('#NoComments').length) {
-				$('#NoComments').remove()
-			}
-			$('#Comments').append(data['html'])
-			flask_moment_render_all()
+				$('#NoComments').remove();
+			};
+			$('#Comments').append(data['html']);
+			flask_moment_render_all();
 		}
-	})
+	});
 
 	socket.on('activity', function(data) {
-		$('#Activity').prepend(data['html'])
-		$('#LastUpdated').html(moment().fromNow(refresh=true))
-		flask_moment_render_all()
-	})
+		$('#Activity').prepend(data['html']);
+		$('#LastUpdated').html(moment().fromNow(refresh=true));
+		flask_moment_render_all();
+	});
 
 	function format(state) {
 	    if (!state.id) return state.text;
@@ -548,23 +734,23 @@
 	}
 
 	$(document).ready(function() {
-		progressBar()
+		updateProgressBar('#Tasks', $('#IncidentProgressPercentage'), $('#IncidentProgressBar'));
 		$('#addTaskSelect').select2({
 			allowClear: true,
 			placeholder: {id:'0', text: 'Assign to users, not required'},
 			templateResult: format,
 			templateSelection: format,
-		})
+		});
 		$('#changeAllocationSelect').select2({
 			allowClear: true,
 			placeholder: {id:'0', text: 'Choose which users to allocate this incident to'},
 			templateResult: format,
 			templateSelection: format,
-		})
+		});
 		$('#addTaskSelect').val(null).trigger('change');
 		$('#changeAllocationSelect').val(null).trigger('change');
 
-		  var map = L.map('Map').setView({lat: 55.872326, lng: -4.288094}, 15)
+		  var map = L.map('Map').setView({lat: 55.872326, lng: -4.288094}, 15);
 		  L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
 			attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
 			minZoom: 4,

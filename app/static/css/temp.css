@@ -53,8 +53,12 @@
   margin-right: 0.2rem;
 }
 
-.edit-opacity {
+.btn-opacity {
   opacity: 0.8;
+}
+
+.btn-opacity:hover {
+  opacity: 1;
 }
 
 .task-checkbox {
@@ -71,6 +75,10 @@
   z-index: 999;
 }
 
+.pointer {
+  cursor: pointer;
+}
+
 input[type=checkbox][disabled]{
   cursor: not-allowed;
 }
@@ -79,11 +87,6 @@ input[type=checkbox][disabled]{
 tr:hover {
   cursor: pointer;
   background-color: #f6f8fe !important;
-}
-
-.not-pinned {
-  text-shadow: 0px 0px 1px black, 0px 0px 1px black;
-  color: white;
 }
 
 /*!

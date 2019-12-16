@@ -1,5 +1,5 @@
 from app.api import dgvost_api
-from app.utils.create import new_incident
+from app.utils.create import create_incident
 from flask_restplus import Resource, Namespace
 from app.models import User, Incident, Deployment
 from flask_jwt_extended import jwt_required, get_jwt_identity
@@ -68,7 +68,7 @@ class CreateNewIncident(Resource):
         payload = dgvost_api.payload
         current_user = User.query.filter_by(id=get_jwt_identity()).first()
 
-        created_incident = new_incident(payload['name'], payload['description'], payload['location'], payload['reported_via'], payload['reference'], deployment, current_user)
+        created_incident = create_incident(payload['name'], payload['description'], payload['location'], payload['reported_via'], payload['reference'], deployment, current_user)
         return {'id': created_incident.id, 'name': created_incident.name, 'description': created_incident.description,
                 'location': created_incident.location, 'open': created_incident.open_status,
                 'public': created_incident.public,

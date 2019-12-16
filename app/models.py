@@ -4,8 +4,8 @@ from string import Template
 from os import path, makedirs
 from flask_admin import Admin  ##TODO Remove
 from flask_login import UserMixin
-from app import app, db, login, argon2
 from datetime import datetime, timedelta
+from app import app, db, login, argon2, moment
 from flask_admin.contrib.sqla import ModelView
 
 avatar_colours = ['#26de81', '#3867d6', '#eb3b5a', '#0fb9b1', '#f7b731', '#a55eea', '#fed330', '#45aaf2', '#fa8231',
@@ -36,11 +36,20 @@ incidenttask_user_junction = db.Table('task_users',
                                       db.Column('id', db.Integer, db.ForeignKey('incident_task.id')),
                                       )
 
+incidentsubtask_user_junction = db.Table('subtask_users',
+                                      db.Column('user_id', db.Integer, db.ForeignKey('user.id')),
+                                      db.Column('id', db.Integer, db.ForeignKey('incident_sub_task.id')),
+                                      )
+
 incidentlog_target_users_junction = db.Table('incidentlog_target_users_actions',
                                              db.Column('user_id', db.Integer, db.ForeignKey('user.id')),
                                              db.Column('id', db.Integer, db.ForeignKey('incident_log.id')),
                                              )
 
+tasklog_target_users_junction = db.Table('tasklog_target_users_actions',
+                                             db.Column('user_id', db.Integer, db.ForeignKey('user.id')),
+                                             db.Column('id', db.Integer, db.ForeignKey('task_log.id')),
+                                             )
 
 def list_of_names(names):
     if not names:
@@ -49,6 +58,12 @@ def list_of_names(names):
         return str(names[0])
     return f'{", ".join([str(m) for m in names[:-1]])} and {str(names[-1])}'
 
+
+def task_string(tasks):
+    if not tasks:
+        return
+    completed = [m for m in tasks if m.completed]
+    return f'{len(completed)}/{len(tasks)}'
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
@@ -63,6 +78,7 @@ class User(db.Model, UserMixin):
     incidents = db.relationship('Incident', secondary=incident_user_junction)
     pinned = db.relationship('Incident', secondary=incident_pinned_junction)
     tasks = db.relationship('IncidentTask', secondary=incidenttask_user_junction)
+    subtasks = db.relationship('IncidentSubTask', secondary=incidentsubtask_user_junction)
     incident_log_target = db.relationship('IncidentLog', secondary=incidentlog_target_users_junction)
     audit_actions = db.relationship('AuditLog', backref='user', lazy=True)
     incident_comments = db.relationship('IncidentComment', backref='user')
@@ -256,10 +272,7 @@ class Incident(db.Model):
         return int((sum([1 for m in self.tasks if m.completed]) / len(self.tasks)) * 100)
 
     def task_string(self):
-        if not self.tasks:
-            return
-        completed = [m for m in self.tasks if m.completed]
-        return f'{len(completed)}/{len(self.tasks)}'
+        return task_string(self.tasks)
 
     def generate_geojson(self):
         if not self.longitude or not self.latitude:
@@ -275,6 +288,7 @@ class Incident(db.Model):
                 'tasks': self.task_string(),
                 'comments': len(self.comments),
                 'colour': self.priority_colours[self.priority],
+                'animate': (datetime.utcnow().timestamp()-self.last_updated.timestamp()) <= 300,
                 'url': url_for('view_incident', deployment_name=self.deployment, deployment_id=self.deployment.id, incident_name=self.name, incident_id=self.id)
             },
             'geometry': {
@@ -288,8 +302,7 @@ class IncidentTask(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     incident_id = db.Column(db.Integer, db.ForeignKey('incident.id'))
     name = db.Column(db.String(64))
-    details = db.Column(db.String(1024))
-    completed_details = db.Column(db.String(1024))
+    description = db.Column(db.String(1024))
     completed = db.Column(db.Boolean(), default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     completed_at = db.Column(db.DateTime)
@@ -298,8 +311,50 @@ class IncidentTask(db.Model):
     def get_assigned(self):
         return list_of_names(self.assigned_to)
 
+    def get_subtasks(self):
+        return sorted([{'id': m.id, 'name': m.name, 'completed': m.completed, 'assigned_to': m.get_assigned(), 'timestamp': moment.create(m.completed_at if m.completed else m.created_at).fromNow(refresh=True)} for m in self.subtasks], key=lambda k: k['id'])
+
+    def get_comments(self):
+        return sorted([{'user': str(m.user), 'user_avatar': m.user.get_avatar(), 'text': str(m), 'timestamp': moment.create(m.sent_at).fromNow(refresh=True)} for m in self.comments], key=lambda k: k['timestamp'], reverse=True)
+
+    def get_actions(self):
+        return sorted([{'user': str(m.user), 'user_avatar': m.user.get_avatar(), 'text': str(m), 'timestamp': moment.create(m.occurred_at).fromNow(refresh=True)} for m in self.task_logs], key=lambda k: k['timestamp'], reverse=True)
+
+    def subtask_string(self):
+        return task_string(self.subtasks)
+
     def __repr__(self):
         return f'{self.name}'
+
+
+class IncidentSubTask(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    task_id = db.Column(db.Integer, db.ForeignKey('incident_task.id'))
+    task = db.relationship('IncidentTask', backref="subtasks", lazy=True)
+    name = db.Column(db.String(64))
+    completed = db.Column(db.Boolean(), default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    completed_at = db.Column(db.DateTime)
+    assigned_to = db.relationship('User', secondary=incidentsubtask_user_junction)
+
+    def get_assigned(self):
+        return list_of_names(self.assigned_to)
+
+    def __repr__(self):
+        return f'{self.name}'
+
+
+class TaskComment(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    task_id = db.Column(db.Integer, db.ForeignKey('incident_task.id'))
+    task = db.relationship('IncidentTask', backref="comments", lazy=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    user = db.relationship('User', backref="task_comments", lazy=True)
+    text = db.Column(db.String(1024))
+    sent_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f'{self.text}'
 
 
 class IncidentComment(db.Model):
@@ -307,8 +362,10 @@ class IncidentComment(db.Model):
     incident_id = db.Column(db.Integer, db.ForeignKey('incident.id'))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     text = db.Column(db.String(1024))
-    highlight = db.Column(db.Boolean(), default=False)
     sent_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f'{self.test}'
 
 
 class IncidentMedia(db.Model):
@@ -343,13 +400,13 @@ class AuditLog(db.Model):
 class IncidentLog(db.Model):
     action_values = {'create_incident': 1, 'create_task': 2, 'complete_task': 3, 'delete_task': 4, 'add_comment': 5,
                      'delete_comment': 6, 'incomplete_task': 7, 'assigned_user': 8, 'removed_user': 9,
-                     'marked_complete': 10, 'marked_incomplete': 11, 'changed_priority': 12}  ##TODO RE-ORDER ONCE DONE
+                     'marked_complete': 10, 'marked_incomplete': 11, 'changed_priority': 12, 'changed_task_description': 13, 'assigned_user_task': 14, 'removed_user_task': 15}  ##TODO RE-ORDER ONCE DONE
     action_strings = {1: 'created incident', 2: 'created task $task', 3: 'marked $task as complete',
                       4: 'deleted task $task',
                       5: 'added update', 6: 'deleted update', 7: 'marked $task as incomplete',
                       8: 'assigned $target_users to incident',
                       9: 'removed $target_users from incident', 10: 'marked incident as complete',
-                      11: 'marked incident as incomplete', 12: 'changed priority to $extra'}
+                      11: 'marked incident as incomplete', 12: 'changed priority to $extra', 13: 'changed $task description to "$extra"', 14: 'added $target_users to $task', 15: 'removed $target_users from $task'}
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
@@ -357,6 +414,8 @@ class IncidentLog(db.Model):
     incident_id = db.Column(db.Integer, db.ForeignKey('incident.id'))
     task_id = db.Column(db.Integer, db.ForeignKey('incident_task.id'))
     task = db.relationship('IncidentTask', backref="logs", lazy=True)
+    subtask_id = db.Column(db.Integer, db.ForeignKey('incident_sub_task.id'))
+    subtask = db.relationship('IncidentSubTask', backref="logs", lazy=True)
     target_users = db.relationship('User', secondary=incidentlog_target_users_junction)
     action_type = db.Column(db.Integer())
     reason = db.Column(db.String(256))
@@ -374,6 +433,36 @@ class IncidentLog(db.Model):
                                                                          extra=self.extra)
         return f'{msg}.'
 
+
+class TaskLog(db.Model):
+    action_values = {'create_subtask': 1, 'complete_subtask': 2, 'delete_subtask': 3, 'changed_description': 4, 'assigned_user': 5, 'removed_user': 6, 'incomplete_subtask': 7}  ##TODO RE-ORDER ONCE DONE
+    action_strings = {1: 'created $subtask', 2: 'marked $subtask as complete',
+                      3: 'deleted $extra',
+                      4: 'changed task description to "$extra"', 5: 'added $target_users to task', 6: 'removed $target_users from task', 7: 'marked $subtask as incomplete'}
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    user = db.relationship('User', backref='task_actions')
+    task_id = db.Column(db.Integer, db.ForeignKey('incident_task.id'))
+    task = db.relationship('IncidentTask', backref="task_logs", lazy=True)
+    subtask_id = db.Column(db.Integer, db.ForeignKey('incident_sub_task.id'))
+    subtask = db.relationship('IncidentSubTask', backref="task_logs", lazy=True)
+    target_users = db.relationship('User', secondary=tasklog_target_users_junction)
+    action_type = db.Column(db.Integer())
+    reason = db.Column(db.String(256))
+    extra = db.Column(db.String(64))
+    occurred_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        target_users = None
+        if self.target_users:
+            if len(self.target_users) > 1:
+                target_users = list_of_names(self.target_users)
+            else:
+                target_users = self.target_users[0]
+        msg = Template(self.action_strings[self.action_type]).substitute(target_users=target_users, task=self.task, subtask=self.subtask,
+                                                                         extra=self.extra)
+        return f'{msg}.'
 
 class RevokedToken(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -395,9 +484,11 @@ admin.add_view(ModelView(Group, db.session))
 admin.add_view(ModelView(Deployment, db.session))
 admin.add_view(ModelView(Incident, db.session))
 admin.add_view(ModelView(IncidentTask, db.session))
+admin.add_view(ModelView(IncidentSubTask, db.session))
 admin.add_view(ModelView(IncidentComment, db.session))
 admin.add_view(ModelView(IncidentMedia, db.session))
 admin.add_view(ModelView(EmailLink, db.session))
 admin.add_view(ModelView(AuditLog, db.session))
 admin.add_view(ModelView(IncidentLog, db.session))
+admin.add_view(ModelView(TaskLog, db.session))
 admin.add_view(ModelView(RevokedToken, db.session))

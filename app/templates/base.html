@@ -207,61 +207,61 @@
     {% if deployment is defined or incident is defined %}
 	function clock() {
 	    <!-- TODO Add closed deployment logic & fix for mobile -->
-	    var zero = moment.unix(0)
+	    var zero = moment.unix(0);
 	    var interval = setInterval(function() {
                 {% if incident is defined %}
                 if ($('#ChangeIncidentStatus').hasClass('btn-info')) {
-                    clearInterval(interval)
-                }
+                    clearInterval(interval);
+                };
                 {% endif %}
-	            var seconds = Math.round(new Date().getTime()/1000) - {% if incident is defined %}{{ incident.created_at.timestamp() }}{% else %}{{ deployment.created_at.timestamp() }}{% endif %}
-	            var days = Math.floor(seconds / 86400)
-                seconds -= days * 86400
+	            var seconds = Math.round(new Date().getTime()/1000) - {% if incident is defined %}{{ incident.created_at.timestamp() }}{% else %}{{ deployment.created_at.timestamp() }}{% endif %};
+	            var days = Math.floor(seconds / 86400);
+                seconds -= days * 86400;
 
-                var hours = Math.floor(seconds / 3600) % 24
-                seconds -= hours * 3600
+                var hours = Math.floor(seconds / 3600) % 24;
+                seconds -= hours * 3600;
 
-                var minutes = Math.floor(seconds / 60) % 60
-                seconds -= minutes * 60
+                var minutes = Math.floor(seconds / 60) % 60;
+                seconds -= minutes * 60;
 
-                var seconds = Math.floor(seconds % 60)
+                var seconds = Math.floor(seconds % 60);
 
                 if (parseInt($('#DaysTime').text()) != days) {
-                    $('#DaysTime').text(days)
+                    $('#DaysTime').text(days);
                 }
                 if (parseInt($('#HoursTime').text()) != days) {
-                    $('#HoursTime').text(hours)
+                    $('#HoursTime').text(hours);
                 }
                 if (parseInt($('#MinutesTime').text()) != days) {
-                    $('#MinutesTime').text(minutes)
+                    $('#MinutesTime').text(minutes);
                 }
-                $('#SecondsTime').text(seconds)
+                $('#SecondsTime').text(seconds);
 
                 if ($('#SecondsText').hasClass('d-none')) {
-                    $('#MinutesText').removeClass('d-none')
-                    $('#SecondsText').removeClass('d-none')
+                    $('#MinutesText').removeClass('d-none');
+                    $('#SecondsText').removeClass('d-none');
                 }
-                if ($('#HoursText').hasClass('d-none') && hours > 0) {
-                    $('#HoursText').removeClass('d-none')
+                if ($('#HoursText').hasClass('d-none') && (days > 0 || hours > 0)) {
+                    $('#HoursText').removeClass('d-none');
                 }
 
                 if ($('#DaysText').hasClass('d-none') && days > 0) {
-                    $('#DaysText').removeClass('d-none')
+                    $('#DaysText').removeClass('d-none');
                 }
-	    }, 1000)
+	    }, 1000);
 	}
 
-	clock()
+	clock();
 	{% endif %}
 
 $(document).ready(function(){
-    $('[data-toggle="tooltip"]').tooltip()
+    $('[data-toggle="tooltip"]').tooltip();
     $('[data-toggle="tooltip"]').click(function () {
-          $('[data-toggle="tooltip"]').tooltip("hide")
-    })
+          $('[data-toggle="tooltip"]').tooltip("hide");
+    });
     $("form").each(function() {
-      $(this)[0].reset()
-    })
+      $(this)[0].reset();
+    });
 
 });
 </script>

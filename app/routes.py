@@ -2,13 +2,14 @@ import functools
 from sqlalchemy import func
 from itertools import groupby
 from app import app, db, socketio
+from app.utils.delete import delete_subtask
 from flask_socketio import emit, join_room, disconnect
 from flask import render_template, flash, redirect, url_for, request
 from app.forms import LoginForm, CreateUser, CreateGroup, SetPassword
 from flask_login import current_user, login_user, logout_user, login_required
-from app.utils.change import incident_status, allocation, incident_priority, task_status
-from app.models import User, Group, Deployment, Incident, IncidentTask, EmailLink, AuditLog
-from app.utils.create import new_user, new_group, new_deployment, new_incident, new_task, new_comment
+from app.models import User, Group, Deployment, Incident, IncidentTask, IncidentSubTask, EmailLink, AuditLog
+from app.utils.create import create_user, create_group, create_deployment, create_incident, create_task, create_subtask, create_task_comment, create_comment
+from app.utils.change import change_incident_status, change_allocation, change_incident_priority, change_task_status, change_task_description, change_task_assigned, change_subtask_status
 
 
 def login_required_sockets(f):
@@ -71,7 +72,7 @@ def create_user():
         group = None
         if form.group.data:
             group = Group.query.get(form.group.data)
-        user = new_user(form.firstname.data, form.surname.data, form.email.data, group.id if group else None, current_user)
+        user = create_user(form.firstname.data, form.surname.data, form.email.data, group.id if group else None, current_user)
         flash('Congratulations, you created a user!')
         return user.email_link
     return render_template('base.html', title='Create New User', form=form)
@@ -105,7 +106,7 @@ def create_group():
                        "new_reports": form.new_reports.data, "create_deployments": form.create_deployments.data,
                        "decision_making_log": form.decision_making_log.data, "supervisor": form.supervisor.data}
         chosen_permissions = [k for k, v in permissions.items() if v]
-        new_group(form.name.data, chosen_permissions, current_user)
+        create_group(form.name.data, chosen_permissions, current_user)
         return redirect(url_for('create_new_user'))
     return render_template('base.html', title='Create New Group', form=form)
 
@@ -210,7 +211,7 @@ def on_join(data):
 @socketio.on('create_deployment')
 @login_required_sockets
 #@has_permission_sockets
-def create_deployment(data):
+def create_deployment_socket(data):
     print(data)
     try:
         name = data['name']
@@ -219,13 +220,13 @@ def create_deployment(data):
         users = data['users']
     except:
         return emit('create_incident', {'message': 'Incorrect data supplied.', 'code': 403})
-    new_deployment(name, description, groups, users, current_user)
+    create_deployment(name, description, groups, users, current_user)
 
 
 @socketio.on('create_incident')
 @login_required_sockets
 #@has_permission_sockets
-def create_incident(data):
+def create_incident_socket(data):
     print(data)
     try:
         name = data['name']
@@ -238,13 +239,87 @@ def create_incident(data):
     deployment = Deployment.query.filter_by(id=data['deployment_id']).first()
     if not deployment:
         return emit('create_incident', {'message': 'Unable to find the deployment.', 'code': 404})
-    new_incident(name, description, location, reported_via, reference, deployment, current_user)
+    create_incident(name, description, location, reported_via, reference, deployment, current_user)
+
+
+@socketio.on('create_incident_task')
+@login_required_sockets
+#@has_permission_sockets
+def create_incident_task_socket(data):
+    print(data)
+    try: ##TODO Add in incident id and deployment id in here too
+        name = data['name']
+        users = data['users']
+        description = data['description']
+    except:
+        return emit('create_incident_task', {'message': 'Incorrect data supplied.', 'code': 403})
+    incident = Incident.query.filter(Deployment.id == data['deployment_id'], Incident.id == data['incident_id']).first()
+    if not incident:
+        return emit('create_incident_task', {'message': 'Unable to find the deployment or incident.', 'code': 404})
+    if users:
+        users = User.query.filter(User.id.in_(data['users'])).all()
+        if set(users) - set(incident.assigned_to):
+            change_allocation(incident, users, current_user)
+    create_task(name, users, description, incident, current_user)
+
+
+@socketio.on('create_incident_subtask')
+@login_required_sockets
+#@has_permission_sockets
+def create_incident_subtask_socket(data):
+    print(data)
+    try: ##TODO Add in incident id and deployment id in here too
+        name = data['name']
+        task_id = data['task_id']
+        users = data['users']
+    except:
+        return emit('create_incident_subtask', {'message': 'Incorrect data supplied.', 'code': 403})
+    task = IncidentTask.query.filter_by(incident_id=data['incident_id'], id=task_id).first()
+    if not task or task.incident.id != data['incident_id'] or task.incident.deployment_id != data['deployment_id']:
+        return emit('create_incident_subtask', {'message': 'Unable to find the deployment, incident or task.', 'code': 404})
+    if users:
+        users = User.query.filter(User.id.in_(data['users'])).all()
+        if any([m for m in users if m not in task.incident.assigned_to]):
+            change_allocation(task.incident, users + task.incident.assigned_to, current_user)
+        print(task.assigned_to)
+        if any([m for m in users if m not in task.assigned_to]):
+            change_task_assigned(task, users + task.assigned_to, current_user)
+        print(task.assigned_to)
+    create_subtask(name, users, task, current_user)
+
+
+@socketio.on('create_task_comment')
+@login_required_sockets
+#@has_permission_sockets
+def create_task_comment_socket(data):
+    try:
+        text = data['text']
+    except:
+        return emit('create_incident_comment', {'message': 'Incorrect data supplied.', 'code': 403})
+    task = IncidentTask.query.filter_by(incident_id=data['incident_id'], id=data['task_id']).first()
+    if not task or task.incident.id != data['incident_id'] or task.incident.deployment_id != data['deployment_id']:
+        return emit('create_incident_subtask', {'message': 'Unable to find the deployment, incident or task.', 'code': 404})
+    create_task_comment(text, task, current_user)
+
+
+@socketio.on('create_incident_comment')
+@login_required_sockets
+#@has_permission_sockets
+def create_incident_comment_socket(data):
+    try:
+        text = data['text']
+    except:
+        return emit('create_incident_comment', {'message': 'Incorrect data supplied.', 'code': 403})
+    incident = Incident.query.filter(Deployment.id == data['deployment_id'], Incident.id == data['incident_id']).first()
+    if not incident:
+        return emit('create_incident_comment', {'message': 'Unable to find the deployment or incident.', 'code': 404})
+    create_comment(text, incident, current_user)
 
 
 @socketio.on('change_incident_status')
 @login_required_sockets
 #@has_permission_sockets
-def change_incident_status(data):
+def change_incident_status_socket(data):
     print(data)
     try: ##TODO Make sure not None
         status = data['status']
@@ -253,14 +328,14 @@ def change_incident_status(data):
     incident = Incident.query.filter(Deployment.id==data['deployment_id'], Incident.id == data['incident_id']).first()
     if not incident:
         return emit('change_incident_status', {'message': 'Unable to find the deployment or incident.', 'code': 404})
-    if incident_status(current_user, incident, status) is False:
+    if change_incident_status(incident, status, current_user) is False:
         return emit('change_incident_status', {'message': 'Incident already has this status.', 'code': 400})
 
 
 @socketio.on('change_incident_allocation')
 @login_required_sockets
 #@has_permission_sockets
-def change_incident_allocation(data):
+def change_incident_allocation_socket(data):
     #if not current_user.has_permission('change_allocation'):
     #    return jsonify(data='You don\'t have permission to change an incident\'s allocation.'), 403
     print(data)
@@ -268,14 +343,14 @@ def change_incident_allocation(data):
     if not incident:
         return emit('change_incident_allocation', {'message': 'Unable to find the deployment or incident.', 'code': 404})
     users = [n for n in [User.query.filter_by(id=int(m)).first() for m in data['users'] if m] if n and n.has_deployment_access(incident.deployment)]
-    if allocation(current_user, incident, users) is False:
+    if change_allocation(incident, users, current_user) is False:
         return emit('change_incident_allocation', {'message': 'Didn\'t change assigned users.', 'code': 400})
 
 
 @socketio.on('change_incident_priority')
 @login_required_sockets
 #@has_permission_sockets
-def change_incident_priority(data):
+def change_incident_priority_socket(data):
     print(data)
     #if not current_user.has_permission('change_priority'):
     #    return jsonify(data='You don\'t have permission to change an incident\'s priority.'), 403
@@ -286,33 +361,14 @@ def change_incident_priority(data):
     incident = Incident.query.filter(Deployment.id == data['deployment_id'], Incident.id == data['incident_id']).first()
     if not incident:
         return emit('change_incident_priority', {'message': 'Unable to find the deployment or incident.', 'code': 404})
-    if incident_priority(current_user, incident, priority) is False:
+    if change_incident_priority(incident, priority, current_user) is False:
         return emit('change_incident_priority', {'message': 'Incident already has this priority.', 'code': 400})
-
-@socketio.on('create_incident_task')
-@login_required_sockets
-#@has_permission_sockets
-def create_incident_task(data):
-    print(data)
-    try: ##TODO Add in incident id and deployment id in here too
-        name = data['name']
-        users = data['users']
-    except:
-        return emit('create_incident_task', {'message': 'Incorrect data supplied.', 'code': 403})
-    incident = Incident.query.filter(Deployment.id == data['deployment_id'], Incident.id == data['incident_id']).first()
-    if not incident:
-        return emit('create_incident_task', {'message': 'Unable to find the deployment or incident.', 'code': 404})
-    if users:
-        users = User.query.filter(User.id.in_(data['users'])).all()
-        if set(users) - set(incident.assigned_to):
-            allocation(current_user, incident, users)
-    new_task(name, users, incident, current_user)
 
 
 @socketio.on('change_task_status')
 @login_required_sockets
 #@has_permission_sockets
-def change_task_status(data):
+def change_task_status_socket(data):
     print(data)
     task_id = data['task_id']
     completed = data['completed']
@@ -320,19 +376,60 @@ def change_task_status(data):
     task = IncidentTask.query.filter_by(incident_id=data['incident_id'], id=task_id).first()
     if not task or task.incident.deployment_id != data['deployment_id']:
         return emit('change_task_status', {'message': 'Unable to find the deployment, incident or task.', 'code': 404})
-    if task_status(current_user, task, completed) is False:
+    if change_task_status(task, completed, current_user) is False:
         return emit('change_task_status', {'message': 'Task already has this status.', 'code': 400})
 
 
-@socketio.on('create_incident_comment')
+@socketio.on('change_task_description')
 @login_required_sockets
 #@has_permission_sockets
-def create_incident_comment(data):
-    try:
-        text = data['text']
-    except:
-        return emit('create_incident_comment', {'message': 'Incorrect data supplied.', 'code': 403})
-    incident = Incident.query.filter(Deployment.id == data['deployment_id'], Incident.id == data['incident_id']).first()
-    if not incident:
-        return emit('create_incident_comment', {'message': 'Unable to find the deployment or incident.', 'code': 404})
-    new_comment(text, False, incident, current_user)
+def change_task_description_socket(data):
+    print(data)
+    task_id = data['task_id']
+    description = data['description']
+       # return emit('change_task_status', {'message': 'Incorrect data supplied.', 'code': 403})
+    task = IncidentTask.query.filter_by(incident_id=data['incident_id'], id=task_id).first()
+    if not task or task.incident.deployment_id != data['deployment_id']:
+        return emit('change_task_status', {'message': 'Unable to find the deployment, incident or task.', 'code': 404})
+    if change_task_description(task, description, current_user) is False:
+        return emit('change_task_status', {'message': 'Task already has this status.', 'code': 400})
+
+
+@socketio.on('change_subtask_status')
+@login_required_sockets
+#@has_permission_sockets
+def change_subtask_status_socket(data):
+    print(data)
+    subtask_id = data['subtask_id']
+    completed = data['completed']
+       # return emit('change_task_status', {'message': 'Incorrect data supplied.', 'code': 403})
+    subtask = IncidentSubTask.query.filter_by(task_id=data['task_id'], id=subtask_id).first()
+    if not subtask or subtask.task.incident.id != data['incident_id'] or subtask.task.incident.deployment_id != data['deployment_id']:
+        return emit('change_subtask_status', {'message': 'Unable to find the deployment, incident or task.', 'code': 404})
+    if change_subtask_status(subtask, completed, current_user) is False:
+        return emit('change_subtask_status', {'message': 'Task already has this status.', 'code': 400})
+
+
+@socketio.on('view_task')
+@login_required_sockets
+#@has_permission_sockets
+def view_task_socket(data):
+    print(data)
+    task_id = data['task_id']
+    task = IncidentTask.query.filter_by(incident_id=data['incident_id'], id=task_id).first()
+    if not task or task.incident.deployment_id != data['deployment_id']:
+        return emit('view_task', {'message': 'Unable to find the deployment, incident or task.', 'code': 404})
+    return emit('view_task', {'id': task.id, 'name': task.name, 'description': task.description, 'subtasks': task.get_subtasks(), 'comments': task.get_comments(), 'actions': task.get_actions(), 'code': 200})
+
+
+@socketio.on('delete_subtask')
+@login_required_sockets
+#@has_permission_sockets
+def delete_subtask_socket(data):
+    print(data)
+    subtask_id = data['subtask_id']
+       # return emit('change_task_status', {'message': 'Incorrect data supplied.', 'code': 403})
+    subtask = IncidentSubTask.query.filter_by(task_id=data['task_id'], id=subtask_id).first()
+    if not subtask or subtask.task.incident.id != data['incident_id'] or subtask.task.incident.deployment_id != data['deployment_id']:
+        return emit('delete_subtask', {'message': 'Unable to find the deployment, incident or task.', 'code': 404})
+    delete_subtask(subtask, current_user)

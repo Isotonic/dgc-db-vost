@@ -1,7 +1,7 @@
 from sqlalchemy import func
 from app.api import dgvost_api
 from app.models import User, Group
-from app.utils.create import new_group
+from app.utils.create import create_group
 from flask_restplus import Resource, Namespace
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.api.utils.models import new_group_model, group_model
@@ -63,5 +63,5 @@ class CreateNewGroup(Resource):
         if group is not None:
             ns_group.abort(409, 'Group already exists')
 
-        created_group = new_group(payload['name'], payload['permissions'], current_user)
+        created_group = create_group(payload['name'], payload['permissions'], current_user)
         return {'group_id': created_group.id, 'name': created_group.name, 'permissions': created_group.permissions}, 200

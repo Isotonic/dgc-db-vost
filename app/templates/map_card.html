@@ -13,11 +13,11 @@
         <li class="map-card-actions">
         {% endif %}
         {% if incident.tasks %}
-        <i class="fas fa-tasks"></i>
+        <i class="fas fa-tasks" data-toggle="tooltip" title="Tasks"></i>
             <span class="map-card-actions-text">{{ incident.task_string() }}</span>
         {% endif %}
         {% if incident.comments %}
-        <i class="far fa-comment"></i>
+        <i class="far fa-comment" data-toggle="tooltip" title="Comments"></i>
             <span class="map-card-actions-text">{{ incident.comments|length }}</span>
         {% endif %}
         {% if (incident.tasks) or (incident.comments) %}
