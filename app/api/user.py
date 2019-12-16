@@ -83,10 +83,10 @@ class GetAllOpenIncidents(Resource):
         """
         current_user = User.query.filter_by(id=get_jwt_identity()).first()
         deployments = current_user.get_deployments()
-        incidents = [o for n in [current_user.get_incidents(m) for m in deployments] for o in n]
+        incidents = [y for x in [current_user.get_incidents(m) for m in deployments] for y in x]
         all_incidents = [{'id': m.id, 'name': m.name, 'description': m.description,
                           'location': m.location, 'open': m.open_status, 'public': m.public,
                           'flagged': m.flagged, 'type': m.incident_type, 'priority': m.priority,
                           'longitude': m.longitude, 'latitude': m.latitude,
-                          'created_at': m.created_at.timestamp()} for m in incidents if m.longitude and m.latitude] ##TODO remove this check.
+                          'created_at': m.created_at.timestamp()} for m in incidents]
         return all_incidents, 200

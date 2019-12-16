@@ -26,7 +26,7 @@ class GetAllIncidents(Resource):
                           'location': m.location, 'open': m.open_status, 'public': m.public,
                           'flagged': m.flagged, 'type': m.incident_type, 'priority': m.priority,
                           'longitude': m.longitude, 'latitude': m.latitude,
-                          'created_at': m.created_at.timestamp()} for m in current_user.get_incidents(deployment_id) if m.longitude and m.latitude] ##TODO remove this check.
+                          'created_at': m.created_at.timestamp()} for m in current_user.get_incidents(deployment_id)]
         return all_incidents, 200
 
 
