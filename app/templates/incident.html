@@ -354,6 +354,7 @@
 <script src='https://api.mapbox.com/mapbox-gl-js/v1.4.1/mapbox-gl.js'></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.0.12/dist/js/select2.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/handlebars@latest/dist/handlebars.js"></script>
+<script src="/static/js/taxonomy.min.js"></script>
 <script id = "Task-Modal-Template" type="text/x-handlebars-template">
 {% raw %}
 <div class="modal-dialog modal-bigger" role="document">
@@ -368,19 +369,26 @@
 				</div>
 				<div class="card-body bg-light">
 					<div class="row">
-						<div class="col-xl-7 col-sm-8 mb-4">
-							<h5><i class="fas fa-align-left"></i> Description</h5>
-							<input id="TaskModalDescriptionText" class="form-control-plaintext" name="description" placeholder="{{#if description}}{{ description }}{{else}}Add a description...{{/if}}" type="text">
-							<button id="TaskModalDescriptionSaveBtn" type="submit" class="btn btn-primary float-right mt-3 d-none">Save</button>
+						<div class="col-xl-12 col-sm-8 mb-4">
+							<h5><i class="fas fa-align-left mb-3 mr-2"></i> Description</h5>
+							<textarea id="TaskModalDescriptionText" class="form-control-plaintext text-dark mb-3" name="description" placeholder="Add a description...">{{#if description}}{{ description }}{{/if}}</textarea>
+							<form id="taskLabelsForm">
+								<ul id="TaskLabels" class="tag-cloud list-inline ml-1">
+									<li>High Priority</li>
+									<li>Medium Priority</li>
+									<li>Low Priority</li>
+								</ul>
+							</form>
+							<button id="TaskModalDescriptionSaveBtn" type="submit" class="btn btn-primary float-right d-none">Save</button>
 						</div>
 					</div>
 					<div class="row">
 						<div class="col-xl-12 col-sm-8 mb-4">
-							<h5><i class="fas fa-tasks"></i> Tasks</h5>
+							<h5><i class="fas fa-tasks mb-3 mr-2"></i> Tasks</h5>
 							<div class="row">
-								<div class="col-auto"><div id="TaskProgressPercentage" class="h5 mb-0 mr-3 font-weight-bold text-gray-800">20%</div></div>
+								<div class="col-auto"><div id="TaskProgressPercentage" class="h5 ml-1 mb-2 font-weight-bold text-gray-800">20%</div></div>
 								<div class="col">
-									<div class="progress progress-sm mr-2">
+									<div class="progress progress-sm mt-2">
 										<div id="TaskProgressBar" class="progress-bar bg-success"
 											style="width: 20%" aria-valuenow="{{ percentage }}"
 											aria-valuemin="0" aria-valuemax="100"></div>
@@ -401,7 +409,7 @@
 										</div>
 										<div class="col-auto">
 											<div>
-												<input class="task-checkbox" id="SubTask{{ id }}"  value="{{ id }}" type="checkbox" {{#if completed}}checked{{/if}}>
+												<input class="task-checkbox{{#if completed}} text-success{{/if}}" id="SubTask{{ id }}"  value="{{ id }}" type="checkbox" {{#if completed}}checked{{/if}}>
 												<i class="fas fa-trash-alt btn-opacity text-danger" data-toggle="tooltip" title="Delete Sub-Task" data-id="{{ id }}"></i>
 											</div>
 										</div>
@@ -411,28 +419,29 @@
 							</ul>
 							<div>
 								<form id="addSubTaskForm" role="form">
-									<div class="form-group mb-3">
-										<input id="TaskModalSubTaskAdd" class="form-control was-validated" name="name" placeholder="Sub-task Name" type="text" required>
-									</div>
-									<div class="form-group mb-3">
-									<select id="addSubTaskSelect" name="users" multiple="multiple" style="width: 100%">
-										<option value="0"></option>
-										{% endraw %}
-										{% for group in groups %}
-										<optgroup label="{{ group[0] }}">
-											{% for user in group[1] %}
-											<option value="{{ user.id }}" data-avatar-url="{{ user.get_avatar() }}">{{ user }}</option>
-											{% endfor %}
-										</optgroup>
-										{% endfor %}
-										{% raw %}
-									</select>
+									<div class="form-group my-3">
+										<div class="col-sm-12">
+											<input id="TaskModalSubTaskAdd" class="form-control was-validated" name="name" placeholder="Sub-task Name" type="text" required>
+											<select id="addSubTaskSelect" name="users" multiple="multiple" style="width: 100%">
+												<option value="0"></option>
+												{% endraw %}
+												{% for group in groups %}
+												<optgroup label="{{ group[0] }}">
+													{% for user in group[1] %}
+													<option value="{{ user.id }}" data-avatar-url="{{ user.get_avatar() }}">{{ user }}</option>
+													{% endfor %}
+												</optgroup>
+												{% endfor %}
+												{% raw %}
+											</select>
+										</div>
 									</div>
 									<div class="text-center">
 										<button id="AddSubTaskBtn" type="button" class="btn btn-primary my-4">Submit</button>
 									</div>
 								</form>
 							</div>
+							<h5><i class="fas fa-comments mb-3 mr-2"></i> Comments</h5>
 							<ul id="TaskModalComments" class="list-group list-unstyled">
 								{{#each comments}}
 								<li class="update-log">
@@ -450,13 +459,12 @@
 								{{/each}}
 							</ul>
 							<form id="addTaskCommentForm" role="form">
-								<div class="form-group mb-3">
-									<input id="TaskModalCommentAdd" class="form-control was-validated" name="comment" placeholder="Write a comment..." type="text" required>
-								</div>
-								<div class="text-center">
-									<button id="AddTaskCommentBtn" type="button" class="btn btn-primary my-4">Submit</button>
+								<div class="form-group input-group mb-5">
+									<input id="TaskModalCommentAdd" class="form-control was-validated" name="comment" placeholder="Add a comment..." type="text" required>
+									<button id="AddTaskCommentBtn" type="button" class="btn btn-primary ml-3">Submit</button>
 								</div>
 							</form>
+							<h5><i class="fas fa-clipboard-list mb-3 mr-2"></i> Actions</h5>
 							<ul class="activity">
 								{{#each actions}}
 								<li>
@@ -491,6 +499,7 @@
 	var incident_id = {{ incident.id }};
 	var socket = io();
 	var taskModalScript = Handlebars.compile($('#Task-Modal-Template').html());
+	var taxonomy = null;
 
     socket.on("connect", function() {
         socket.emit("join", {'type': 2, 'deployment_id': deployment_id, 'incident_id': incident_id});
@@ -562,8 +571,8 @@
 	});
 
 	$('#taskModal').on('click', function (e) {
-		console.log(e.target)
-		if ($(e.target).attr('id') == 'TaskModalDescriptionText') {
+		console.log(taxonomy)
+		if ($(e.target).attr('id') == 'TaskModalDescriptionText' || $(e.target).hasClass('.badge.badge-dark.tag')) {
 			$('#TaskModalDescriptionSaveBtn').removeClass('d-none');
 		} else if ($(e.target).attr('id') == 'TaskModalDescriptionSaveBtn') {
 			$(e.target).addClass('d-none');
@@ -641,10 +650,12 @@
 		if (recieve(data)) {
 			if (data['completed']) {
 				$('#TaskRow' + data['id']).addClass('text-muted');
+				$('#Task' + data['id']).addClass('text-success');
 				$('#TaskDate' + data['id']).html('Completed ' + moment.unix(data['timestamp']).fromNow(refresh=true));
 				$('#Task' + data['id']).prop('checked', true);
 			} else {
 				$('#TaskRow' + data['id']).removeClass('text-muted');
+				$('#Task' + data['id']).removeClass('text-success');
 				$('#TaskDate' + data['id']).html('Created ' + moment.unix(data['timestamp']).fromNow(refresh=true));
 				$('#Task' + data['id']).prop('checked', false);
 			}
@@ -674,6 +685,8 @@
 			if ($('#TaskProgressBar').length) {
 				updateProgressBar('#SubTasks', $('#TaskProgressPercentage'), $('#TaskProgressBar'));
 			}
+			taxonomy = $('#TaskLabels').taxonomy_jquery();
+			console.log(taxonomy);
 			socket.emit("join", {'type': 3, 'deployment_id': deployment_id, 'incident_id': incident_id, 'task_id': data['id']});
 			$('#taskModal').modal('show');
 		}
@@ -697,10 +710,12 @@
 		if (recieve(data) && $('#SubTask' + data['id']).length) {
 			if (data['completed']) {
 				$('#SubTaskRow' + data['id']).addClass('text-muted');
+				$('#SubTask' + data['id']).addClass('text-success');
 				$('#SubTaskDate' + data['id']).html('Completed ' + moment.unix(data['timestamp']).fromNow(refresh=true));
 				$('#SubTask' + data['id']).prop('checked', true);
 			} else {
 				$('#SubTaskRow' + data['id']).removeClass('text-muted');
+				$('#SubTask' + data['id']).removeClass('text-success');
 				$('#SubTaskDate' + data['id']).html('Created ' + moment.unix(data['timestamp']).fromNow(refresh=true));
 				$('#SubTask' + data['id']).prop('checked', false);
 			}
@@ -730,6 +745,26 @@
 	    if (!state.id) return state.text;
 	    return $("<span><img class='rounded-circle avatar-sm' src='" + $(state.element).data('avatar-url') + "'/> " + state.text + "</span>");
 	}
+
+	var autoExpand = function (field) {
+
+		field.style.height = 'inherit';
+
+		var computed = window.getComputedStyle(field);
+
+		var height = parseInt(computed.getPropertyValue('border-top-width'), 10)
+					 + parseInt(computed.getPropertyValue('padding-top'), 10)
+					 + field.scrollHeight
+					 + parseInt(computed.getPropertyValue('padding-bottom'), 10)
+					 + parseInt(computed.getPropertyValue('border-bottom-width'), 10);
+
+		field.style.height = height + 'px';
+
+	};
+	document.addEventListener('input', function (event) {
+		if (event.target.tagName.toLowerCase() !== 'textarea') return;
+		autoExpand(event.target);
+	}, false);
 
 	$(document).ready(function() {
 		updateProgressBar('#Tasks', $('#IncidentProgressPercentage'), $('#IncidentProgressBar'));

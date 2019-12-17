@@ -71,6 +71,17 @@
                 <i class="fas fa-fw fa-pen"></i>
                 <span>Decision-Making Log</span></a>
             </li>
+            {% if current_user.has_permission('Supervisor') %}
+            <hr class="sidebar-divider">
+            <div class="sidebar-heading">
+                Supervisor
+            </div>
+            <li class="nav-item{% if live_feed_active is defined %} active{% endif %}">
+                <a class="nav-link" href="{{ url_for('view_live_feed', deployment_name=deployment.name, deployment_id=deployment.id) }}">
+                <i class="fas fa-fw fa-check-double"></i>
+                <span>Actions Required</span></a>
+            </li>
+            {% endif %}
             <!-- Divider -->
             <hr class="sidebar-divider d-none d-md-block">
             <!-- Sidebar Toggler (Sidebar) -->

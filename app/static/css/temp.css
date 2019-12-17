@@ -54,7 +54,8 @@
 }
 
 .btn-opacity {
-  opacity: 0.8;
+  opacity: 0.7;
+  margin-left: 5px;
 }
 
 .btn-opacity:hover {
@@ -375,4 +376,89 @@ li.update-log > .update-log-text:before {
 
 .font-smaller {
   font-size: smaller;
+}
+
+/*
+Copyright (c) 2019 by Jase (https://codepen.io/jasesmith/pen/EeVmWZ)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/
+
+input[type=checkbox],
+input[type=radio] {
+  position: relative;
+  -webkit-appearance: none;
+     -moz-appearance: none;
+          appearance: none;
+  font-size: inherit;
+  width: 1em;
+  margin: 0;
+  color: inherit;
+  outline: none;
+  font-family: 'Font Awesome 5 Free';
+  transition: 300ms ease-out;
+}
+
+input[type=checkbox]::after,
+input[type=radio]::after {
+  content: '\f111';
+  display: inline-block;
+  text-align: center;
+  width: 1em;
+}
+
+input[type=checkbox]:checked::after,
+input[type=radio]:checked::after {
+  font-weight: 900;
+}
+
+input[type=checkbox]:active,
+input[type=radio]:active {
+  -webkit-transform: scale(0.6);
+          transform: scale(0.6);
+}
+
+input[type=checkbox] + span,
+input[type=radio] + span {
+  margin-left: .35em;
+}
+
+input[type=checkbox]:checked::after {
+  content: '\f058';
+}
+
+input[type=radio]:checked::after {
+  content: '\f192';
+}
+
+input[type="checkbox"]:hover, input[type="radio"]:hover {
+  cursor: pointer;
+}
+
+.tag-cloud li {
+  margin: 3px;
+  padding: 7px;
+  font-size: 1em;
+  cursor: pointer;
+}
+
+.tag-active {
+  background-color: #00a8ff;
+}
+
+.tag-undo {
+  color: #fff;
+  margin-left: 10px;
+}
+
+.tag-undo:hover{
+  color: #fff;
+}
+
+.list-inline > li {
+  display: inline-block;
 }
