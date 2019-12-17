@@ -40,16 +40,19 @@ deployment_model = dgvost_api.model('Deployment',
 new_incident_model = dgvost_api.model('New Incident',
                                       {'name': fields.String(required=True),
                                        'description': fields.String(required=True),
-                                       'location': fields.String(required=True), 'reported_via': fields.String(),
+                                       'incident_type': fields.String(required=True),
+                                       'location': fields.String(required=True),
+                                       'longitude': fields.Float(required=True),
+                                       'latitude': fields.Float(required=True), 'reported_via': fields.String(),
                                        'reference': fields.String()})  ##TODO Convert to GEOJson
 
 incident_model = dgvost_api.model('Incident',
                                   {'id': fields.Integer(), 'name': fields.String(), 'description': fields.String(),
-                                   'location': fields.String(), 'open': fields.Boolean(), 'public': fields.Boolean(),
-                                   'flagged': fields.Boolean(), 'type': fields.Integer(), 'priority': fields.Integer(),
-                                   'longitude': fields.Float(), 'latitude': fields.Float(),
+                                   'incident_type': fields.String(required=True), 'location': fields.String(),
+                                   'open': fields.Boolean(), 'public': fields.Boolean(), 'flagged': fields.Boolean(),
+                                   'type': fields.Integer(), 'priority': fields.Integer(), 'longitude': fields.Float(),
+                                   'latitude': fields.Float(),
                                    'created_at': fields.Float(description='UTC Timestamp.')})
-
 
 point_geometry = dgvost_api.model('PointGeometry', {
     'type': fields.String(required=True, default="Point"),

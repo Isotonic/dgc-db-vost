@@ -372,3 +372,7 @@ li.update-log > .update-log-text:before {
 .clock-time {
   display: block;
 }
+
+.font-smaller {
+  font-size: smaller;
+}

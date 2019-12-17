@@ -78,8 +78,14 @@ $(document).ready(function() {
         var geojsonLayer = L.geoJSON(incidents_geojson, {
             onEachFeature: onEachFeature,
             pointToLayer: function (geoJsonPoint, latlng) {
-                return L.marker(latlng, {icon: L.icon.pulse({iconSize:[10,10], color: geoJsonPoint.properties.colour, fillColor: geoJsonPoint.properties.colour, animate: geoJsonPoint.properties.animate})})
-            }
+                return L.marker(latlng, {icon: L.ExtraMarkers.icon({
+                                                icon: 'fa-' + geoJsonPoint.properties.icon,
+                                                markerColor: geoJsonPoint.properties.colour,
+                                                shape: 'square',
+                                                prefix: 'fa'
+                                            })
+                                        }
+                )}
         }).addTo(map);
         map.fitBounds(geojsonLayer.getBounds());
 

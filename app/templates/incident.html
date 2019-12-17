@@ -66,28 +66,26 @@
 		</div>
 	</div>
 	<div class="col-xl-3 col-md-6 mb-4">
-		{% set priority = incident.get_priority() %}
 		{% if current_user.has_permission('change_priority') %}
-		<div id="PriorityBorder" class="card border-left-{{ priority }} shadow h-100 py-2">
-			<a id="PriorityCog" class="incident-cog text-{{ priority }}" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+		<div id="PriorityBorder" class="card border-left-{{ incident.priority }} shadow h-100 py-2">
+			<a id="PriorityCog" class="incident-cog text-{{ incident.priority }}" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 			    <i class="fas fa-cog float-right" data-toggle="tooltip" title="Change Priority"></i>
 			</a>
 			<div id="PriorityDropdown" class="dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="dropdownPriorityMenu">
-				<a id="PriorityStandard" class="dropdown-item{% if priority == 'Standard' %} active{% endif %}" href="#" type="submit">Standard</a>
-				<a id="PriorityPrompt" class="dropdown-item{% if priority == 'Prompt' %} active{% endif %}" href="#" type="submit">Prompt</a>
-				<a id="PriorityImmediate" class="dropdown-item{% if priority == 'Immediate' %} active{% endif %}" href="#" type="submit">Immediate</a>
+				<a id="PriorityStandard" class="dropdown-item{% if incident.priority == 'Standard' %} active{% endif %}" href="#" type="submit">Standard</a>
+				<a id="PriorityPrompt" class="dropdown-item{% if incident.priority == 'Prompt' %} active{% endif %}" href="#" type="submit">Prompt</a>
+				<a id="PriorityImmediate" class="dropdown-item{% if incident.priority == 'Immediate' %} active{% endif %}" href="#" type="submit">Immediate</a>
 			</div>
 			{% endif %}
 			<div class="card-body">
 				<div class="row no-gutters align-items-center">
 					<div class="col mr-2">
-						<div id="PriorityTitle" class="text-s font-weight-bold text-{{ priority }} text-uppercase mb-1">Priority</div>
-						<div id="PriorityText" class="h5 mb-0 font-weight-bold text-gray-800">{{ priority }}</div>
+						<div id="PriorityTitle" class="text-s font-weight-bold text-{{ incident.priority }} text-uppercase mb-1">Priority</div>
+						<div id="PriorityText" class="h5 mb-0 font-weight-bold text-gray-800">{{ incident.priority }}</div>
 					</div>
 					<div class="col-auto">
-						<div id="PriorityIcon" class="icon icon-shape bg-{{ priority }} text-white rounded-circle shadow">
-							<!-- TODO Add different types of incidents. -->
-							<i class="fas fa-exclamation fa-1fourx"></i>
+						<div id="PriorityIcon" class="icon icon-shape bg-{{ incident.priority }} text-white rounded-circle shadow">
+							<i class="fas fa-1fourx fa-{{ incident.get_icon() }}"></i>
 						</div>
 					</div>
 				</div>
@@ -750,7 +748,7 @@
 		$('#addTaskSelect').val(null).trigger('change');
 		$('#changeAllocationSelect').val(null).trigger('change');
 
-		  var map = L.map('Map').setView({lat: 55.872326, lng: -4.288094}, 15);
+		  var map = L.map('Map').setView({lat: {{ incident.latitude }}, lng: {{ incident.longitude }}}, 15);
 		  L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
 			attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
 			minZoom: 4,
@@ -759,7 +757,7 @@
 			accessToken: '{{ config['MAPBOX_API_KEY'] }}'
 		}).addTo(map);
 
-		var marker = L.circleMarker([55.872326, -4.288094]).addTo(map);
+		var marker = L.circleMarker([{{ incident.latitude }}, {{ incident.longitude }}]).addTo(map);
 	})
 </script>
 {% endblock %}

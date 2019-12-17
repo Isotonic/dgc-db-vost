@@ -46,8 +46,8 @@ def create_deployment(name, description, group_ids, user_ids, created_by):
     return deployment
 
 
-def create_incident(name, description, location, reported_via, reference, deployment, created_by):
-    incident = Incident(name=name, description=description, location=location, reported_via=reported_via,
+def create_incident(name, description, incident_type, location, longitude, latitude, reported_via, reference, deployment, created_by):
+    incident = Incident(name=name, description=description, incident_type=incident_type, location=location, longitude=longitude, latitude=latitude, reported_via=reported_via,
                         reference=reference, deployment=deployment, created_by=created_by.id)
     db.session.add(incident)
     db.session.commit()

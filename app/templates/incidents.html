@@ -2,6 +2,8 @@
 {% block css %}
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.20/css/dataTables.bootstrap4.min.css">
 <link rel="stylesheet" type="text/css" href="/static/css/temp.css">
+<link href="https://api.tiles.mapbox.com/mapbox-gl-js/v1.6.0/mapbox-gl.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.4.2/mapbox-gl-geocoder.css" type="text/css"/>
 {% endblock %}
 {% block heading %}
 <a href="#newIncidentModal" data-toggle="modal" data-target="#newIncidentModal" class="btn btn-icon-split btn-success mb-1">
@@ -40,7 +42,7 @@
 				<div class="row no-gutters align-items-center">
 					<div class="col mr-2">
 						<div class="text-s font-weight-bold text-warning text-uppercase mb-1">Response Time</div>
-						<div class="h5 mb-0 font-weight-bold text-gray-800">1 Hour</div>
+						<div class="h5 mb-0 font-weight-bold text-gray-800">WIP</div>
 					</div>
 					<div class="col-auto">
 						<div class="icon icon-shape bg-warning text-white rounded-circle shadow">
@@ -49,7 +51,7 @@
 					</div>
 				</div>
 				<p class="mt-3 mb-0 text-muted">
-					<span class="text-danger mr-2"><i class="fa fa-arrow-down"></i> 3.48%</span>
+					<span class="text-info mr-2"><i class="fa"></i> 0%</span>
 					<span class="text-nowrap">since last hour</span>
 				</p>
 			</div>
@@ -103,11 +105,11 @@
 							{{ incident.name }}
 						</td>
 						<td scope="row">
-							{{ incident.location }}
+							<span class="font-smaller">{{ incident.location }}</span>
 						</td>
 						<td class="status">
 							<span class="badge badge-dot mr-4">
-							<i class="bg-warning"></i> {{ incident.get_priority() }}
+							<i class="bg-{{ incident.priority }}"></i> {{ incident.priority }}
 							</span>
 						</td>
 						<td>
@@ -158,6 +160,7 @@
 </div>
 {% endblock %}
 {% block modals %}
+<!-- New Incident Modal -->
 <div class="modal fade" id="newIncidentModal" tabindex="-1" role="dialog" aria-labelledby="newIncidentModal" aria-hidden="true">
 	<div class="modal-dialog" role="document">
 		<div class="modal-content">
@@ -174,16 +177,94 @@
 							<div class="form-group mb-3">
 								<input class="form-control was-validated" name="name" placeholder="Incident Name" type="text" required>
 							</div>
-							<div class="form-group mb-3">
-								<input class="form-control" name="location" placeholder="Location" type="text">
-							</div>
 							<textarea class="form-control" rows="3" name="description" placeholder="Description"></textarea>
+							<div class="form-group my-3">
+								<select id="newIncidentCategory" name="category" style="width: 100%">
+									<optgroup label="Transport Disruption">
+										<option value="Road Incident"><i class="fas fa-car"></i> Road Obstruction/Closure/Disruption</option>
+										<option value="Rail Incident">Railway Incident / Disruption</option><i class="fas fa-subway"></i>
+										<option value="Aviation Incident">Aviation Incident / Disruption</option><i class="fas fa-plane"></i>
+										<option value="Maritine Incident">Maritine Incident / Disruption</option><i class="fas fa-ship"></i>
+									</optgroup>
+									<optgroup label="Severe Weather">
+										<option value="Snow / Ice">Snow / Ice</option><i class="fas fa-snowflake"></i>
+										<option value="Severe Wind">Severe Wind</option><i class="fas fa-wind"></i>
+										<option value="Rain / Flooding">Rain / Flooding</option><i class="fas fa-cloud-showers-heavy"></i>
+									</optgroup>
+									<optgroup label="General Incident">
+										<option value="Industrial">Industrial</option><i class="fas fa-industry"></i>
+										<option value="Major Accident Hazard Pipeline">Major Accident Hazard Pipeline</option>
+										<option value="Nuclear Incident">Nuclear Incident</option><i class="fas fa-radiation"></i>
+										<option value="Fire/Explosion">Fire/Explosion</option><i class="fas fa-fire"></i>
+										<option value="Building Collapse">Building Collapse</option><i class="fas fa-building"></i>
+										<option value="Reservoir">Reservoir</option>
+									</optgroup>
+									<optgroup label="Fuel / Utilities">
+										<option value="Fuel Disruption">Fuel Disruption</option><i class="fas fa-gas-pump"></i>
+										<option value="Power Outage">Power Outage</option><i class="fas fa-plug"></i>
+										<option value="Gas Supply Interruption">Gas Supply Interruption</option>
+										<option value="Public Water Supply">Public Water Supply</option><i class="fas fa-water"></i>
+										<option value="Private Water Supply">Private Water Supply</option><i class="fas fa-water"></i>
+										<option value="Telecoms Outage">Telecoms Outage</option><i class="fas fa-phone-slash"></i>
+										<option value="Blackstart">Blackstart</option>
+									</optgroup>
+									<optgroup label="Human Health">
+										<option value="Pandemic">Pandemic</option>
+										<option value="Food Contamination">Food Contamination</option><i class="fas fa-utensils"></i>
+										<option value="Exotic Notification Disease">Exotic Notification Disease</option>
+									</optgroup>
+									<optgroup label="Crime & Disorder">
+										<option value="Terrorism">Terrorism</option>
+										<option value="Cyber Attack">Cyber Attack</option>
+										<option value="Public Disorder">Public Disorder</option>
+										<option value="Protest">Protest</option>
+									</optgroup>
+									<optgroup label="People">
+										<option value="Fatalities">Fatalities</option>
+										<option value="Casualties">Casualties</option><i class="fas fa-first-aid"></i>
+										<option value="Missing Person(s)">Missing Person(s)</option>
+										<option value="Resque Required">Resque Required</option>
+										<option value="Evacuation">Evacuation</option>
+										<option value="Rest Centre Activation">Rest Centre Activation</option>
+										<option value="Survivor Reception Centre Activation">Survivor Reception Centre Activation</option>
+										<option value="Friends & Family Reception Centre Activation">Friends & Family Reception Centre Activation</option>
+										<option value="Humanitarian Assistance Centre Activation">Humanitarian Assistance Centre Activation</option>
+										<option value="Casualty Bureau Activation">Casualty Bureau Activation</option>
+										<option value="General Welfare Provision">General Welfare Provision</option>
+										<option value="Vaccination">Vaccination</option>
+									</optgroup>
+									<optgroup label="Communications">
+										<option value="Press Release">Press Release</option><i class="fas fa-newspaper"></i>
+										<option value="SitRep Required">SitRep Required</option>
+										<option value="Social Media">Social Media</option>
+										<option value="DGVOST Activation">DGVOST Activation</option>
+									</optgroup>
+									<optgroup label="Animal Health">
+										<option value="Control Zones">Control Zones</option>
+										<option value="Surveillance Zones">Surveillance Zones</option><i class="fas fa-video"></i>
+										<option value="Movement Restrictions">Movement Restrictions</option>
+										<option value="Cull">Cull</option>
+										<option value="Disposal">Disposal</option>
+										<option value="Disinfection">Disinfection</option>
+										<option value="Animal Welfare">Animal Welfare</option>
+									</optgroup>
+									<optgroup label="Environmental">
+										<option value="Plume">Plume</option>
+										<option value="Radiation Pollution">Radiation Pollution</option><i class="fas fa-radiation-alt"></i>
+										<option value="Hazardous Chemical Pollution">Hazardous Chemical Pollution</option>
+										<option value="Oil Pollution">Oil Pollution</option>
+										<option value="Sewage / Slurry">Sewage / Slurry</option>
+									</optgroup>
+								</select>
+							</div>
 							<div class="form-group mt-3 mb-3">
-								<input class="form-control" name="reported_via" placeholder="Reported Via" type="text">
+								<input class="form-control" name="reported_via" placeholder="Reported Via" type="text" required>
 							</div>
 							<div class="form-group mb-3">
 								<input class="form-control" name="reference" placeholder="Reference (Optional)" type="text">
 							</div>
+							<span id="LocationNotChosen" class="text-danger d-none">Please select the location of the incident.</span>
+							<div id="Map" class="map-container"></div>
 							<div class="text-center">
 								<button type="submit" class="btn btn-primary my-4">Submit</button>
 							</div>
@@ -218,8 +299,13 @@
 
 	$('#newIncidentForm').submit( function(e) {
 	    e.preventDefault();
+	    if (!new_incident_location) {
+	    	$('#LocationNotChosen').removeClass('d-none')
+	    	return;
+	    }
 	    $('#newIncidentModal').modal('hide')
-		socket.emit('create_incident', {'name': $(this).serializeArray()[0]['value'], 'location': $(this).serializeArray()[1]['value'], 'description': $(this).serializeArray()[2]['value'], 'reported_via': $(this).serializeArray()[3]['value'], 'reference': $(this).serializeArray()[4]['value'], 'deployment_id': deployment_id})
+		socket.emit('create_incident', {'name': $(this).serializeArray()[0]['value'], 'location': new_incident_location['place_name'], 'geometry': new_incident_location['geometry']['coordinates'], 'description': $(this).serializeArray()[1]['value'], 'type': $('#newIncidentCategory').val(), 'reported_via': $(this).serializeArray()[2]['value'], 'reference': $(this).serializeArray()[3]['value'], 'deployment_id': deployment_id})
+		$('#LocationNotChosen').addClass('d-none')
 		$('#newIncidentForm').get(0).reset()
 	})
 
@@ -271,5 +357,35 @@
 	        ]
 	    });
 	});
+</script>
+<script src="https://api.tiles.mapbox.com/mapbox-gl-js/v1.6.0/mapbox-gl.js"></script>
+<script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.4.2/mapbox-gl-geocoder.min.js"></script>
+<script>
+	var new_incident_location = null
+	mapboxgl.accessToken = '{{ config['MAPBOX_API_KEY'] }}';
+	var map = new mapboxgl.Map({
+		container: 'Map',
+		style: 'mapbox://styles/mapbox/streets-v11',
+		zoom: 5,
+		center: [-4.003661, 56.584255]
+	});
+
+	var geocoder = new MapboxGeocoder({
+			accessToken: mapboxgl.accessToken,
+			mapboxgl: mapboxgl,
+			countries: 'gb'
+	})
+
+	geocoder.on('result', function(result) {
+	   new_incident_location = result['result'];
+	})
+
+	map.addControl(geocoder);
+
+	map.setFilter('my-layer', ['==', 'name', 'UK']);
+
+
+
+
 </script>
 {% endblock %}

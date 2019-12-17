@@ -37,9 +37,9 @@ incidenttask_user_junction = db.Table('task_users',
                                       )
 
 incidentsubtask_user_junction = db.Table('subtask_users',
-                                      db.Column('user_id', db.Integer, db.ForeignKey('user.id')),
-                                      db.Column('id', db.Integer, db.ForeignKey('incident_sub_task.id')),
-                                      )
+                                         db.Column('user_id', db.Integer, db.ForeignKey('user.id')),
+                                         db.Column('id', db.Integer, db.ForeignKey('incident_sub_task.id')),
+                                         )
 
 incidentlog_target_users_junction = db.Table('incidentlog_target_users_actions',
                                              db.Column('user_id', db.Integer, db.ForeignKey('user.id')),
@@ -47,9 +47,10 @@ incidentlog_target_users_junction = db.Table('incidentlog_target_users_actions',
                                              )
 
 tasklog_target_users_junction = db.Table('tasklog_target_users_actions',
-                                             db.Column('user_id', db.Integer, db.ForeignKey('user.id')),
-                                             db.Column('id', db.Integer, db.ForeignKey('task_log.id')),
-                                             )
+                                         db.Column('user_id', db.Integer, db.ForeignKey('user.id')),
+                                         db.Column('id', db.Integer, db.ForeignKey('task_log.id')),
+                                         )
+
 
 def list_of_names(names):
     if not names:
@@ -64,6 +65,7 @@ def task_string(tasks):
         return
     completed = [m for m in tasks if m.completed]
     return f'{len(completed)}/{len(tasks)}'
+
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
@@ -227,10 +229,28 @@ class Deployment(db.Model):
 
 
 class Incident(db.Model):
-    priority_values = {'standard': 1, 'prompt': 2, 'immediate': 3}
-    priorities = {1: 'standard', 2: 'prompt', 3: 'immediate'}
-    priority_colours = {1: '#FFC312', 2: '#fa8231', 3: '#e74c3c'}
-    incident_types = {}  ##TODO Get incident types.
+    priority_colours = {'Standard': 'yellow', 'Immediate': 'orange', 'Prompt': 'orange-dark'}
+    ##TODO Should really load these from a file.
+    incident_types = {'Road Incident': 'car', 'Rail Incident': 'subway', 'Aviation Incident': 'plane',
+                      'Maritane Inicent': 'ship', 'Snow/Ice': 'snowflake',
+                      'Severe Wind': 'wind', 'Rain / Flooding': 'cloud-showers-heavy', 'Industrial': 'industry',
+                      'Major Accident Hazard Pipeline': '',
+                      'Nuclear Incident': 'radiation', 'Fire/Explosion': 'fire', 'Building Collapse': 'building',
+                      'Reservoir': '', 'Fuel Disruption': 'gas-pump',
+                      'Power Outage': 'plug', 'Gas Supply Interruption': '', 'Public Water Supply': 'water',
+                      'Private Water Supply': 'water', 'Telecoms Outage': 'phone-slash',
+                      'Blackstart': '', 'Pandemic': '', 'Food Contamination': 'utensils',
+                      'Exotic Notification Disease': '', 'Terrorism': '', 'Cyber Attack': '', 'Public Disorder': '',
+                      'Protest': '', 'Fatalities': '', 'Casualties': 'first-aid', 'Missing Person(s)': '',
+                      'Rescue Required': '', 'Evacuation': '', 'Rest Centre Activation': '',
+                      'Survivor Reception Centre Activation': '', 'Friends & Family Reception Centre Activation': '',
+                      'Humanitarian Assistance Centre Activation': '', 'Casualty Bureau Activation': '',
+                      'General Welfare Provision': '', 'Vaccination': '', 'Press Release': 'newspaper',
+                      'SitRep Required': '', 'Social Media': '', 'DGVOST Activation': '', 'Control Zones': '',
+                      'Surveillance Zones': 'video',
+                      'Movement Restrictions': '', 'Cull': '', 'Disposal': '', 'Disinfection': '', 'Animal Welfare': '',
+                      'Plume': '', 'Radiation Pollution': 'radiation-alt', 'Hazardous Chemical Pollution': '',
+                      'Oil Pollution': '', 'Sewage / Slurry': ''}
 
     # TODO Add who has this pinned.
     id = db.Column(db.Integer, primary_key=True, index=True)
@@ -239,7 +259,7 @@ class Incident(db.Model):
     description = db.Column(db.String(256))
     reported_via = db.Column(db.String(256))
     reference = db.Column(db.String(128))  ##TODO MAYBE CHANGE TO INT
-    incident_type = db.Column(db.Integer)
+    incident_type = db.Column(db.String(32))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
     created_by_user = db.relationship('User', backref='created_incidents')
@@ -249,7 +269,7 @@ class Incident(db.Model):
     flagged = db.Column(db.Boolean(), default=False)
     open_status = db.Column(db.Boolean(), default=True)
     location = db.Column(db.String(128), index=True)
-    priority = db.Column(db.Integer())
+    priority = db.Column(db.String(10))
     longitude = db.Column(db.Float())
     latitude = db.Column(db.Float())
     assigned_to = db.relationship('User', secondary=incident_user_junction)
@@ -262,10 +282,6 @@ class Incident(db.Model):
     def name_check(self, deployment_name, incident_name):
         return self.deployment.name.lower() == deployment_name.lower() and self.name.lower() == incident_name.lower()
 
-    def get_priority(self):
-        if not self.priority: return self.priorities[1].title()  ##TODO REMOVE
-        return self.priorities[self.priority].title()
-
     def calculate_task_percentage(self):
         if not self.tasks:
             return
@@ -273,6 +289,11 @@ class Incident(db.Model):
 
     def task_string(self):
         return task_string(self.tasks)
+
+    def get_icon(self):
+        if self.incident_type in self.incident_types and self.incident_types[self.incident_type] != '':
+            return self.incident_types[self.incident_type]
+        return 'exclamation'
 
     def generate_geojson(self):
         if not self.longitude or not self.latitude:
@@ -282,14 +303,16 @@ class Incident(db.Model):
             'properties': {
                 'name': self.name,
                 'description': self.description,
-                'priority': self.get_priority(),
+                'priority': self.priority,
                 'created_at': self.created_at.timestamp(),
                 'location': self.location,
                 'tasks': self.task_string(),
                 'comments': len(self.comments),
                 'colour': self.priority_colours[self.priority],
-                'animate': (datetime.utcnow().timestamp()-self.last_updated.timestamp()) <= 300,
-                'url': url_for('view_incident', deployment_name=self.deployment, deployment_id=self.deployment.id, incident_name=self.name, incident_id=self.id)
+                'animate': (datetime.utcnow().timestamp() - self.last_updated.timestamp()) <= 300,
+                'icon': self.get_icon(),
+                'url': url_for('view_incident', deployment_name=self.deployment, deployment_id=self.deployment.id,
+                               incident_name=self.name, incident_id=self.id)
             },
             'geometry': {
                 'type': 'Point',
@@ -312,13 +335,19 @@ class IncidentTask(db.Model):
         return list_of_names(self.assigned_to)
 
     def get_subtasks(self):
-        return sorted([{'id': m.id, 'name': m.name, 'completed': m.completed, 'assigned_to': m.get_assigned(), 'timestamp': moment.create(m.completed_at if m.completed else m.created_at).fromNow(refresh=True)} for m in self.subtasks], key=lambda k: k['id'])
+        return sorted([{'id': m.id, 'name': m.name, 'completed': m.completed, 'assigned_to': m.get_assigned(),
+                        'timestamp': moment.create(m.completed_at if m.completed else m.created_at).fromNow(
+                            refresh=True)} for m in self.subtasks], key=lambda k: k['id'])
 
     def get_comments(self):
-        return sorted([{'user': str(m.user), 'user_avatar': m.user.get_avatar(), 'text': str(m), 'timestamp': moment.create(m.sent_at).fromNow(refresh=True)} for m in self.comments], key=lambda k: k['timestamp'], reverse=True)
+        return sorted([{'user': str(m.user), 'user_avatar': m.user.get_avatar(), 'text': str(m),
+                        'timestamp': moment.create(m.sent_at).fromNow(refresh=True)} for m in self.comments],
+                      key=lambda k: k['timestamp'], reverse=True)
 
     def get_actions(self):
-        return sorted([{'user': str(m.user), 'user_avatar': m.user.get_avatar(), 'text': str(m), 'timestamp': moment.create(m.occurred_at).fromNow(refresh=True)} for m in self.task_logs], key=lambda k: k['timestamp'], reverse=True)
+        return sorted([{'user': str(m.user), 'user_avatar': m.user.get_avatar(), 'text': str(m),
+                        'timestamp': moment.create(m.occurred_at).fromNow(refresh=True)} for m in self.task_logs],
+                      key=lambda k: k['timestamp'], reverse=True)
 
     def subtask_string(self):
         return task_string(self.subtasks)
@@ -400,13 +429,17 @@ class AuditLog(db.Model):
 class IncidentLog(db.Model):
     action_values = {'create_incident': 1, 'create_task': 2, 'complete_task': 3, 'delete_task': 4, 'add_comment': 5,
                      'delete_comment': 6, 'incomplete_task': 7, 'assigned_user': 8, 'removed_user': 9,
-                     'marked_complete': 10, 'marked_incomplete': 11, 'changed_priority': 12, 'changed_task_description': 13, 'assigned_user_task': 14, 'removed_user_task': 15}  ##TODO RE-ORDER ONCE DONE
+                     'marked_complete': 10, 'marked_incomplete': 11, 'changed_priority': 12,
+                     'changed_task_description': 13, 'assigned_user_task': 14,
+                     'removed_user_task': 15}  ##TODO RE-ORDER ONCE DONE
     action_strings = {1: 'created incident', 2: 'created task $task', 3: 'marked $task as complete',
                       4: 'deleted task $task',
                       5: 'added update', 6: 'deleted update', 7: 'marked $task as incomplete',
                       8: 'assigned $target_users to incident',
                       9: 'removed $target_users from incident', 10: 'marked incident as complete',
-                      11: 'marked incident as incomplete', 12: 'changed priority to $extra', 13: 'changed $task description to "$extra"', 14: 'added $target_users to $task', 15: 'removed $target_users from $task'}
+                      11: 'marked incident as incomplete', 12: 'changed priority to $extra',
+                      13: 'changed $task description to "$extra"', 14: 'added $target_users to $task',
+                      15: 'removed $target_users from $task'}
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
@@ -435,10 +468,12 @@ class IncidentLog(db.Model):
 
 
 class TaskLog(db.Model):
-    action_values = {'create_subtask': 1, 'complete_subtask': 2, 'delete_subtask': 3, 'changed_description': 4, 'assigned_user': 5, 'removed_user': 6, 'incomplete_subtask': 7}  ##TODO RE-ORDER ONCE DONE
+    action_values = {'create_subtask': 1, 'complete_subtask': 2, 'delete_subtask': 3, 'changed_description': 4,
+                     'assigned_user': 5, 'removed_user': 6, 'incomplete_subtask': 7}  ##TODO RE-ORDER ONCE DONE
     action_strings = {1: 'created $subtask', 2: 'marked $subtask as complete',
                       3: 'deleted $extra',
-                      4: 'changed task description to "$extra"', 5: 'added $target_users to task', 6: 'removed $target_users from task', 7: 'marked $subtask as incomplete'}
+                      4: 'changed task description to "$extra"', 5: 'added $target_users to task',
+                      6: 'removed $target_users from task', 7: 'marked $subtask as incomplete'}
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
@@ -460,9 +495,11 @@ class TaskLog(db.Model):
                 target_users = list_of_names(self.target_users)
             else:
                 target_users = self.target_users[0]
-        msg = Template(self.action_strings[self.action_type]).substitute(target_users=target_users, task=self.task, subtask=self.subtask,
+        msg = Template(self.action_strings[self.action_type]).substitute(target_users=target_users, task=self.task,
+                                                                         subtask=self.subtask,
                                                                          extra=self.extra)
         return f'{msg}.'
+
 
 class RevokedToken(db.Model):
     id = db.Column(db.Integer, primary_key=True)

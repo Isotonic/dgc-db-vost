@@ -121,6 +121,7 @@ def view_deployments():
     return render_template('deployments.html', title='Deployments', nosidebar=True, groups=groups, back_url=url_for('view_deployments'), deployments=current_user.get_deployments())
 
 
+@app.route('/deployments/<deployment_name>-<int:deployment_id>/', methods=['GET'])
 @app.route('/deployments/<deployment_name>-<int:deployment_id>/incidents/', methods=['GET'])
 @login_required
 def view_incidents(deployment_name, deployment_id):
@@ -130,6 +131,7 @@ def view_incidents(deployment_name, deployment_id):
     incidents_stat = deployment.calculate_incidents_stat()
     return render_template('incidents.html', title=f'{deployment.name}', deployment=deployment,
                            incidents_active=True, incidents_stat=incidents_stat, incidents=current_user.get_incidents(deployment.id), back_url=url_for('view_deployments'))
+
 
 @app.route('/deployments/<deployment_name>-<deployment_id>/assigned_incidents/', methods=['GET'])
 @login_required
@@ -162,7 +164,7 @@ def view_notifications():
     pass
 
 
-@app.route('/<deployment_name>-<deployment_id>/map/', methods=['GET'])
+@app.route('/deployments/<deployment_name>-<deployment_id>/map/', methods=['GET'])
 @login_required
 def view_map(deployment_name, deployment_id):
     deployment = Deployment.query.filter_by(id=deployment_id).first()
@@ -171,16 +173,17 @@ def view_map(deployment_name, deployment_id):
     return render_template('map.html', title=f'{deployment}', deployment=deployment, geojson=list(filter(None, [m.generate_geojson() for m in current_user.get_incidents(deployment)])), map_active=True, back_url=url_for('view_incidents', deployment_name=deployment.name, deployment_id=deployment.id))
 
 
-@app.route('/<deployment_name>-<deployment_id>/live-feed/', methods=['GET'])
+@app.route('/deployments/<deployment_name>-<deployment_id>/live-feed/', methods=['GET'])
 @login_required
 def view_live_feed(deployment_name):
     pass
 
 
-@app.route('/<deployment_name>-<deployment_id>/decision-making-log/', methods=['GET'])
+@app.route('/deployments/<deployment_name>-<deployment_id>/decision-making-log/', methods=['GET'])
 @login_required
 def view_decision_making_log(deployment_name):
     pass
+
 
 @socketio.on('join')
 @login_required_sockets
@@ -231,15 +234,20 @@ def create_incident_socket(data):
     try:
         name = data['name']
         description = data['description']
+        incident_type = data['type']
         location = data['location']
+        longitude = data['geometry'][0]
+        latitude = data['geometry'][1]
         reported_via = data['reported_via']
         reference = data['reference']
-    except:
+    except: ##TODO Less vague exception handling
+        return emit('create_incident', {'message': 'Incorrect data supplied.', 'code': 403})
+    if incident_type not in Incident.incident_types.keys():
         return emit('create_incident', {'message': 'Incorrect data supplied.', 'code': 403})
     deployment = Deployment.query.filter_by(id=data['deployment_id']).first()
     if not deployment:
         return emit('create_incident', {'message': 'Unable to find the deployment.', 'code': 404})
-    create_incident(name, description, location, reported_via, reference, deployment, current_user)
+    create_incident(name, description, incident_type, location, longitude, latitude, reported_via, reference, deployment, current_user)
 
 
 @socketio.on('create_incident_task')
@@ -355,8 +363,10 @@ def change_incident_priority_socket(data):
     #if not current_user.has_permission('change_priority'):
     #    return jsonify(data='You don\'t have permission to change an incident\'s priority.'), 403
     try: ##TODO Add in function to get data
-        priority = Incident.priority_values[data['priority'].lower()]
+        priority = data['priority']
     except:
+        return emit('change_incident_priority', {'message': 'Incorrect data supplied.', 'code': 403})
+    if priority not in ['Standard', 'Prompt', 'Immediate']:
         return emit('change_incident_priority', {'message': 'Incorrect data supplied.', 'code': 403})
     incident = Incident.query.filter(Deployment.id == data['deployment_id'], Incident.id == data['incident_id']).first()
     if not incident:

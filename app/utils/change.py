@@ -44,10 +44,10 @@ def change_incident_priority(incident, priority, changed_by):
         return False
     incident.priority = priority
     incident.last_updated = datetime.utcnow()
-    emit('change_incident_priority', {'priority': Incident.priorities[incident.priority].title(), 'code': 200},
+    emit('change_incident_priority', {'priority': incident.priority, 'code': 200},
          room=f'{incident.deployment_id}-{incident.id}')
     incident_action(user=changed_by, action_type=IncidentLog.action_values['changed_priority'],
-                    incident=incident, extra=Incident.priorities[priority])
+                    incident=incident, extra=priority)
 
 
 def change_task_status(task, status, changed_by):
