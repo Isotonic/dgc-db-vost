@@ -128,28 +128,14 @@
 						</td>
 						<td class="completion">
 							<div class="d-flex align-items-center">
-								{% set percentage = incident.calculate_task_percentage() %}
-								{% if percentage == None %}
-								None
-								{% elif percentage == 100 %}
-								Completed
-								{% else %}
-								<span class="mr-2">{{ percentage }}%</span>
-								<div>
-									<div class="progress">
-										<div class="progress-bar bg-warning" role="progressbar" aria-valuenow="60"
-											aria-valuemin="0" aria-valuemax="100"
-											style="width: {{ percentage }}%;"></div>
-									</div>
-								</div>
-								{% endif %}
+								{% include 'percentage.html' %}
 							</div>
 						</td>
 						<td class="status">
 							{{ moment(incident.last_updated).fromNow(refresh=True) }}
 						</td>
 						<td class="d-none">
-							{{ incident.last_updated }}
+							{{ incident.last_updated.timestamp() }}
 						</td>
 					</tr>
 					{% endfor %}
@@ -279,6 +265,7 @@
 {% block scripts %}
 <script src="https://cdn.datatables.net/1.10.20/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.10.20/js/dataTables.bootstrap4.min.js"></script>
+<script src="/static/js/bootstrap-notify.js"></script>
 <script type="text/javascript" charset="utf-8">
 	var deployment_id = {{ deployment.id }}
 	var socket = io()
@@ -307,11 +294,20 @@
 		socket.emit('create_incident', {'name': $(this).serializeArray()[0]['value'], 'location': new_incident_location['place_name'], 'geometry': new_incident_location['geometry']['coordinates'], 'description': $(this).serializeArray()[1]['value'], 'type': $('#newIncidentCategory').val(), 'reported_via': $(this).serializeArray()[2]['value'], 'reference': $(this).serializeArray()[3]['value'], 'deployment_id': deployment_id})
 		$('#LocationNotChosen').addClass('d-none')
 		$('#newIncidentForm').get(0).reset()
-	})
+		{% if not current_user.has_permission('supervisor') %}
+		$.notify({message: 'Your incident has been sent to a supervisor!'},{type: 'success'});
+		{% endif %}
+	});
 
-	//TODO
+	{% if current_user.has_permission('supervisor') %}
+	socket.on('redirect_incident', function(data) {
+		if (recieve(data)) {
+			window.location.href = data['url'];
+		}
+	});
+	{% endif %}
+
 	socket.on('create_incident', function(data) {
-		return;
 		if (recieve(data)) {
 			$('#dataTable').DataTable().row.add([
             '<i class="far fa-bookmark"></i>',
@@ -320,14 +316,26 @@
             data['priority'],
             data['assigned_to'],
             data['tasks'],
-            data['last_updated_timestamp'],
-            data['last_updated']
-        ] ).draw( false )
+            data['last_updated'],
+            data['last_updated_timestamp']
+        ] ).draw()
+        flask_moment_render_all();
 		}
-	})
+	});
+
+	socket.on('action_required_count', function(data) {
+		if (recieve(data)) {
+			if (data['count'] == 0) {
+				$('#ActionsRequiredCounter').addClass('d-none');
+			} else if ($('#ActionsRequiredCounter').hasClass('d-none')) {
+				$('#ActionsRequiredCounter').removeClass('d-none');
+			}
+			$('#ActionsRequiredCounter').text(data['count']);
+		}
+	});
 
 	$(document).on('click', 'td', function () {
-	     window.location = $(this).parent().data("href")
+		window.location = $(this).parent().data("href")
 	 })
 
 </script>
@@ -349,7 +357,7 @@
 	            {
 	                "targets": [ 6 ],
 	                "orderData": [ 7 ]
-	
+
 	            }
 	        ],
 	        "order": [
@@ -383,9 +391,6 @@
 	map.addControl(geocoder);
 
 	map.setFilter('my-layer', ['==', 'name', 'UK']);
-
-
-
 
 </script>
 {% endblock %}

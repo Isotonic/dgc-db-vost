@@ -8,7 +8,7 @@
 <div>
 	<!-- TODO Allow non-privileged users to request a status change -->
 	{% if incident.open_status %}
-	<a id="ChangeIncidentStatus" href="#" class="btn btn-icon-split btn-success mb-1 mt-2">
+	<a id="ChangeIncidentStatus" class="btn btn-icon-split btn-success mb-1 mt-2" href="#" data-toggle="modal" data-target="#requestCompleteModal">
 	    <span class="btn-icon">
 	        <i class="fas fa-check"></i>
 	    </span>
@@ -30,7 +30,7 @@
 	</a>
 	<div class="dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="dropdownPriorityMenu">
 		<a class="dropdown-item" href="#" type="submit">User</a>
-		<a class="dropdown-item" href="#" type="submit">Supervisor</a>
+		<a class="dropdown-item" href="#" data-toggle="modal" data-target="#flagToSupervisorModal">Supervisor</a>
 	</div>
 </div>
 {% endblock %}
@@ -184,10 +184,12 @@
 		<div class="card shadow mb-4">
 			<div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
 				<h6 class="m-0 font-weight-bold text-primary">Map</h6>
+				{% if current_user.has_permission('mark_as_public') %}
 				<div class="custom-switch" data-toggle="tooltip" title="Toggle public visibility">
 					<input type="checkbox" class="custom-control-input" id="customSwitch1">
 					<label class="custom-control-label" for="customSwitch1"></label>
 				</div>
+				{% endif %}
 			</div>
 			<div class="card-body">
 				<div id="Map" class="map-container-incident"></div>
@@ -229,6 +231,56 @@
 </div>
 {% endblock %}
 {% block modals %}
+<!-- Request Complete Modal -->
+<div class="modal fade" id="requestCompleteModal" tabindex="-1" role="dialog" aria-labelledby="requestCompleteModal" aria-hidden="true">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-body p-0">
+				<div class="card shadow">
+					<div class="card-header py-3 d-flex align-items-center justify-content-between">
+						<h6 class="m-0 font-weight-bold text-primary">Request Status Change</h6>
+						<button class="close" type="button" data-dismiss="modal" aria-label="Close">
+						<span aria-hidden="true">×</span>
+						</button>
+					</div>
+					<div class="card-body">
+						<form id="requestCompleteForm" role="form">
+							<textarea class="form-control" rows="3" name="reason" placeholder="Add a reason..."></textarea>
+							<div class="text-center">
+								<button type="submit" class="btn btn-primary my-4">Submit</button>
+							</div>
+						</form>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<!-- Flag To Supervisor Modal -->
+<div class="modal fade" id="flagToSupervisorModal" tabindex="-1" role="dialog" aria-labelledby="flagToSupervisorModal" aria-hidden="true">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-body p-0">
+				<div class="card shadow">
+					<div class="card-header py-3 d-flex align-items-center justify-content-between">
+						<h6 class="m-0 font-weight-bold text-primary">Flag to Supervisor</h6>
+						<button class="close" type="button" data-dismiss="modal" aria-label="Close">
+						<span aria-hidden="true">×</span>
+						</button>
+					</div>
+					<div class="card-body">
+						<form id="flagToSupervisorForm" role="form">
+							<textarea class="form-control" rows="3" name="reason" placeholder="Add a reason..." required></textarea>
+							<div class="text-center">
+								<button type="submit" class="btn btn-primary my-4">Submit</button>
+							</div>
+						</form>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
 <!-- Change Allocation To Modal -->
 <div class="modal fade" id="changeAllocationModal" tabindex="-1" role="dialog" aria-labelledby="editAssignedToModal" aria-hidden="true">
 	<div class="modal-dialog" role="document">
@@ -355,6 +407,7 @@
 <script src="https://cdn.jsdelivr.net/npm/select2@4.0.12/dist/js/select2.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/handlebars@latest/dist/handlebars.js"></script>
 <script src="/static/js/taxonomy.min.js"></script>
+<script src="/static/js/bootstrap-notify.js"></script>
 <script id = "Task-Modal-Template" type="text/x-handlebars-template">
 {% raw %}
 <div class="modal-dialog modal-bigger" role="document">
@@ -535,10 +588,29 @@
 	    }
 	}
 
+	{% if current_user.has_permission('change_status') %}
 	$('#ChangeIncidentStatus').click( function(e) {
 		e.preventDefault();
 		socket.emit('change_incident_status', {'status': $(this).hasClass('btn-info'), 'deployment_id': deployment_id, 'incident_id': incident_id});
 	});
+	{% else %}
+	$('#requestCompleteForm').submit( function(e) {
+	   e.preventDefault();
+	   $('#requestCompleteModal').modal('hide');
+        socket.emit('request_incident_complete', {'status': $(this).hasClass('btn-info'), 'reason': $(this).serializeArray()[0]['value'], 'deployment_id': deployment_id, 'incident_id': incident_id});
+		$.notify({message: 'Your request has been sent!'},{type: 'success'});
+		$('#requestCompleteForm').get(0).reset();
+	});
+	{% endif %}
+
+	$('#flagToSupervisorForm').submit( function(e) {
+	   e.preventDefault();
+	   $('#flagToSupervisorModal').modal('hide');
+        socket.emit('flag_to_supervisor', {'reason': $(this).serializeArray()[0]['value'], 'deployment_id': deployment_id, 'incident_id': incident_id});
+		$.notify({message: 'You have flagged this incident to a supervisor!'},{type: 'success'});
+		$('#flagToSupervisorForm').get(0).reset();
+	});
+
 
 	$('#changeAllocationForm').submit( function(e) {
 	    e.preventDefault();
@@ -703,6 +775,17 @@
 	socket.on('create_incident_subtask', function(data) {
 		if (recieve(data)) {
 			console.log(true);
+		}
+	});
+
+	socket.on('action_required_count', function(data) {
+		if (recieve(data)) {
+			if (data['count'] == 0) {
+				$('#ActionsRequiredCounter').addClass('d-none');
+			} else if ($('#ActionsRequiredCounter').hasClass('d-none')) {
+				$('#ActionsRequiredCounter').removeClass('d-none');
+			}
+			$('#ActionsRequiredCounter').text(data['count']);
 		}
 	});
 

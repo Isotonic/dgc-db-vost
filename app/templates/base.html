@@ -76,10 +76,11 @@
             <div class="sidebar-heading">
                 Supervisor
             </div>
-            <li class="nav-item{% if live_feed_active is defined %} active{% endif %}">
-                <a class="nav-link" href="{{ url_for('view_live_feed', deployment_name=deployment.name, deployment_id=deployment.id) }}">
-                <i class="fas fa-fw fa-check-double"></i>
-                <span>Actions Required</span></a>
+            <li class="nav-item{% if supervisor_actions_active is defined %} active{% endif %}">
+                <a class="nav-link" href="{{ url_for('supervisor_actions', deployment_name=deployment.name, deployment_id=deployment.id) }}">
+                <i class="fas fa-fw fa-flag"></i>
+                {% set action_counter = deployment.calculate_actions_required() %}
+                <span>Actions Required <span id="ActionsRequiredCounter" class="badge badge-light {% if action_counter == 0 %}d-none{% endif %}">{{ action_counter }}</span></span></a>
             </li>
             {% endif %}
             <!-- Divider -->

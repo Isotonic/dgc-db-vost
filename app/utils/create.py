@@ -1,7 +1,8 @@
 import secrets
-from app import db, moment
+from app import db
 from flask_socketio import emit
 from flask import render_template
+from .supervisor import new_incident
 from .change import change_task_status
 from .actions import incident_action, task_action
 from app.models import User, Group, Deployment, Incident, IncidentTask, IncidentSubTask, TaskComment, IncidentComment, EmailLink, AuditLog, IncidentLog, TaskLog
@@ -47,16 +48,13 @@ def create_deployment(name, description, group_ids, user_ids, created_by):
 
 
 def create_incident(name, description, incident_type, location, longitude, latitude, reported_via, reference, deployment, created_by):
-    incident = Incident(name=name, description=description, incident_type=incident_type, location=location, longitude=longitude, latitude=latitude, reported_via=reported_via,
+    incident = Incident(name=name, description=description, supervisor_approved=created_by.has_permission('supervisor'), priority='Standard', incident_type=incident_type, location=location, longitude=longitude, latitude=latitude, reported_via=reported_via,
                         reference=reference, deployment=deployment, created_by=created_by.id)
     db.session.add(incident)
     db.session.commit()
-    emit('create_incident',
-         {'name': incident.name, 'location': incident.location, 'priority': incident.priority, 'assigned_to': None,
-          'last_updated': moment.create(incident.last_updated).fromNow(refresh=True), 'code': 200},
-         room=f'{incident.deployment_id}-all')
     incident_action(user=created_by, action_type=IncidentLog.action_values['create_incident'],
                    incident=incident)
+    new_incident(incident, created_by)
     return incident
 
 

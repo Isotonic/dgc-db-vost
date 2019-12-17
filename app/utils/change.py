@@ -2,8 +2,8 @@ from datetime import datetime
 from collections import Counter
 from flask_socketio import emit
 from flask import render_template
+from app.models import IncidentLog, TaskLog
 from .actions import incident_action, task_action
-from app.models import Incident, IncidentLog, TaskLog
 
 
 def change_incident_status(incident, status, changed_by):

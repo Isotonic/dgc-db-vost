@@ -120,11 +120,11 @@ class User(db.Model, UserMixin):
         if not deployment:
             return False
         if not self.has_deployment_access(deployment):
-            return incidents
+            return [m for m in incidents if m.supervisor_approved]
         if not ignore_permissions and self.has_permission('view_all_incidents'):
-            return [m for m in deployment.incidents if m.open_status] if open_only else deployment.incidents
+            return [m for m in deployment.incidents if m.open_status and m.supervisor_approved] if open_only else deployment.incidents
         for x in deployment.incidents:
-            if (not open_only or (open_only and x.open_status)) and self in x.assigned_to:
+            if (not open_only or (open_only and x.open_status)) and self in x.assigned_to and x.supervisor_approved:
                 incidents.append(x)
         return incidents
 
@@ -209,6 +209,9 @@ class Deployment(db.Model):
     def name_check(self, deployment_name):
         return self.name.lower() == deployment_name.lower()
 
+    def calculate_actions_required(self):
+        return len(SupervisorActions.query.filter_by(deployment_id=self.id, completed=False).all())
+
     def calculate_incidents_stat(self, user=None):
         if user:
             incidents = user.get_incidents(self)
@@ -266,6 +269,7 @@ class Incident(db.Model):
     closed_at = db.Column(db.DateTime)
     last_updated = db.Column(db.DateTime, default=datetime.utcnow)
     public = db.Column(db.Boolean(), default=False)
+    supervisor_approved = db.Column(db.Boolean(), default=False)
     flagged = db.Column(db.Boolean(), default=False)
     open_status = db.Column(db.Boolean(), default=True)
     location = db.Column(db.String(128), index=True)
@@ -405,6 +409,22 @@ class IncidentMedia(db.Model):
     uploaded_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
+class SupervisorActions(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    deployment_id = db.Column(db.Integer, db.ForeignKey('deployment.id'))
+    deployment = db.relationship('Deployment', backref='actions_required')
+    incident_id = db.Column(db.Integer, db.ForeignKey('incident.id'))
+    incident = db.relationship('Incident', backref='actions_required')
+    requested_by_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    requested_by = db.relationship('User', backref='actions_requested')
+    action_type = db.Column(db.String(64))
+    reason = db.Column(db.String(1024))
+    completed = db.Column(db.Boolean(), default=False)
+    completed_by_id = db.Column(db.Integer)
+    completed_by = db.relationship('User', backref='completed_actions')
+    requested_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
 class EmailLink(db.Model):  ##TODO Cascade
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
     user = db.relationship('User', backref='email_link')  ##Maybe unused so not needed.
@@ -524,6 +544,7 @@ admin.add_view(ModelView(IncidentTask, db.session))
 admin.add_view(ModelView(IncidentSubTask, db.session))
 admin.add_view(ModelView(IncidentComment, db.session))
 admin.add_view(ModelView(IncidentMedia, db.session))
+admin.add_view(ModelView(SupervisorActions, db.session))
 admin.add_view(ModelView(EmailLink, db.session))
 admin.add_view(ModelView(AuditLog, db.session))
 admin.add_view(ModelView(IncidentLog, db.session))
