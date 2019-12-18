@@ -22,14 +22,14 @@ socketio = SocketIO(app)
 argon2 = Argon2(app)
 bootstrap = Bootstrap(app)
 
-db.create_all()
-
 from .api import api_blueprint
 app.register_blueprint(api_blueprint, url_prefix='/api')
 csrf.exempt(api_blueprint)
 
 from app import routes, models
 login.login_view = 'login'
+
+db.create_all()
 
 @jwt.token_in_blacklist_loader
 def check_if_token_in_blacklist(decrypted_token):
