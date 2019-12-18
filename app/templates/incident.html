@@ -186,8 +186,8 @@
 				<h6 class="m-0 font-weight-bold text-primary">Map</h6>
 				{% if current_user.has_permission('mark_as_public') %}
 				<div class="custom-switch" data-toggle="tooltip" title="Toggle public visibility">
-					<input type="checkbox" class="custom-control-input" id="customSwitch1">
-					<label class="custom-control-label" for="customSwitch1"></label>
+					<input type="checkbox" class="custom-control-input" id="PublicToggle" autocomplete="off" {% if incident.public %}checked{% endif %}>
+					<label class="custom-control-label" for="PublicToggle"></label>
 				</div>
 				{% endif %}
 			</div>
@@ -436,7 +436,7 @@
 						</div>
 					</div>
 					<div class="row">
-						<div class="col-xl-12 col-sm-8 mb-4">
+						<div class="col-xl-12 col-sm-8 mb-2">
 							<h5><i class="fas fa-tasks mb-3 mr-2"></i> Tasks</h5>
 							<div class="row">
 								<div class="col-auto"><div id="TaskProgressPercentage" class="h5 ml-1 mb-2 font-weight-bold text-gray-800">20%</div></div>
@@ -470,32 +470,30 @@
 								</li>
 							{{/each}}
 							</ul>
-							<div>
-								<form id="addSubTaskForm" role="form">
-									<div class="form-group my-3">
-										<div class="col-sm-12">
-											<input id="TaskModalSubTaskAdd" class="form-control was-validated" name="name" placeholder="Sub-task Name" type="text" required>
-											<select id="addSubTaskSelect" name="users" multiple="multiple" style="width: 100%">
-												<option value="0"></option>
-												{% endraw %}
-												{% for group in groups %}
-												<optgroup label="{{ group[0] }}">
-													{% for user in group[1] %}
-													<option value="{{ user.id }}" data-avatar-url="{{ user.get_avatar() }}">{{ user }}</option>
-													{% endfor %}
-												</optgroup>
-												{% endfor %}
-												{% raw %}
-											</select>
-										</div>
-									</div>
+							<form id="addSubTaskForm" role="form">
+								<div class="form-group my-3">
+									<input id="TaskModalSubTaskAdd" class="form-control was-validated mb-2" name="name" placeholder="Sub-task Name" type="text" required>
+									<select id="addSubTaskSelect" name="users" multiple="multiple" style="width: 100%">
+										<option value="0"></option>
+										{% endraw %}
+										{% for group in groups %}
+										<optgroup label="{{ group[0] }}">
+											{% for user in group[1] %}
+											<option value="{{ user.id }}" data-avatar-url="{{ user.get_avatar() }}">{{ user }}</option>
+											{% endfor %}
+										</optgroup>
+										{% endfor %}
+										{% raw %}
+									</select>
 									<div class="text-center">
-										<button id="AddSubTaskBtn" type="button" class="btn btn-primary my-4">Submit</button>
+										<button id="AddSubTaskBtn" type="button" class="btn btn-primary float-right my-3">Submit</button>
 									</div>
-								</form>
-							</div>
+								</div>
+							</form>
+						</div>
+						<div class="col-xl-12 col-sm-8 mb-4">
 							<h5><i class="fas fa-comments mb-3 mr-2"></i> Comments</h5>
-							<ul id="TaskModalComments" class="list-group list-unstyled">
+							<ul id="TaskComments" class="list-group list-unstyled">
 								{{#each comments}}
 								<li class="update-log">
 									<div class="update-log-avatar">
@@ -518,7 +516,7 @@
 								</div>
 							</form>
 							<h5><i class="fas fa-clipboard-list mb-3 mr-2"></i> Actions</h5>
-							<ul class="activity">
+							<ul id="TaskActivity" class="activity">
 								{{#each actions}}
 								<li>
 									<div>
@@ -571,7 +569,10 @@
 	function removeStartingWith(index, css) {return (css.match (/^text-\S+/g) || []).join(' ')};
 
 	function updateProgressBar(check_element, progress_text, progress_bar) {
-		var percentage = parseInt(($(check_element + ' :checked').length/$(check_element + ' :checkbox').length)*100)
+		var percentage = parseInt(($(check_element + ' :checked').length/$(check_element + ' :checkbox').length)*100);
+		if (! percentage) {
+			percentage = 0;
+		}
 	    progress_text.text(percentage + '%');
 	    progress_bar.width(percentage + '%');
 	    progress_bar.removeClass(function (index, css) {
@@ -625,11 +626,16 @@
         socket.emit('change_incident_priority', {'priority': $(this).text(), 'deployment_id': deployment_id, 'incident_id': incident_id});
     });
 
+	$('#PublicToggle').change(function() {
+        socket.emit('change_public', {'public': $(this).is(":checked"), 'deployment_id': deployment_id, 'incident_id': incident_id});
+    });
+
 	$('#addTaskForm').submit( function(e) {
 	   e.preventDefault();
 	   $('#addTaskModal').modal('hide');
         socket.emit('create_incident_task', {'name': $(this).serializeArray()[0]['value'], 'users': $('#addTaskSelect').val(), 'description': $(this).serializeArray()[2]['value'], 'deployment_id': deployment_id, 'incident_id': incident_id});
 		$('#addTaskForm').get(0).reset();
+		$('#addTaskSelect').select2('val', '[]');
 	});
 
 	$('#Tasks').on('click', '.list-group-item.list-group-flush', function(e) {
@@ -651,12 +657,15 @@
 			socket.emit('change_task_description', {'task_id':  e.currentTarget.value, 'description': $('#TaskModalDescriptionText').val(),  'deployment_id': deployment_id, 'incident_id': incident_id});
 		} else if ($(e.target).attr('id') == 'AddSubTaskBtn') {
 			socket.emit('create_incident_subtask', {'task_id':  e.currentTarget.value, 'name': $('#TaskModalSubTaskAdd').val(), 'users': $('#addSubTaskSelect').val(), 'deployment_id': deployment_id, 'incident_id': incident_id});
+			$('#addSubTaskForm').get(0).reset();
+			$('#addSubTaskSelect').select2('val', '[]');
 		} else if ($(e.target).hasClass('task-checkbox')) {
 			socket.emit('change_subtask_status', {'subtask_id':  e.target.value, 'completed': $(e.target).prop("checked"), 'deployment_id': deployment_id, 'incident_id': incident_id, 'task_id': e.currentTarget.value});
 		} else if ($(e.target).hasClass('fa-trash-alt')) {
 			socket.emit('delete_subtask', {'subtask_id':  $(e.target).data('id'), 'deployment_id': deployment_id, 'incident_id': incident_id, 'task_id': e.currentTarget.value});
 		} else if ($(e.target).attr('id') == 'AddTaskCommentBtn') {
 			socket.emit('create_task_comment', {'task_id':  e.currentTarget.value, 'text': $('#TaskModalCommentAdd').val(), 'deployment_id': deployment_id, 'incident_id': incident_id});
+			$('#addTaskCommentForm').get(0).reset();
 		}
 	});
 
@@ -664,6 +673,7 @@
 	   e.preventDefault();
 	   $('#addCommentModal').modal('hide');
         socket.emit('create_incident_comment', {'text': $(this).serializeArray()[0]['value'], 'deployment_id': deployment_id, 'incident_id': incident_id});
+        $('#addCommentForm').get(0).reset();
 	});
 
 	socket.on('change_incident_status', function(data) {
@@ -774,7 +784,23 @@
 
 	socket.on('create_incident_subtask', function(data) {
 		if (recieve(data)) {
-			console.log(true);
+			$('#SubTasks').append(data['html']);
+			flask_moment_render_all();
+		}
+	});
+
+	socket.on('create_task_comment', function(data) {
+		if (recieve(data)) {
+			$('#TaskComments').append(data['html']);
+			flask_moment_render_all();
+		}
+	});
+
+	socket.on('task_activity', function(data) {
+		if (recieve(data)) {
+			$('#TaskActivity').prepend(data['html']);
+			$('#LastUpdated').html(moment().fromNow(refresh=true));
+			flask_moment_render_all();
 		}
 	});
 
@@ -809,7 +835,6 @@
 
 	socket.on('create_incident_comment', function(data) {
 		if (recieve(data)) {
-			$('#addCommentForm').get(0).reset();
 			if ($('#NoComments').length) {
 				$('#NoComments').remove();
 			};

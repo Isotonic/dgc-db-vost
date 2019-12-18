@@ -8,7 +8,7 @@ from flask_login import LoginManager
 from flask_wtf.csrf import CSRFProtect
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager
-
+from flask_bootstrap import Bootstrap
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -20,6 +20,9 @@ moment = Moment(app)
 csrf = CSRFProtect(app)
 socketio = SocketIO(app)
 argon2 = Argon2(app)
+bootstrap = Bootstrap(app)
+
+db.create_all()
 
 from .api import api_blueprint
 app.register_blueprint(api_blueprint, url_prefix='/api')
@@ -32,3 +35,4 @@ login.login_view = 'login'
 def check_if_token_in_blacklist(decrypted_token):
     jti = decrypted_token['jti']
     return models.RevokedToken.is_jti_blacklisted(jti)
+

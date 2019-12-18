@@ -2,7 +2,7 @@ from sqlalchemy import func
 from flask_wtf import FlaskForm
 from app.models import User, Group, Deployment
 from wtforms.validators import DataRequired, ValidationError, Email, EqualTo
-from wtforms import StringField, PasswordField, BooleanField, SelectField, SelectMultipleField
+from wtforms import StringField, PasswordField, BooleanField, SelectField, SelectMultipleField, SubmitField
 
 
 class LoginForm(FlaskForm):
@@ -16,6 +16,7 @@ class CreateUser(FlaskForm):
     surname = StringField('Surname', validators=[DataRequired()])
     email = StringField('Email', validators=[DataRequired(), Email()])
     group = SelectField('Group', coerce=int)
+    submit_button = SubmitField('Submit Form')
 
     def validate_email(self, email):
         user = User.query.filter(func.lower(User.email) == email.data.lower()).first()
@@ -33,6 +34,7 @@ class CreateGroup(FlaskForm):
     decision_making_log = BooleanField("Decision-Making Log", default=False)
     new_reports = BooleanField("Handle New Reports", default=False)
     supervisor = BooleanField("Supervisor", default=False)
+    submit_button = SubmitField('Submit Form')
 
     def validate_name(self, name):
         group = Group.query.filter(func.lower(Group.name) == name.data.lower()).first()

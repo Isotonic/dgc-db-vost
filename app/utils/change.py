@@ -50,6 +50,16 @@ def change_incident_priority(incident, priority, changed_by):
                     incident=incident, extra=priority)
 
 
+def change_public(incident, public, changed_by):
+    if incident.public == public:
+        return False
+    incident.public = public
+    incident.last_updated = datetime.utcnow()
+    emit('change_public', {'public': incident.public, 'code': 200},
+         room=f'{incident.deployment_id}-{incident.id}')
+    incident_action(user=changed_by, action_type=IncidentLog.action_values['public' if public else 'not_public'],
+                    incident=incident)
+
 def change_task_status(task, status, changed_by):
     if task.completed == status:
         return False

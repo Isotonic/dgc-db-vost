@@ -1,5 +1,5 @@
 <div class="col-xl-4 col-lg-6">
-    <div class="card border-left-success shadow mb-4">
+    <div class="card border-left-{% if deployment.open_status %}success{% else %}danger{% endif %} shadow mb-4">
         <div class="card-header d-flex align-items-center justify-content-between">
             <h6 class="font-weight-bold text-primary">{{ deployment.name }}
                 <p class="mb-0 mt-1 text-muted text-xs text-nowrap">Created {{ moment(deployment.created_at).fromNow(refresh=True) }}</p>

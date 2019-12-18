@@ -10,7 +10,7 @@ from flask_login import current_user, login_user, logout_user, login_required
 from app.utils.supervisor import request_incident_complete, mark_request_complete, flag_to_supervisor
 from app.models import User, Group, Deployment, Incident, IncidentTask, IncidentSubTask, SupervisorActions, EmailLink, AuditLog
 from app.utils.create import create_user, create_group, create_deployment, create_incident, create_task, create_subtask, create_task_comment, create_comment
-from app.utils.change import change_incident_status, change_allocation, change_incident_priority, change_task_status, change_task_description, change_task_assigned, change_subtask_status
+from app.utils.change import change_incident_status, change_allocation, change_public, change_incident_priority, change_task_status, change_task_description, change_task_assigned, change_subtask_status
 
 
 def login_required_sockets(f):
@@ -65,7 +65,7 @@ def login():
 
 @app.route('/supervisor/create_user/', methods=['GET', 'POST'])
 @login_required
-def create_user():
+def new_user():
     groups_list = [(i.id, i.name) for i in Group.query.all()]
     form = CreateUser()
     form.group.choices = groups_list
@@ -74,9 +74,9 @@ def create_user():
         if form.group.data:
             group = Group.query.get(form.group.data)
         user = create_user(form.firstname.data, form.surname.data, form.email.data, group.id if group else None, current_user)
-        flash('Congratulations, you created a user!')
-        return user.email_link
-    return render_template('base.html', title='Create New User', form=form)
+        user.set_password('password')
+        db.session.commit()
+    return render_template('group.html', title=' User', form=form)
 
 
 @app.route('/verify/<link>/', methods=['GET', 'POST'])
@@ -92,14 +92,13 @@ def verify_user(link):
         db.session.add(action)
         db.session.delete(email)
         db.session.commit()
-        flash('Congratulations, you are now a registered user!')
         return redirect(url_for('login'))
     return render_template('base.html', title='Set Password', form=form, username=email.user.username)
 
 
 @app.route('/supervisor/create_group/', methods=['GET', 'POST'])
 @login_required
-def create_group():
+def new_group():
     form = CreateGroup()
     if form.validate_on_submit():
         permissions = {"view_all_incidents": form.view_all_incidents.data, "change_status": form.change_status.data,
@@ -108,8 +107,7 @@ def create_group():
                        "decision_making_log": form.decision_making_log.data, "supervisor": form.supervisor.data}
         chosen_permissions = [k for k, v in permissions.items() if v]
         create_group(form.name.data, chosen_permissions, current_user)
-        return redirect(url_for('create_new_user'))
-    return render_template('base.html', title='Create New Group', form=form)
+    return render_template('group.html', title='Group', form=form)
 
 
 @app.route('/')
@@ -384,6 +382,21 @@ def change_incident_allocation_socket(data):
         return emit('change_incident_allocation', {'message': 'Didn\'t change assigned users.', 'code': 400})
 
 
+@socketio.on('change_public')
+@login_required_sockets
+#@has_permission_sockets
+def change_public_socket(data):
+    print(data)
+    try: ##TODO Add in function to get data
+        public = data['public']
+    except:
+        return emit('change_public', {'message': 'Incorrect data supplied.', 'code': 403})
+    incident = Incident.query.filter(Deployment.id == data['deployment_id'], Incident.id == data['incident_id']).first()
+    if not incident:
+        return emit('change_incident_priority', {'message': 'Unable to find the deployment or incident.', 'code': 404})
+    if change_public(incident, public, current_user) is False:
+        return emit('change_public', {'message': 'Incident already has this priority.', 'code': 400})
+
 @socketio.on('change_incident_priority')
 @login_required_sockets
 #@has_permission_sockets
@@ -402,7 +415,6 @@ def change_incident_priority_socket(data):
         return emit('change_incident_priority', {'message': 'Unable to find the deployment or incident.', 'code': 404})
     if change_incident_priority(incident, priority, current_user) is False:
         return emit('change_incident_priority', {'message': 'Incident already has this priority.', 'code': 400})
-
 
 @socketio.on('change_task_status')
 @login_required_sockets

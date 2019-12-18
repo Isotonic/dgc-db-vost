@@ -1,0 +1,19 @@
+<li id="SubTaskRow{{ subtask.id }}" class="list-group-item list-group-flush{%if completed %} text-muted{% endif %}" value="{{ subtask.id }}">
+    <div class="row align-items-center no-gutters">
+        <div class="col mr-2">
+            <h6 class="mb-0">
+                <strong>{{ subtask.name }} </strong><span id="SubTaskDate{{ subtask.id }}" class="text-xs">{% if subtask.completed %}Completed {% else %}Created {% endif %}{{ moment(subtask.created_at).fromNow(refresh=True) }}</span>
+            </h6>
+            {% set assigned_to = subtask.get_assigned() %}
+            {% if assigned_to %}
+            <span id="SubTask{{ id }}Assigned" class="text-xs">Assigned to {{ assigned_to }}</span>
+            {% endif %}
+        </div>
+        <div class="col-auto">
+            <div>
+                <input class="task-checkbox{% if subtask.completed %} text-success{% endif %}" id="SubTask{{ subtask.id }}"  value="{{ subtask.id }}" type="checkbox" {% if subtask.completed %}checked{% endif %}>
+                <i class="fas fa-trash-alt btn-opacity text-danger" data-toggle="tooltip" title="Delete Sub-Task" data-id="{{ subtask.id }}"></i>
+            </div>
+        </div>
+    </div>
+</li>
