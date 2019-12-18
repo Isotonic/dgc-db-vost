@@ -425,13 +425,13 @@
 						<div class="col-xl-12 col-sm-8 mb-4">
 							<h5><i class="fas fa-align-left mb-3 mr-2"></i> Description</h5>
 							<textarea id="TaskModalDescriptionText" class="form-control-plaintext text-dark mb-3" name="description" placeholder="Add a description...">{{#if description}}{{ description }}{{/if}}</textarea>
-							<form id="taskLabelsForm">
+							<!--<form id="taskLabelsForm">
 								<ul id="TaskLabels" class="tag-cloud list-inline ml-1">
 									<li>High Priority</li>
 									<li>Medium Priority</li>
 									<li>Low Priority</li>
 								</ul>
-							</form>
+							</form>-->
 							<button id="TaskModalDescriptionSaveBtn" type="submit" class="btn btn-primary float-right d-none">Save</button>
 						</div>
 					</div>
@@ -550,7 +550,8 @@
 	var incident_id = {{ incident.id }};
 	var socket = io();
 	var taskModalScript = Handlebars.compile($('#Task-Modal-Template').html());
-	var taxonomy = null;
+	//var taxonomy = null;
+	var currentTaskOpen = null;
 
     socket.on("connect", function() {
         socket.emit("join", {'type': 2, 'deployment_id': deployment_id, 'incident_id': incident_id});
@@ -633,7 +634,7 @@
 	$('#addTaskForm').submit( function(e) {
 	   e.preventDefault();
 	   $('#addTaskModal').modal('hide');
-        socket.emit('create_incident_task', {'name': $(this).serializeArray()[0]['value'], 'users': $('#addTaskSelect').val(), 'description': $(this).serializeArray()[2]['value'], 'deployment_id': deployment_id, 'incident_id': incident_id});
+        socket.emit('create_incident_task', {'name': $(this).serializeArray()[0]['value'], 'users': $('#addTaskSelect').val(), 'description': $(this).serializeArray()[1]['value'], 'deployment_id': deployment_id, 'incident_id': incident_id});
 		$('#addTaskForm').get(0).reset();
 		$('#addTaskSelect').select2('val', '[]');
 	});
@@ -644,12 +645,16 @@
 			socket.emit('change_task_status', {'task_id':  e.currentTarget.value, 'completed': $(e.target).prop("checked"), 'deployment_id': deployment_id, 'incident_id': incident_id});
 		} else {
 			console.log(e)
+			if (currentTaskOpen) {
+				socket.emit("disconnect", {'type': 4, 'deployment_id': deployment_id, 'incident_id': incident_id, 'task_id': currentTaskOpen});
+			}
 			socket.emit('view_task', {'task_id':  e.currentTarget.value, 'deployment_id': deployment_id, 'incident_id': incident_id});
+			currentTaskOpen = e.currentTarget.value;
 		}
 	});
 
 	$('#taskModal').on('click', function (e) {
-		console.log(taxonomy)
+		// console.log(taxonomy)
 		if ($(e.target).attr('id') == 'TaskModalDescriptionText' || $(e.target).hasClass('.badge.badge-dark.tag')) {
 			$('#TaskModalDescriptionSaveBtn').removeClass('d-none');
 		} else if ($(e.target).attr('id') == 'TaskModalDescriptionSaveBtn') {
@@ -767,9 +772,9 @@
 			if ($('#TaskProgressBar').length) {
 				updateProgressBar('#SubTasks', $('#TaskProgressPercentage'), $('#TaskProgressBar'));
 			}
-			taxonomy = $('#TaskLabels').taxonomy_jquery();
-			console.log(taxonomy);
-			socket.emit("join", {'type': 3, 'deployment_id': deployment_id, 'incident_id': incident_id, 'task_id': data['id']});
+			// taxonomy = $('#TaskLabels').taxonomy_jquery();
+			// console.log(taxonomy);
+			socket.emit("join", {'type': 4, 'deployment_id': deployment_id, 'incident_id': incident_id, 'task_id': data['id']});
 			$('#taskModal').modal('show');
 		}
 	});

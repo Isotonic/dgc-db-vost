@@ -59,13 +59,13 @@ $(document).ready(function() {
                 layer.bindPopup(
                 `<div class="card shadow">
                     <div class="card-header bg-` + feature.properties.priority + ` align-items-center justify-content-between">
-                        <h6 class="m-0 font-weight-bold text-light">` + feature.properties.name + `</h6>
+                        <h6 class="m-0 font-weight-bold text-light">` + feature.properties.name + `</h6><span class="text-sm text-light mt-1">Last Updated ` + moment.unix(feature.properties.last_update).fromNow() + `<span>
                     </div>
                     <div class="card-body">
-                        <p class="card-text"><b>Created:</b> ` + moment.unix(feature.properties.created_at).fromNow() + `</p>
-                        <p class="card-text"><b>Location:</b> ` + feature.properties.location + `</p>
-                        <p class="card-text"><b>Description:</b> ` + feature.properties.description + `</p>
-                        <div class="text-center">
+                        <span class="card-text"><b>Created:</b> ` + moment.unix(feature.properties.created_at).fromNow() + `</span></br>
+                        <span class="card-text mt-1"><b>Location:</b> ` + feature.properties.location + `</span></br>
+                        <span class="card-text mt-1"><b>Description:</b> ` + feature.properties.description + `</span>
+                        <div class="text-center mt-2">
                             <a class="btn btn-` + feature.properties.priority + ` text-light" href="` + feature.properties.url + `">Go To Incident</a>
                         </div>
                     </div>

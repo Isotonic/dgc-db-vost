@@ -78,7 +78,7 @@ def create_subtask(name, users, task, created_by):
     task_action(user=created_by, action_type=TaskLog.action_values['create_subtask'], task=task, subtask=subtask, target_users=users)
     if len([m for m in task.subtasks if m.completed]) != len(task.subtasks) and  task.completed:
         change_task_status(task, False, created_by)
-    emit('create_incident_subtask', {'html': render_template('subtask.html', subtask=subtask), 'code': 200}, room=f'{task.incident.deployment_id}-{task.incident.id}')
+    emit('create_incident_subtask', {'html': render_template('subtask.html', subtask=subtask), 'code': 200}, room=f'{task.incident.id}-{task.id}')
     return task
 
 
@@ -87,7 +87,7 @@ def create_task_comment(text, task, added_by):
     db.session.add(comment)
     db.session.commit()
     emit('create_task_comment', {'html': render_template('comment.html', comment=comment), 'code': 200},
-         room=f'{task.incident.deployment_id}-{task.incident.id}')
+         room=f'{task.incident.id}-{task.id}')
     task_action(user=added_by, action_type=TaskLog.action_values['add_comment'],
                    task=task)
     return comment

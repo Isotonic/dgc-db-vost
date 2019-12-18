@@ -17,4 +17,4 @@ def task_action(user, action_type, task, subtask=None, target_users=None, extra=
     action = TaskLog(user=user, action_type=action_type, task=task, subtask=subtask, target_users=target_users, extra=extra)
     db.session.add(action)
     db.session.commit()
-    emit('task_activity', {'html': [render_template('action.html', action=action)], 'code': 200}, room=f'{task.incident.deployment_id}-{task.incident.id}')
+    emit('task_activity', {'html': [render_template('action.html', action=action)], 'code': 200}, room=f'{task.incident.id}-{task.id}')

@@ -84,9 +84,9 @@ def change_task_description(task, description, changed_by):
     task.description = description
     task.incident.last_updated = datetime.utcnow()
     emit('change_task_description', {'id': task.id, 'description': task.description,
-                                     'code': 200}, room=f'{task.incident.deployment_id}-{task.incident.id}')
-    incident_action(user=changed_by, action_type=IncidentLog.action_values['changed_task_description'],
-                    incident=task.incident, task=task, extra=description)
+                                     'code': 200}, room=f'{task.incident.id}-{task.id}')
+    task_action(user=changed_by, action_type=TaskLog.action_values['changed_description'],
+                    task=task, extra=description)
 
 
 def change_task_assigned(task, assigned_to, changed_by):

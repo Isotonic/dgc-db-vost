@@ -64,7 +64,7 @@ def login():
 
 
 @app.route('/supervisor/create_user/', methods=['GET', 'POST'])
-@login_required
+#@login_required
 def new_user():
     groups_list = [(i.id, i.name) for i in Group.query.all()]
     form = CreateUser()
@@ -76,6 +76,8 @@ def new_user():
         user = create_user(form.firstname.data, form.surname.data, form.email.data, group.id if group else None, current_user)
         user.set_password('password')
         db.session.commit()
+        form = CreateUser()
+        form.group.choices = groups_list
     return render_template('group.html', title=' User', form=form)
 
 
@@ -97,7 +99,7 @@ def verify_user(link):
 
 
 @app.route('/supervisor/create_group/', methods=['GET', 'POST'])
-@login_required
+#@login_required
 def new_group():
     form = CreateGroup()
     if form.validate_on_submit():
@@ -107,6 +109,7 @@ def new_group():
                        "decision_making_log": form.decision_making_log.data, "supervisor": form.supervisor.data}
         chosen_permissions = [k for k, v in permissions.items() if v]
         create_group(form.name.data, chosen_permissions, current_user)
+        form = CreateGroup()
     return render_template('group.html', title='Group', form=form)
 
 
@@ -234,7 +237,17 @@ def on_join(data):
         else:
             disconnect()
             print(f'Kicked from Room: {data["deployment_id"]}-actions')
+    elif data['type'] == 4:
+        join_room(f'{data["incident_id"]}-{data["task_id"]}')
+        print(f'Joined Room: {data["incident_id"]}-{data["task_id"]}')
 
+
+@socketio.on('disconnect')
+@login_required_sockets
+def on_disconnect(data):
+    if data['type'] == 4:
+        disconnect(f'{data["incident_id"]}-{data["task_id"]}')
+        print(f'Kicked from Room: {data["incident_id"]}-{data["task_id"]}')
 
 @socketio.on('create_deployment')
 @login_required_sockets

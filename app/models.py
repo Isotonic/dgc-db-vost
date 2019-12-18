@@ -309,6 +309,7 @@ class Incident(db.Model):
                 'description': self.description,
                 'priority': self.priority,
                 'created_at': self.created_at.timestamp(),
+                'last_update': self.last_updated.timestamp(),
                 'location': self.location,
                 'tasks': self.task_string(),
                 'comments': len(self.comments),
