@@ -60,6 +60,7 @@ def change_public(incident, public, changed_by):
     incident_action(user=changed_by, action_type=IncidentLog.action_values['public' if public else 'not_public'],
                     incident=incident)
 
+
 def change_task_status(task, status, changed_by):
     if task.completed == status:
         return False
@@ -86,7 +87,9 @@ def change_task_description(task, description, changed_by):
     emit('change_task_description', {'id': task.id, 'description': task.description,
                                      'code': 200}, room=f'{task.incident.id}-{task.id}')
     task_action(user=changed_by, action_type=TaskLog.action_values['changed_description'],
-                    task=task, extra=description)
+                task=task, extra=description)
+    incident_action(user=changed_by, action_type=IncidentLog.action_values['changed_task_description'], incident=task.incident, task=task,
+                    extra=description)
 
 
 def change_task_assigned(task, assigned_to, changed_by):
@@ -99,9 +102,12 @@ def change_task_assigned(task, assigned_to, changed_by):
          {'id': task.id, 'text': task.get_assigned(), 'code': 200},
          room=f'{task.incident.deployment_id}-{task.incident.id}')
     if removed:
+        task_action(user=changed_by, action_type=TaskLog.action_values['assigned_user'], task=task,
+                    target_users=removed)
         incident_action(user=changed_by, action_type=IncidentLog.action_values['removed_user_task'],
                         incident=task.incident, task=task, target_users=removed)
     if added:
+        task_action(user=changed_by, action_type=TaskLog.action_values['assigned_user'], task=task, target_users=added)
         incident_action(user=changed_by, action_type=IncidentLog.action_values['assigned_user_task'],
                         incident=task.incident, task=task, target_users=added)
 
@@ -123,5 +129,7 @@ def change_subtask_status(subtask, status, changed_by):
                                    'code': 200},
          room=f'{task.incident.deployment_id}-{task.incident.id}')
     task_action(user=changed_by, action_type=TaskLog.action_values[action_type], task=task, subtask=subtask)
+    incident_action(user=changed_by, action_type=IncidentLog.action_values[action_type], incident=task.incident, task=task,
+                    extra=subtask.name)
     if len([m for m in task.subtasks if m.completed]) == len(task.subtasks) and not task.completed:
         change_task_status(task, True, changed_by)

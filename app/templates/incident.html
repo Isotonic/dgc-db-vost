@@ -432,7 +432,20 @@
 									<li>Low Priority</li>
 								</ul>
 							</form>-->
-							<button id="TaskModalDescriptionSaveBtn" type="submit" class="btn btn-primary float-right d-none">Save</button>
+							<h6>Change Assigned Members</h6>
+							<select id="addEditTaskSelect" name="users" multiple="multiple" style="width: 100%">
+								<option value="0"></option>
+								{% endraw %}
+								{% for group in groups %}
+								<optgroup label="{{ group[0] }}">
+									{% for user in group[1] %}
+									<option value="{{ user.id }}" data-avatar-url="{{ user.get_avatar() }}">{{ user }}</option>
+									{% endfor %}
+								</optgroup>
+								{% endfor %}
+								{% raw %}
+							</select>
+							<button id="TaskModalDescriptionSaveBtn" type="submit" class="btn btn-primary mt-3 float-right d-none">Save</button>
 						</div>
 					</div>
 					<div class="row">
@@ -646,7 +659,7 @@
 		} else {
 			console.log(e)
 			if (currentTaskOpen) {
-				socket.emit("disconnect", {'type': 4, 'deployment_id': deployment_id, 'incident_id': incident_id, 'task_id': currentTaskOpen});
+				socket.emit('unconnect', {'type': 4, 'deployment_id': deployment_id, 'incident_id': incident_id, 'task_id': currentTaskOpen});
 			}
 			socket.emit('view_task', {'task_id':  e.currentTarget.value, 'deployment_id': deployment_id, 'incident_id': incident_id});
 			currentTaskOpen = e.currentTarget.value;
@@ -655,11 +668,13 @@
 
 	$('#taskModal').on('click', function (e) {
 		// console.log(taxonomy)
-		if ($(e.target).attr('id') == 'TaskModalDescriptionText' || $(e.target).hasClass('.badge.badge-dark.tag')) {
+		console.log(e);
+		if ($(e.target).attr('id') == 'TaskModalDescriptionText' || $(e.target).hasClass('.badge.badge-dark.tag') || e.target.type == 'search') {
 			$('#TaskModalDescriptionSaveBtn').removeClass('d-none');
 		} else if ($(e.target).attr('id') == 'TaskModalDescriptionSaveBtn') {
 			$(e.target).addClass('d-none');
 			socket.emit('change_task_description', {'task_id':  e.currentTarget.value, 'description': $('#TaskModalDescriptionText').val(),  'deployment_id': deployment_id, 'incident_id': incident_id});
+	        socket.emit('change_task_assigned', {'task_id': e.currentTarget.value, 'users': $('#addEditTaskSelect').val(), 'deployment_id': deployment_id, 'incident_id': incident_id});
 		} else if ($(e.target).attr('id') == 'AddSubTaskBtn') {
 			socket.emit('create_incident_subtask', {'task_id':  e.currentTarget.value, 'name': $('#TaskModalSubTaskAdd').val(), 'users': $('#addSubTaskSelect').val(), 'deployment_id': deployment_id, 'incident_id': incident_id});
 			$('#addSubTaskForm').get(0).reset();
@@ -762,6 +777,12 @@
 			var html = taskModalScript(data);
 			$('#taskModal').html(html);
 			$('#taskModal').val(data['id']);
+			$('#addEditTaskSelect').select2({
+				allowClear: true,
+				placeholder: {id:'0', text: 'Assign to users, not required'},
+				templateResult: format,
+				templateSelection: format,
+			});
 			$('#addSubTaskSelect').select2({
 				allowClear: true,
 				placeholder: {id:'0', text: 'Assign to users, not required'},
@@ -772,6 +793,8 @@
 			if ($('#TaskProgressBar').length) {
 				updateProgressBar('#SubTasks', $('#TaskProgressPercentage'), $('#TaskProgressBar'));
 			}
+			$('#addEditTaskSelect').val([data['chosen_ids']]);
+			$('#addEditTaskSelect').trigger('change');
 			// taxonomy = $('#TaskLabels').taxonomy_jquery();
 			// console.log(taxonomy);
 			socket.emit("join", {'type': 4, 'deployment_id': deployment_id, 'incident_id': incident_id, 'task_id': data['id']});

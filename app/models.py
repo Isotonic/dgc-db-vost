@@ -452,7 +452,7 @@ class IncidentLog(db.Model):
                      'delete_comment': 6, 'incomplete_task': 7, 'assigned_user': 8, 'removed_user': 9,
                      'marked_complete': 10, 'marked_incomplete': 11, 'changed_priority': 12,
                      'changed_task_description': 13, 'assigned_user_task': 14,
-                     'removed_user_task': 15, 'public': 16, 'not_public': 17}  ##TODO RE-ORDER ONCE DONE
+                     'removed_user_task': 15, 'public': 16, 'not_public': 17, 'complete_subtask': 18, 'incomplete_subtask': 19, 'create_subtask': 20, 'add_subtask_comment': 21}  ##TODO RE-ORDER ONCE DONE
     action_strings = {1: 'created incident', 2: 'created task $task', 3: 'marked $task as complete',
                       4: 'deleted task $task',
                       5: 'added update', 6: 'deleted update', 7: 'marked $task as incomplete',
@@ -460,7 +460,7 @@ class IncidentLog(db.Model):
                       9: 'removed $target_users from incident', 10: 'marked incident as complete',
                       11: 'marked incident as incomplete', 12: 'changed priority to $extra',
                       13: 'changed $task description to "$extra"', 14: 'added $target_users to $task',
-                      15: 'removed $target_users from $task', 16: 'set the incident to public', 17: 'set the incident to private'}
+                      15: 'removed $target_users from $task', 16: 'set the incident to public', 17: 'set the incident to private', 18: 'marked $extra as complete', 19: 'marked $extra as incomplete', 20: 'created sub-task $extra', 21: 'added comment to $task'}
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))

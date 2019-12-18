@@ -4,7 +4,7 @@ from itertools import groupby
 from app import app, db, socketio
 from app.utils.delete import delete_subtask
 from flask_socketio import emit, join_room, disconnect
-from flask import render_template, flash, redirect, url_for, request
+from flask import render_template, redirect, url_for, request
 from app.forms import LoginForm, CreateUser, CreateGroup, SetPassword
 from flask_login import current_user, login_user, logout_user, login_required
 from app.utils.supervisor import request_incident_complete, mark_request_complete, flag_to_supervisor
@@ -242,12 +242,13 @@ def on_join(data):
         print(f'Joined Room: {data["incident_id"]}-{data["task_id"]}')
 
 
-@socketio.on('disconnect')
+@socketio.on('unconnect')
 @login_required_sockets
-def on_disconnect(data):
+def on_unconnect(data):
     if data['type'] == 4:
         disconnect(f'{data["incident_id"]}-{data["task_id"]}')
         print(f'Kicked from Room: {data["incident_id"]}-{data["task_id"]}')
+
 
 @socketio.on('create_deployment')
 @login_required_sockets
@@ -410,6 +411,7 @@ def change_public_socket(data):
     if change_public(incident, public, current_user) is False:
         return emit('change_public', {'message': 'Incident already has this priority.', 'code': 400})
 
+
 @socketio.on('change_incident_priority')
 @login_required_sockets
 #@has_permission_sockets
@@ -428,6 +430,7 @@ def change_incident_priority_socket(data):
         return emit('change_incident_priority', {'message': 'Unable to find the deployment or incident.', 'code': 404})
     if change_incident_priority(incident, priority, current_user) is False:
         return emit('change_incident_priority', {'message': 'Incident already has this priority.', 'code': 400})
+
 
 @socketio.on('change_task_status')
 @login_required_sockets
@@ -459,6 +462,27 @@ def change_task_description_socket(data):
         return emit('change_task_status', {'message': 'Task already has this status.', 'code': 400})
 
 
+@socketio.on('change_task_assigned')
+@login_required_sockets
+#@has_permission_sockets
+def change_task_assigned_socket(data):
+    print(data)
+    try: ##TODO Add in incident id and deployment id in here too
+        task_id = data['task_id']
+        users = data['users']
+    except:
+        return emit('change_task_assigned', {'message': 'Incorrect data supplied.', 'code': 403})
+    task = IncidentTask.query.filter_by(incident_id=data['incident_id'], id=task_id).first()
+    if not task or task.incident.id != data['incident_id'] or task.incident.deployment_id != data['deployment_id']:
+        return emit('change_task_assigned', {'message': 'Unable to find the deployment, incident or task.', 'code': 404})
+    if users:
+        users = User.query.filter(User.id.in_(data['users'])).all()
+        if any([m for m in users if m not in task.incident.assigned_to]):
+            change_allocation(task.incident, users + task.incident.assigned_to, current_user)
+        if any([m for m in users if m not in task.assigned_to]):
+            change_task_assigned(task, users + task.assigned_to, current_user)
+
+
 @socketio.on('change_subtask_status')
 @login_required_sockets
 #@has_permission_sockets
@@ -483,7 +507,7 @@ def view_task_socket(data):
     task = IncidentTask.query.filter_by(incident_id=data['incident_id'], id=task_id).first()
     if not task or task.incident.deployment_id != data['deployment_id']:
         return emit('view_task', {'message': 'Unable to find the deployment, incident or task.', 'code': 404})
-    return emit('view_task', {'id': task.id, 'name': task.name, 'description': task.description, 'subtasks': task.get_subtasks(), 'comments': task.get_comments(), 'actions': task.get_actions(), 'code': 200})
+    return emit('view_task', {'id': task.id, 'name': task.name, 'description': task.description, 'subtasks': task.get_subtasks(), 'comments': task.get_comments(), 'actions': task.get_actions(), 'chosen_ids': list([m.id for m in task.assigned_to]), 'code': 200})
 
 
 @socketio.on('delete_subtask')
