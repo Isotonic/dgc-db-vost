@@ -8,7 +8,7 @@
 <div>
 	<!-- TODO Allow non-privileged users to request a status change -->
 	{% if incident.open_status %}
-	<a id="ChangeIncidentStatus" class="btn btn-icon-split btn-success mb-1 mt-2" href="#" data-toggle="modal" data-target="#requestCompleteModal">
+	<a id="ChangeIncidentStatus" class="btn btn-icon-split btn-success mb-1 mt-2" href="#" {% if not current_user.has_permission('change_status') %}data-toggle="modal" data-target="#requestCompleteModal"{% endif %}>
 	    <span class="btn-icon">
 	        <i class="fas fa-check"></i>
 	    </span>
@@ -66,17 +66,17 @@
 		</div>
 	</div>
 	<div class="col-xl-3 col-md-6 mb-4">
-		{% if current_user.has_permission('change_priority') %}
 		<div id="PriorityBorder" class="card border-left-{{ incident.priority }} shadow h-100 py-2">
+			{% if current_user.has_permission('change_priority') %}
 			<a id="PriorityCog" class="incident-cog text-{{ incident.priority }}" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 			    <i class="fas fa-cog float-right" data-toggle="tooltip" title="Change Priority"></i>
 			</a>
+			{% endif %}
 			<div id="PriorityDropdown" class="dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="dropdownPriorityMenu">
 				<a id="PriorityStandard" class="dropdown-item{% if incident.priority == 'Standard' %} active{% endif %}" href="#" type="submit">Standard</a>
 				<a id="PriorityPrompt" class="dropdown-item{% if incident.priority == 'Prompt' %} active{% endif %}" href="#" type="submit">Prompt</a>
 				<a id="PriorityImmediate" class="dropdown-item{% if incident.priority == 'Immediate' %} active{% endif %}" href="#" type="submit">Immediate</a>
 			</div>
-			{% endif %}
 			<div class="card-body">
 				<div class="row no-gutters align-items-center">
 					<div class="col mr-2">
@@ -793,7 +793,7 @@
 			if ($('#TaskProgressBar').length) {
 				updateProgressBar('#SubTasks', $('#TaskProgressPercentage'), $('#TaskProgressBar'));
 			}
-			$('#addEditTaskSelect').val([data['chosen_ids']]);
+			$('#addEditTaskSelect').val(data['chosen_ids']);
 			$('#addEditTaskSelect').trigger('change');
 			// taxonomy = $('#TaskLabels').taxonomy_jquery();
 			// console.log(taxonomy);
@@ -875,6 +875,14 @@
 		$('#Activity').prepend(data['html']);
 		$('#LastUpdated').html(moment().fromNow(refresh=true));
 		flask_moment_render_all();
+	});
+
+	socket.on('flag_to_supervisor', function(data) {
+		recieve(data);
+	});
+
+	socket.on('request_incident_complete', function(data) {
+		recieve(data);
 	});
 
 	function format(state) {

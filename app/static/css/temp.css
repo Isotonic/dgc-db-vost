@@ -59,6 +59,7 @@
 }
 
 .btn-opacity:hover {
+  cursor: pointer;
   opacity: 1;
 }
 
@@ -84,7 +85,7 @@ input[type=checkbox][disabled]{
   cursor: not-allowed;
 }
 
-.list-group-item.list-group-flush:hover,
+.list-group-item.random.list-group-flush:hover,
 tr:hover {
   cursor: pointer;
   background-color: #f6f8fe !important;

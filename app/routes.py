@@ -64,7 +64,7 @@ def login():
 
 
 @app.route('/supervisor/create_user/', methods=['GET', 'POST'])
-#@login_required
+@login_required
 def new_user():
     groups_list = [(i.id, i.name) for i in Group.query.all()]
     form = CreateUser()
@@ -99,7 +99,7 @@ def verify_user(link):
 
 
 @app.route('/supervisor/create_group/', methods=['GET', 'POST'])
-#@login_required
+@login_required
 def new_group():
     form = CreateGroup()
     if form.validate_on_submit():
@@ -152,8 +152,8 @@ def view_incident(deployment_name, deployment_id, incident_name, incident_id):
     incident = Incident.query.filter_by(id=incident_id, deployment_id=deployment_id).first()
     if not incident or not incident.name_check(deployment_name, incident_name):
         return render_template('404.html', nosidebar=True), 404
-    if not current_user.has_permission('view_all_incidents'):
-        return redirect(url_for('view_assigned_incidents', deployment_name=Incident.deployment.urlstring, deployment_id=Incident.deployment_id))
+    if not current_user.has_permission('view_all_incidents') and not current_user in incident.assigned_to:
+        return redirect(url_for('view_assigned_incidents', deployment_name=incident.deployment.name, deployment_id=incident.deployment_id))
     groups = []
     for k, g in groupby(User.query.all(), key=lambda item: item.group):
         groups.append([k.name, list(g)])
@@ -217,9 +217,6 @@ def on_join(data):
                     join_room(f'{data["deployment_id"]}-actions-count')
                     print(f'{data["deployment_id"]}-actions-count')
                 print(f'Joined Private Room: {data["deployment_id"]}-private')
-        else:
-            disconnect()
-            print(f'Kicked from Room: {data["deployment_id"]}')
     elif data['type'] == 2:
         if current_user.has_incident_access(data['deployment_id'], data['incident_id']):
             join_room(f'{data["deployment_id"]}-{data["incident_id"]}')
@@ -227,16 +224,10 @@ def on_join(data):
             if current_user.has_permission('supervisor'):
                 join_room(f'{data["deployment_id"]}-actions-count')
                 print(f'{data["deployment_id"]}-actions-count')
-        else:
-            disconnect()
-            print(f'Kicked from Room: {data["deployment_id"]}-{data["incident_id"]}')
     elif data['type'] == 3:
         if current_user.has_permission('supervisor'):
             join_room(f'{data["deployment_id"]}-actions')
             print(f'Joined Room: {data["deployment_id"]}-actions')
-        else:
-            disconnect()
-            print(f'Kicked from Room: {data["deployment_id"]}-actions')
     elif data['type'] == 4:
         join_room(f'{data["incident_id"]}-{data["task_id"]}')
         print(f'Joined Room: {data["incident_id"]}-{data["task_id"]}')

@@ -22,6 +22,8 @@ def flag_to_supervisor(incident, reason, request_by):
 
 
 def new_incident(incident, created_by):
+    if created_by.has_permission('supervisor'):
+        return
     action = SupervisorActions(deployment_id=incident.deployment_id, incident=incident, action_type='New Incident', requested_by=created_by)
     db.session.add(action)
     db.session.commit()

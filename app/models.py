@@ -148,7 +148,7 @@ class User(db.Model, UserMixin):
         incident = Incident.query.filter(Deployment.id == deployment_id, Incident.id == incident_id).first()
         if not self.has_deployment_access(incident.deployment):
             return False
-        if self.has_permission('view_all_incidents') or self.id in incident.assigned_to:
+        if self.has_permission('view_all_incidents') or self in incident.assigned_to:
             return True
         return False
 
@@ -182,7 +182,7 @@ class Group(db.Model):
         self.permissions = int(permission_value)
 
     def has_permission(self, permission):
-        if self.permission_values['supervisor']:
+        if self.permissions == self.permission_values['supervisor']:
             return True
         try:
             if self.permissions & self.permission_values[permission.lower()] > 0:
