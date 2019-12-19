@@ -128,6 +128,21 @@ class User(db.Model, UserMixin):
                 incidents.append(x)
         return incidents
 
+    def get_closed_incidents(self, deployment, ignore_permissions=False):
+        incidents = []
+        if not isinstance(deployment, Deployment):
+            deployment = Deployment.query.filter_by(id=deployment).first()
+        if not deployment:
+            return False
+        if not self.has_deployment_access(deployment):
+            return [m for m in incidents if m.supervisor_approved]
+        if not ignore_permissions and self.has_permission('view_all_incidents'):
+            return [m for m in deployment.incidents if not m.open_status and m.supervisor_approved]
+        for x in deployment.incidents:
+            if not x.open_status and self in x.assigned_to and x.supervisor_approved:
+                incidents.append(x)
+        return incidents
+
     def has_permission(self, permission):
         if not self.group:
             return False

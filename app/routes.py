@@ -134,6 +134,17 @@ def view_incidents(deployment_name, deployment_id):
     return render_template('incidents.html', title=f'{deployment.name}', deployment=deployment,
                            incidents_active=True, incidents_stat=incidents_stat, incidents=current_user.get_incidents(deployment.id), back_url=url_for('view_deployments'))
 
+@app.route('/deployments/<deployment_name>-<int:deployment_id>/closed_incidents/', methods=['GET'])
+@login_required
+def view_closed_incidents(deployment_name, deployment_id):
+    deployment = Deployment.query.filter_by(id=deployment_id).first()
+    if not deployment or not deployment.name_check(deployment_name):
+        return render_template('404.html', nosidebar=True), 404
+    incidents_stat = deployment.calculate_incidents_stat()
+    return render_template('incidents.html', title=f'{deployment.name}', deployment=deployment,
+                           closed_incidents_active=True, incidents_stat=incidents_stat, incidents=current_user.get_closed_incidents(deployment.id), back_url=url_for('view_deployments'))
+
+
 
 @app.route('/deployments/<deployment_name>-<deployment_id>/assigned_incidents/', methods=['GET'])
 @login_required

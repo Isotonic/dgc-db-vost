@@ -50,6 +50,11 @@
                 <i class="fas fa-fw fa-clone"></i>
                 <span>Assigned Incidents</span></a>
             </li>
+            <li class="nav-item{% if closed_incidents_active is defined %} active{% endif %}">
+                <a class="nav-link" href="{{ url_for('view_closed_incidents', deployment_name=deployment.name, deployment_id=deployment.id) }}">
+                <i class="fas fa-fw fa-clone"></i>
+                <span>Closed Incidents</span></a>
+            </li>
             <li class="nav-item{% if notifications_active is defined %} active{% endif %}">
                 <a class="nav-link" href="{{ url_for('view_notifications') }}">
                 <i class="fas fa-fw fa-bell"></i>
