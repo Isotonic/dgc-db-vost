@@ -120,7 +120,7 @@ class User(db.Model, UserMixin):
         if not deployment:
             return False
         if not self.has_deployment_access(deployment):
-            return [m for m in incidents if m.supervisor_approved]
+            return incidents
         if not ignore_permissions and self.has_permission('view_all_incidents'):
             return [m for m in deployment.incidents if m.open_status and m.supervisor_approved] if open_only else deployment.incidents
         for x in deployment.incidents:
@@ -135,7 +135,7 @@ class User(db.Model, UserMixin):
         if not deployment:
             return False
         if not self.has_deployment_access(deployment):
-            return [m for m in incidents if m.supervisor_approved]
+            return incidents
         if not ignore_permissions and self.has_permission('view_all_incidents'):
             return [m for m in deployment.incidents if not m.open_status and m.supervisor_approved]
         for x in deployment.incidents:

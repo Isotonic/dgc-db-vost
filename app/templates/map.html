@@ -39,12 +39,10 @@
 <script>
 $(document).ready(function() {
 		  var map = L.map('Map').setView({lat: 55.872326, lng: -4.288094}, 15);
-		  L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
-			attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+		  L.tileLayer('https://maps.wikimedia.org/osm-intl/{z}/{x}/{y}.png', {
+			attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors | <a href="https://foundation.wikimedia.org/wiki/Maps_Terms_of_Use">Wikimedia Maps</a>',
 			minZoom: 4,
-			maxZoom: 22,
-			id: 'mapbox/streets-v11',
-			accessToken: '{{ config['MAPBOX_API_KEY'] }}'
+			maxZoom: 22
 		}).addTo(map);
 
         function clickZdoom(e) {

@@ -13,7 +13,7 @@
 	        <i class="fas fa-check"></i>
 	    </span>
 	    <span id="ChangeIncidentStatusText" class="text">Mark As Complete</span>
-	    </a>
+	</a>
 	{% else %}
 	<a id="ChangeIncidentStatus" href="#" class="btn btn-icon-split btn-info mb-1 mt-2">
 	    <span class="btn-icon">
@@ -928,12 +928,10 @@
 		$('#changeAllocationSelect').val(null).trigger('change');
 
 		  var map = L.map('Map').setView({lat: {{ incident.latitude }}, lng: {{ incident.longitude }}}, 15);
-		  L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
-			attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+		  L.tileLayer('https://maps.wikimedia.org/osm-intl/{z}/{x}/{y}.png', {
+			attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors | <a href="https://foundation.wikimedia.org/wiki/Maps_Terms_of_Use">Wikimedia Maps</a>',
 			minZoom: 4,
-			maxZoom: 22,
-			id: 'mapbox/streets-v11',
-			accessToken: '{{ config['MAPBOX_API_KEY'] }}'
+			maxZoom: 22
 		}).addTo(map);
 
 		var marker = L.circleMarker([{{ incident.latitude }}, {{ incident.longitude }}]).addTo(map);

@@ -168,7 +168,7 @@ def view_incident(deployment_name, deployment_id, incident_name, incident_id):
     groups = []
     for k, g in groupby(User.query.all(), key=lambda item: item.group):
         groups.append([k.name, list(g)])
-    return render_template('incident.html', incident=incident, deployment=incident.deployment, groups=groups, back_url=url_for('view_incidents', deployment_name=incident.deployment.name, deployment_id=incident.deployment_id), title=f'{incident.deployment.id} - Incident {incident_id}')
+    return render_template('incident.html', incident=incident, deployment=incident.deployment, groups=groups, back_url=url_for('view_incidents', deployment_name=incident.deployment.name, deployment_id=incident.deployment_id), title=f'{incident.deployment} - Incident {incident_id}')
 
 
 @app.route('/notifications/', methods=['GET'])
