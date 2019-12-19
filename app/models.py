@@ -247,7 +247,7 @@ class Deployment(db.Model):
 
 
 class Incident(db.Model):
-    priority_colours = {'Standard': 'yellow', 'Immediate': 'orange', 'Prompt': 'orange-dark'}
+    priority_colours = {'Standard': 'yellow', 'Prompt': 'orange', 'Immediate': 'orange-dark'}
     ##TODO Should really load these from a file.
     incident_types = {'Road Incident': 'car', 'Rail Incident': 'subway', 'Aviation Incident': 'plane',
                       'Maritane Inicent': 'ship', 'Snow/Ice': 'snowflake',
