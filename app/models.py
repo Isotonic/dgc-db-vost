@@ -329,6 +329,7 @@ class Incident(db.Model):
                 'tasks': self.task_string(),
                 'comments': len(self.comments),
                 'colour': self.priority_colours[self.priority],
+                'type': self.incident_type,
                 'animate': (datetime.utcnow().timestamp() - self.last_updated.timestamp()) <= 300,
                 'icon': self.get_icon(),
                 'url': url_for('view_incident', deployment_name=self.deployment, deployment_id=self.deployment.id,

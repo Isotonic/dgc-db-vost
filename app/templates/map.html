@@ -63,6 +63,7 @@ $(document).ready(function() {
                     </div>
                     <div class="card-body">
                         <span class="card-text"><b>Created:</b> ` + moment.unix(feature.properties.created_at).fromNow() + `</span></br>
+                        <span class="card-text"><b>Incident Type:</b> ` + feature.properties.type + `</span></br>
                         <span class="card-text mt-1"><b>Location:</b> ` + feature.properties.location + `</span></br>
                         <span class="card-text mt-1"><b>Description:</b> ` + feature.properties.description + `</span>
                         <div class="text-center mt-2">
