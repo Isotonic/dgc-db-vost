@@ -1,9 +1,9 @@
 <template>
   <div>
     <div id="wrapper">
-      <sidebar />
+      <sidebar :title="deployment.name"></sidebar>
       <div id="content-wrapper" class="d-flex flex-column">
-          <topbar :title="deployment.name"></topbar>
+          <topbar />
           <div class="container-fluid">
             <div class="d-sm-flex align-items-center justify-content-between mb-4">
                 <h1 class="h3 mb-0">{{ deployment.name }}</h1>
@@ -82,9 +82,11 @@
 
 <script>
 import Vue from 'vue'
-import Topbar from '../components/Topbar.vue'
-import Sidebar from '../components/Sidebar.vue'
-import { ClientTable } from 'vue-tables-2'
+import router from '@/router/index.js'
+import { ClientTable, Event } from 'vue-tables-2'
+
+import Topbar from '@/components/Topbar.vue'
+import Sidebar from '@/components/Sidebar.vue'
 
 Vue.use(ClientTable)
 
@@ -154,6 +156,12 @@ export default {
         }
       }
     }
+  },
+  mounted () {
+    let self = this
+    Event.$on('vue-tables.row-click', function (data) {
+      router.push({ name: 'viewIncident', params: { deploymentName: self.deployment.name.replace(' ', '-'), deploymentId: self.deployment.id, incidentName: data.row.name.replace(' ', '-'), incidentId: data.row.id } })
+    })
   },
   computed: {
     incidentStatText: function () {

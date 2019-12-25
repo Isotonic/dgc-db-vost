@@ -37,8 +37,8 @@
 </template>
 
 <script>
-import Topbar from '../components/Topbar.vue'
-import DeploymentCard from '../components/DeploymentCard.vue'
+import Topbar from '@/components/Topbar.vue'
+import DeploymentCard from '@/components/DeploymentCard.vue'
 
 export default {
   name: 'deployments',

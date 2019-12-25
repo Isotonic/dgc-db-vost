@@ -6,7 +6,6 @@
 {% endblock %}
 {% block heading %}
 <div>
-	<!-- TODO Allow non-privileged users to request a status change -->
 	{% if incident.open_status %}
 	<a id="ChangeIncidentStatus" class="btn btn-icon-split btn-success mb-1 mt-2" href="#" {% if not current_user.has_permission('change_status') %}data-toggle="modal" data-target="#requestCompleteModal"{% endif %}>
 	    <span class="btn-icon">

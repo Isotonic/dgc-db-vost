@@ -11,19 +11,19 @@ const routes = [
     component: () => import(/* webpackChunkName: "about" */ '../views/Deployments.vue')
   },
   {
-    path: '/deployments/:deploymentName-:deploymentId/incidents',
+    path: '/deployments/:deploymentName-:deploymentId(\\d+)/incidents',
     name: 'viewIncidents',
-    props: (route) => {
-      const deploymentId = Number.parseInt(route.params.deploymentId, 10)
-      if (Number.isNaN(deploymentId)) {
-        return 0
-      }
-      return { deploymentId }
-    },
     component: () => import(/* webpackChunkName: "about" */ '../views/Incidents.vue')
   },
   {
-    path: '*',
+    path: '/deployments/:deploymentName-:deploymentId(\\d+)/incidents/:incidentName-:incidentId(\\d+)',
+    name: 'viewIncident',
+    component: () => import(/* webpackChunkName: "about" */ '../views/Incident.vue')
+  },
+  {
+    path: '/404',
+    alias: '*',
+    name: 'PageNotFound',
     component: () => import(/* webpackChunkName: "about" */ '../views/PageNotFound.vue')
   }
 ]
