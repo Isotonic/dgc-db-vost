@@ -38,7 +38,6 @@ def page_not_found(e):
         return render_template('404.html', nosidebar=True), 404
     return redirect(url_for('login'))
 
-
 @app.route('/logout/')
 @login_required
 def logout():
