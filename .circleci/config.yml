@@ -1,6 +1,4 @@
 version: 2.1
-orbs:
-  deploy-to-heroku: betterdoc/deploy-to-heroku@4.0.0
 jobs:
   build:
     docker:
@@ -17,7 +15,7 @@ jobs:
           command: |
             docker build --tag registry.heroku.com/$HEROKU_APP_NAME/web --file ./Dockerfile "."
       - run:
-          name: Deploy the image
+          name: Push the image
           command: |
             docker login -u _ -p $HEROKU_AUTH_TOKEN registry.heroku.com
             docker push registry.heroku.com/$HEROKU_APP_NAME/web
