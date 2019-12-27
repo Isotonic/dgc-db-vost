@@ -10,7 +10,7 @@
     "heroku-postbuild": "webpack --config webpack.dev.js"
   },
   "dependencies": {
-    "core-js": "^3.4.3",
+    "core-js": "^3.6.1",
     "leaflet": "^1.6.0",
     "popper": "^1.0.1",
     "v-tooltip": "^2.0.2",
