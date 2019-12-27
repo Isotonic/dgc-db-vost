@@ -1,5 +1,6 @@
 from flask import Flask
 from config import Config
+from flask_cors import CORS
 from flask_moment import Moment
 from flask_argon2 import Argon2
 from flask_migrate import Migrate
@@ -12,6 +13,7 @@ from flask_bootstrap import Bootstrap
 
 app = Flask(__name__)
 app.config.from_object(Config)
+cors = CORS(app)
 jwt = JWTManager(app)
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
@@ -23,7 +25,7 @@ argon2 = Argon2(app)
 bootstrap = Bootstrap(app)
 
 from .api import api_blueprint
-app.register_blueprint(api_blueprint, url_prefix='/api')
+app.register_blueprint(api_blueprint, url_prefix='/v1')
 csrf.exempt(api_blueprint)
 
 from app import routes, models

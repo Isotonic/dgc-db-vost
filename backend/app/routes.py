@@ -31,13 +31,17 @@ def has_permission_sockets(f):
             return f(*args, **kwargs)
     return wrapped
 
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def catch_all(path):
+    return 'You want path: %s' % path
+
 @app.errorhandler(404)
 @login_required
 def page_not_found(e):
     if current_user.is_authenticated:
         return render_template('404.html', nosidebar=True), 404
     return redirect(url_for('login'))
-
 
 @app.route('/logout/')
 @login_required
