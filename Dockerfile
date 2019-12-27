@@ -26,6 +26,6 @@ COPY ./nginx/default.conf /etc/nginx/conf.d/default.conf
 COPY ./backend/requirements.txt ./
 RUN pip install -r requirements.txt
 COPY ./backend .
-CMD gunicorn -b 0.0.0.0:5000 dgvost:app --daemon && \
+CMD gunicorn -c gunicorn_conf.py dgvost:app --daemon && \
       sed -i -e 's/$PORT/'"$PORT"'/g' /etc/nginx/conf.d/default.conf && \
       nginx -g 'daemon off;'

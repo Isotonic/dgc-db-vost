@@ -1,5 +1,5 @@
 import os
-
+from dotenv import load_dotenv
 
 class Config(object):
     def get_env_variable(name):
@@ -8,6 +8,8 @@ class Config(object):
         except KeyError:
             message = "Expected environment variable '{}' not set.".format(name)
             raise Exception(message)
+
+    load_dotenv()
 
     # Setup Postgres details.
     POSTGRES_URL = get_env_variable('POSTGRES_URL')
