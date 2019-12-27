@@ -31,6 +31,11 @@ def has_permission_sockets(f):
             return f(*args, **kwargs)
     return wrapped
 
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def catch_all(path):
+    return 'You want path: %s' % path
+
 @app.errorhandler(404)
 @login_required
 def page_not_found(e):

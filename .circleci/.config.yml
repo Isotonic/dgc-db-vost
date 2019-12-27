@@ -1,0 +1,27 @@
+version: 2.1
+jobs:
+  build:
+  machine: true
+  steps:
+    - checkout
+    - run:
+    name: Build image
+    command: |
+        docker build
+          --tag << pipeline.git.branch >>
+          --file ./Dockerfile
+          "."
+    - run:
+    name: Deploy the image
+    command: |
+        docker login -u _ -p $HEROKU_AUTH_TOKEN registry.heroku.com
+        docker push registry.heroku.com/$HEROKU_APP_NAME/web
+    - run:
+    name: Setup Heroku
+    command: |
+        chmod +x .circleci/setup-heroku.sh
+        .circleci/setup-heroku.sh
+    - run:
+      name: Deploy to Heroku
+      command: |
+        heroku container:release web --app $HEROKU_APP_NAME
