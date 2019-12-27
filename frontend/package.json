@@ -31,7 +31,7 @@
     "babel-eslint": "^10.0.3",
     "css-loader": "^3.4.0",
     "eslint": "^5.16.0",
-    "eslint-plugin-vue": "^5.0.0",
+    "eslint-plugin-vue": "^6.1.0",
     "style-loader": "^1.1.1",
     "vue-loader": "^15.8.3",
     "vue-template-compiler": "^2.6.11"
