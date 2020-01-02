@@ -6,7 +6,7 @@ from flask_restplus import Resource, Namespace
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.api.utils.models import new_deployment_model, deployment_model
 
-ns_deployment = Namespace('Deployment', description='Used to carry out operations related with deployments.',
+ns_deployment = Namespace('Deployment', description='Used to carry out operations related to deployments.',
                           path='/deployment')
 
 

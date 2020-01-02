@@ -7,7 +7,7 @@ from flask_restplus import Resource, Namespace
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.api.utils.models import new_user_model, user_model, incident_model
 
-ns_user = Namespace('User', description='Used to carry out operations related with users.', path='/user')
+ns_user = Namespace('User', description='Used to carry out operations related to users.', path='/user')
 
 
 @ns_user.route('/list')

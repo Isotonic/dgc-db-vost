@@ -5,7 +5,7 @@ from app.models import User, Incident, Deployment
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.api.utils.models import new_incident_model, incident_model
 
-ns_incident = Namespace('Incident', description='Used to carry out operations related with incidents.',
+ns_incident = Namespace('Incident', description='Used to carry out operations related to incidents.',
                         path='/incident')
 
 

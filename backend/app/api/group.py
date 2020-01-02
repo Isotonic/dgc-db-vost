@@ -6,7 +6,7 @@ from flask_restplus import Resource, Namespace
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.api.utils.models import new_group_model, group_model
 
-ns_group = Namespace('Group', description='Used to carry out operations related with groups.', path='/group')
+ns_group = Namespace('Group', description='Used to carry out operations related to groups.', path='/group')
 
 
 @ns_group.route('/list')

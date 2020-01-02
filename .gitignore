@@ -1,7 +1,7 @@
 #Folders
 .idea/
 migrations/
-app/static/img/avatars/
+backend/app/static/img/avatars/
 frontend/src/assets/img/avatars/
 frontend/node_modules
 frontend/dist/

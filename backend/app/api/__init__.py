@@ -19,7 +19,7 @@ authorizations = {
 dgvost_api = Api(api_blueprint,
                  title='DGVOST API',
                  version='1.0',
-                 description='Complete actions via the API on behalf of a user.',
+                 description='An API allowing you to carry out actions on behalf of a user.',
                  authorizations=authorizations)
 
 jwt._set_error_handler_callbacks(dgvost_api)  # Fix for Flask-RestPlus error handler not working.

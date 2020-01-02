@@ -25,7 +25,7 @@ argon2 = Argon2(app)
 bootstrap = Bootstrap(app)
 
 from .api import api_blueprint
-app.register_blueprint(api_blueprint, url_prefix='/v1')
+app.register_blueprint(api_blueprint)
 csrf.exempt(api_blueprint)
 
 from app import routes, models
