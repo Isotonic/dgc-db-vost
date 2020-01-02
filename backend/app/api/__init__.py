@@ -1,6 +1,15 @@
 from app import jwt
-from flask import Blueprint
 from flask_restplus import Api
+from flask import Blueprint, url_for
+
+@property
+def specs_url(self):
+    """
+    The Swagger specifications absolute url (ie. `swagger.json`)
+
+    :rtype: str
+    """
+    return url_for(self.endpoint('specs'), _external=False)
 
 api_blueprint = Blueprint('api', __name__)
 
@@ -15,6 +24,8 @@ authorizations = {
         'name': 'Authorization'
     }
 }
+
+Api.specs_url = specs_url
 
 dgvost_api = Api(api_blueprint,
                  title='DGVOST API',
