@@ -1,5 +1,4 @@
 import functools
-from sqlalchemy import func
 from itertools import groupby
 from app import app, db, socketio
 from app.utils.delete import delete_subtask
@@ -31,53 +30,11 @@ def has_permission_sockets(f):
             return f(*args, **kwargs)
     return wrapped
 
-@app.errorhandler(404)
-@login_required
-def page_not_found(e):
-    if current_user.is_authenticated:
-        return render_template('404.html', nosidebar=True), 404
-    return redirect(url_for('login'))
-
 @app.route('/logout/')
 @login_required
 def logout():
     logout_user()
     return redirect(url_for('login'))
-
-
-@app.route('/login/', methods=['GET', 'POST'])
-def login():
-    if current_user.is_authenticated:
-        return redirect(url_for('view_deployments'))
-    form = LoginForm()
-    if form.validate_on_submit():
-        user = User.query.filter(func.lower(User.email) == func.lower(form.email.data)).first()
-        if user is None or not user.check_password(form.password.data):
-            return render_template('login.html', title='Sign In', form=form, invalid=True)
-        login_user(user, remember=form.remember_me.data)
-        next_page = request.args.get('next')
-        if next_page:
-            return redirect(next_page)
-        return redirect(url_for('view_deployments'))
-    return render_template('login.html', title='Sign In', form=form, invalid=False)
-
-
-@app.route('/supervisor/create_user/', methods=['GET', 'POST'])
-@login_required
-def new_user():
-    groups_list = [(i.id, i.name) for i in Group.query.all()]
-    form = CreateUser()
-    form.group.choices = groups_list
-    if form.validate_on_submit():
-        group = None
-        if form.group.data:
-            group = Group.query.get(form.group.data)
-        user = create_user(form.firstname.data, form.surname.data, form.email.data, group.id if group else None, current_user)
-        user.set_password('password')
-        db.session.commit()
-        form = CreateUser()
-        form.group.choices = groups_list
-    return render_template('group.html', title=' User', form=form)
 
 
 @app.route('/verify/<link>/', methods=['GET', 'POST'])
@@ -95,21 +52,6 @@ def verify_user(link):
         db.session.commit()
         return redirect(url_for('login'))
     return render_template('base.html', title='Set Password', form=form, username=email.user.username)
-
-
-@app.route('/supervisor/create_group/', methods=['GET', 'POST'])
-@login_required
-def new_group():
-    form = CreateGroup()
-    if form.validate_on_submit():
-        permissions = {"view_all_incidents": form.view_all_incidents.data, "change_status": form.change_status.data,
-                       "change_allocations": form.change_allocations.data, "mark_as_public": form.mark_as_public.data,
-                       "new_reports": form.new_reports.data, "create_deployments": form.create_deployments.data,
-                       "decision_making_log": form.decision_making_log.data, "supervisor": form.supervisor.data}
-        chosen_permissions = [k for k, v in permissions.items() if v]
-        create_group(form.name.data, chosen_permissions, current_user)
-        form = CreateGroup()
-    return render_template('group.html', title='Group', form=form)
 
 
 @app.route('/deployments/', methods=['GET'])
@@ -130,7 +72,7 @@ def view_incidents(deployment_name, deployment_id):
         return render_template('404.html', nosidebar=True), 404
     incidents_stat = deployment.calculate_incidents_stat()
     return render_template('incidents.html', title=f'{deployment.name}', deployment=deployment,
-                           incidents_active=True, incidents_stat=incidents_stat, incidents=current_user.get_incidents(deployment.id), back_url=url_for('view_deployments'))
+                           incidents_active=True, incidents_stat=incidents_stat, incidents=current_user.get_incidents(deployment.id, open_only=True), back_url=url_for('view_deployments'))
 
 @app.route('/deployments/<deployment_name>-<int:deployment_id>/closed_incidents/', methods=['GET'])
 @login_required
@@ -140,8 +82,7 @@ def view_closed_incidents(deployment_name, deployment_id):
         return render_template('404.html', nosidebar=True), 404
     incidents_stat = deployment.calculate_incidents_stat()
     return render_template('incidents.html', title=f'{deployment.name}', deployment=deployment,
-                           closed_incidents_active=True, incidents_stat=incidents_stat, incidents=current_user.get_closed_incidents(deployment.id), back_url=url_for('view_deployments'))
-
+                           closed_incidents_active=True, incidents_stat=incidents_stat, incidents=current_user.get_incidents(deployment.id, closed_only=True), back_url=url_for('view_deployments'))
 
 
 @app.route('/deployments/<deployment_name>-<deployment_id>/assigned_incidents/', methods=['GET'])
@@ -152,7 +93,7 @@ def view_assigned_incidents(deployment_name, deployment_id):
         return render_template('404.html', nosidebar=True), 404
     incidents_stat = deployment.calculate_incidents_stat(current_user)
     return render_template('incidents.html', title=f'{deployment.name}', deployment=deployment,
-                           assigned_incidents_active=True, incidents_stat=incidents_stat, incidents=current_user.get_incidents(deployment.id, ignore_permissions=True), back_url=url_for('view_deployments'))
+                           assigned_incidents_active=True, incidents_stat=incidents_stat, incidents=current_user.get_incidents(deployment.id, open_only=True, ignore_permissions=True), back_url=url_for('view_deployments'))
 
 
 @app.route('/deployments/<deployment_name>-<deployment_id>/incidents/<incident_name>-<int:incident_id>/', methods=['GET', 'POST'])
@@ -181,7 +122,7 @@ def view_map(deployment_name, deployment_id):
     deployment = Deployment.query.filter_by(id=deployment_id).first()
     if not deployment or not deployment.name_check(deployment_name):
         return render_template('404.html', nosidebar=True), 404
-    return render_template('map.html', title=f'{deployment}', deployment=deployment, geojson=list(filter(None, [m.generate_geojson() for m in current_user.get_incidents(deployment)])), map_active=True, back_url=url_for('view_incidents', deployment_name=deployment.name, deployment_id=deployment.id))
+    return render_template('map.html', title=f'{deployment}', deployment=deployment, geojson=list(filter(None, [m.generate_geojson() for m in current_user.get_incidents(deployment, open_only=True)])), map_active=True, back_url=url_for('view_incidents', deployment_name=deployment.name, deployment_id=deployment.id))
 
 
 @app.route('/deployments/<deployment_name>-<deployment_id>/live-feed/', methods=['GET'])

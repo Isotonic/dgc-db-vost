@@ -1,78 +1,166 @@
-from sqlalchemy import func
-from app.api import dgvost_api
-from app.models import User, Deployment
-from app.utils.create import create_deployment
-from flask_restplus import Resource, Namespace
+from app.api import api
+from app.api.utils.resource import Resource
+from app.api.utils.namespace import Namespace
+from app.models import User, Deployment, Incident
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from app.api.utils.models import new_deployment_model, deployment_model
+from app.utils.create import create_deployment, create_incident
+from app.api.utils.models import new_deployment_model, deployment_model, new_incident_model, incident_model
 
-ns_deployment = Namespace('Deployment', description='Used to carry out operations related to deployments.',
-                          path='/deployment')
+ns_deployment = Namespace('Deployment', description='Used to carry out operations related to deployments.', path='/deployments')
 
 
-@ns_deployment.route('/list')
-class GetAllDeployments(Resource):
+@ns_deployment.route('')
+class AllDeployments(Resource):
     @jwt_required
     @ns_deployment.doc(security='access_token')
     @ns_deployment.response(200, 'Success', [deployment_model])
-    @ns_deployment.response(404, 'No deployments found')
+    @ns_deployment.response(401, 'Incorrect credentials')
+    @api.marshal_with(deployment_model)
     def get(self):
         """
                 Returns all deployments the user has access to.
         """
         current_user = User.query.filter_by(id=get_jwt_identity()).first()
-        all_deployments = [{'id': m.id, 'name': m.name, 'description': m.description, 'open': m.open_status,
-                            'created_at': m.created_at.timestamp(), 'group_ids': [x.id for x in m.groups],
-                            'user_ids': [y.id for y in m.users], 'areas': m.areas} for m in current_user.get_deployments()]
-        if not all_deployments:
-            ns_deployment.abort(404, 'No deployments found')
+        all_deployments = current_user.get_deployments()
         return all_deployments, 200
 
 
-@ns_deployment.route('/get/<int:deployment_id>')
-class GetDeployment(Resource):
-    @jwt_required
-    @ns_deployment.doc(security='access_token')
-    @ns_deployment.response(200, 'Success', [deployment_model])
-    @ns_deployment.response(401, 'Deployment doen\'t exist')
-    def get(self, deployment_id):
-        """
-                Returns deployment info.
-        """
-        deployment = Deployment.query.filter_by(id=deployment_id).first()
-        if not deployment:
-            ns_deployment.abort(401, 'Deployment doesn\'t exist')
-        return {'id': deployment.id, 'name': deployment.name, 'description': deployment.description,
-                'open': deployment.open_status, 'created_at': deployment.created_at.timestamp(),
-                'group_ids': [m.id for m in deployment.groups], 'user_ids': [m.id for m in deployment.users],
-                'areas': deployment.areas}, 200
-
-
-@ns_deployment.route('/create')
-class CreateNewDeployment(Resource):
     @jwt_required
     @ns_deployment.expect(new_deployment_model, validate=True)
     @ns_deployment.doc(security='access_token')
     @ns_deployment.response(200, 'Success', deployment_model)
     @ns_deployment.response(401, 'Incorrect credentials')
     @ns_deployment.response(403, 'Missing Supervisor permission')
+    @api.marshal_with(deployment_model)
     def post(self):
         """
                 Creates a new deployment, requires the Supervisor permission. Supplying a list of groups and users is optional and is left blank if everyone is to have access.
         """
-        payload = dgvost_api.payload
+        payload = api.payload
+        current_user = User.query.filter_by(id=get_jwt_identity()).first()
+        ns_deployment.has_permission(current_user, 'Supervisor')
+        created_deployment = create_deployment(payload['name'], payload['description'], payload['groups'], payload['users'], current_user)
+        return created_deployment, 200
+
+
+@ns_deployment.route('/<int:id>')
+@ns_deployment.doc(params={'id': 'Deployment ID.'})
+@ns_deployment.resolve_object('deployment', lambda kwargs: Deployment.query.get_or_error(kwargs.pop('id')))
+class GetDeployment(Resource):
+    @jwt_required
+    @ns_deployment.doc(security='access_token')
+    @ns_deployment.response(200, 'Success', [deployment_model])
+    @ns_deployment.response(401, 'Incorrect credentials')
+    @ns_deployment.response(403, 'Missing deployment access')
+    @ns_deployment.response(404, 'Deployment doen\'t exist')
+    @api.marshal_with(deployment_model)
+    def get(self, deployment):
+        """
+                Returns deployment info.
+        """
+        current_user = User.query.filter_by(id=get_jwt_identity()).first()
+        ns_deployment.has_deployment_access(current_user, deployment)
+        return deployment, 200
+
+
+    @jwt_required
+    @ns_deployment.expect(new_incident_model, validate=True)
+    @ns_deployment.doc(security='access_token')
+    @ns_deployment.response(200, 'Success', incident_model)
+    @ns_deployment.response(401, 'Incorrect credentials')
+    @ns_deployment.response(403, 'Missing deployment access')
+    @ns_deployment.response(404, 'Deployment doesn\'t exist')
+    @api.marshal_with(deployment_model)
+    def post(self, deployment):
+        """
+                Creates a new incident.
+        """
+        payload = api.payload
         current_user = User.query.filter_by(id=get_jwt_identity()).first()
 
-        if not current_user.group.has_permission('Supervisor'):
-            ns_deployment.abort(403, 'Missing Supervisor permission')
+        created_incident = create_incident(payload['name'], payload['description'], payload['location'], payload['reported_via'], payload['reference'], deployment, current_user)
+        return created_incident, 200
 
-        deployment = Deployment.query.filter(func.lower(Deployment.name) == func.lower(payload['name'])).first()
-        if deployment is not None:
-            ns_deployment.abort(409, 'Deployment already exists')
 
-        created_deployment = create_deployment(payload['name'], payload['description'], payload['groups'],
-                                            payload['users'], current_user)
-        return {'id': created_deployment.id, 'name': created_deployment.name,
-                'description': created_deployment.description, 'open': created_deployment.open_status,
-                'created_at': created_deployment.created_at.timestamp(), 'group_ids': [m.id for m in created_deployment.groups],
-                'user_ids': [m.id for m in created_deployment.users]}, 200
+@ns_deployment.route('/<int:id>/incidents')
+@ns_deployment.doc(params={'id': 'Deployment ID.'})
+@ns_deployment.resolve_object('deployment', lambda kwargs: Deployment.query.get_or_error(kwargs.pop('id')))
+class GetAllIncidents(Resource):
+    @jwt_required
+    @ns_deployment.doc(security='access_token')
+    @ns_deployment.response(200, 'Success', [incident_model])
+    @ns_deployment.response(401, 'Incorrect credentials')
+    @ns_deployment.response(403, 'Missing deployment access')
+    @ns_deployment.response(404, 'Deployment doesn\'t exist')
+    @api.marshal_with(incident_model)
+    def get(self, deployment):
+        """
+                Returns all incidents the user has access to.
+        """
+        current_user = User.query.filter_by(id=get_jwt_identity()).first()
+        ns_deployment.has_deployment_access(current_user, deployment)
+        all_incidents = current_user.get_incidents(deployment.id)
+        return all_incidents, 200
+
+
+@ns_deployment.route('/incidents/<int:id>/assigned')
+@ns_deployment.doc(params={'id': 'Deployment ID.'})
+@ns_deployment.resolve_object('deployment', lambda kwargs: Deployment.query.get_or_error(kwargs.pop('id')))
+class GetAllOpenIncidents(Resource):
+    @jwt_required
+    @ns_deployment.doc(security='access_token')
+    @ns_deployment.response(200, 'Success', [incident_model])
+    @ns_deployment.response(401, 'Incorrect credentials')
+    @ns_deployment.response(403, 'Missing deployment access')
+    @ns_deployment.response(404, 'Deployment doesn\'t exist')
+    @api.marshal_with(incident_model)
+    def get(self, deployment):
+        """
+                Returns open incidents the user has access to.
+        """
+        current_user = User.query.filter_by(id=get_jwt_identity()).first()
+        ns_deployment.has_deployment_access(current_user, deployment)
+        all_incidents = current_user.get_incidents(deployment.id, open_only=True)
+        return all_incidents, 200
+
+
+@ns_deployment.route('/incidents/<int:id>/assigned')
+@ns_deployment.doc(params={'id': 'Deployment ID.'})
+@ns_deployment.resolve_object('deployment', lambda kwargs: Deployment.query.get_or_error(kwargs.pop('id')))
+class GetAllAssignedIncidents(Resource):
+    @jwt_required
+    @ns_deployment.doc(security='access_token')
+    @ns_deployment.response(200, 'Success', [incident_model])
+    @ns_deployment.response(401, 'Incorrect credentials')
+    @ns_deployment.response(403, 'Missing deployment access')
+    @ns_deployment.response(404, 'Deployment doesn\'t exist')
+    @api.marshal_with(incident_model)
+    def get(self, deployment):
+        """
+                Returns assigned incidents to the current user.
+        """
+        current_user = User.query.filter_by(id=get_jwt_identity()).first()
+        ns_deployment.has_deployment_access(current_user, deployment)
+        all_incidents = current_user.get_incidents(deployment.id, ignore_permissions=True)
+        return all_incidents, 200
+
+
+@ns_deployment.route('/incidents/<int:id>/closed')
+@ns_deployment.doc(params={'id': 'Deployment ID.'})
+@ns_deployment.resolve_object('deployment', lambda kwargs: Deployment.query.get_or_error(kwargs.pop('id')))
+class GetAllClosedIncidents(Resource):
+    @jwt_required
+    @ns_deployment.doc(security='access_token')
+    @ns_deployment.response(200, 'Success', [incident_model])
+    @ns_deployment.response(401, 'Incorrect credentials')
+    @ns_deployment.response(403, 'Missing deployment access')
+    @ns_deployment.response(404, 'Deployment doesn\'t exist')
+    @api.marshal_with(incident_model)
+    def get(self, deployment):
+        """
+                Returns closed incidents the user has access to.
+        """
+        current_user = User.query.filter_by(id=get_jwt_identity()).first()
+        ns_deployment.has_deployment_access(current_user, deployment)
+        all_incidents = current_user.get_incidents(deployment.id, closed_only=False)
+        return all_incidents, 200

@@ -1,36 +1,38 @@
 <template>
   <div id="wrapper">
-    <sidebar :title="deployment.name"></sidebar>
+    <sidebar :title="deployment.name" :deploymentId="deployment.id" :deploymentName="deployment.name"/>
     <div id="content-wrapper" class="d-flex flex-column">
       <topbar />
       <div class="container-fluid">
         <div class="d-sm-flex align-items-center justify-content-between mb-4">
           <h1 class="h3 mb-0">{{ deployment.name }}</h1>
-          <div>
-            <a :class="['btn', 'btn-icon-split', 'mb-1', 'mt-2', 'mr-2', incident.openStatus ? 'btn-success' : 'btn-info']" href="#" >
+          <div class="d-flex mb-1 mt-2">
+            <button :class="['btn', 'btn-icon-split', 'mr-2', incident.openStatus ? 'btn-success' : 'btn-info']">
                 <span class="btn-icon">
                     <i class="fas fa-check"></i>
                 </span>
                 <span class="text">{{ incident.openStatus ? 'Mark As Complete' : 'Mark As Incomplete' }}</span>
-            </a>
-            <a href="#flagModal" class="btn btn-icon-split btn-warning mb-1 mt-2 dropdown-toggle" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-              <span class="btn-icon">
-                <i class="fas fa-flag"></i>
-              </span>
-              <span class="text">Flag</span>
-            </a>
-            <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="dropdownPriorityMenu">
-              <a class="dropdown-item" href="#" type="submit">User</a>
-              <a class="dropdown-item" href="#" data-toggle="modal" data-target="#flagToSupervisorModal">Supervisor</a>
-            </div>
+            </button>
+            <b-dropdown id="FlagDropdown" toggle-class="btn-icon-split btn-warning dropdown-toggle text-white">
+              <template slot="button-content">
+                  <span class="btn-icon">
+                    <i class="fas fa-flag"></i>
+                  </span>
+                  <span class="text">Flag</span>
+              </template>
+              <b-dropdown-item>User</b-dropdown-item>
+              <b-dropdown-item @click="isFlagToSupervisorModalVisible = true">Supervisor</b-dropdown-item>
+            </b-dropdown>
+            <FlagToSupervisorModal v-show="isFlagToSupervisorModalVisible" :visible="isFlagToSupervisorModalVisible" @close="isFlagToSupervisorModalVisible = false" />
           </div>
         </div>
         <div class="row">
           <div class="col-xl-3 col-md-6 mb-4">
             <div class="card border-left-primary shadow h-100 py-2">
-              <a v-if="hasPermission('change_allocation')" class="incident-cog" href="#" role="button" data-toggle="modal" data-target="#changeAllocationModal">
-              <i class="fas fa-cog float-right" data-toggle="tooltip" title="Change Allocation"></i>
+              <a v-if="hasPermission('change_allocation')" class="incident-cog" href="#" role="button" @click="isChangeAllocationModalVisible = true">
+                <i class="fas fa-cog float-right" v-tooltip="'Change Allocation'"></i>
               </a>
+              <ChangeAllocationModal v-show="isChangeAllocationModalVisible" :visible="isChangeAllocationModalVisible" @close="isChangeAllocationModalVisible = false" />
               <div class="card-body">
                 <div class="row no-gutters align-items-center">
                   <div class="col mr-2">
@@ -53,14 +55,14 @@
           </div>
           <div class="col-xl-3 col-md-6 mb-4">
             <div :class="['card', 'shadow', 'h-100', 'py-2', 'border-left-' + incident.priority]">
-              <a v-if="hasPermission('change_priority')" :class="['incident-cog', 'text-' + incident.priority]" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                  <i class="fas fa-cog float-right" data-toggle="tooltip" title="Change Priority"></i>
-              </a>
-              <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="dropdownPriorityMenu">
-                <a :class="['dropdown-item', incident.priority === 'Standard' ? 'active' : '']" href="#" type="submit">Standard</a>
-                <a :class="['dropdown-item', incident.priority === 'Prompt' ? 'active' : '']" href="#" type="submit">Prompt</a>
-                <a :class="['dropdown-item', incident.priority === 'Immediate' ? 'active' : '']" href="#" type="submit">Immediate</a>
-              </div>
+              <b-dropdown id="ChangePriorityDropdown" v-if="hasPermission('change_priority')" size="xs" right menu-class="mt-3" variant="link" toggle-tag="a">
+                <template slot="button-content">
+                  <a :class="['fas', 'fa-cog', 'incident-cog', 'float-right', 'text-' + incident.priority]" aria-haspopup="true" v-tooltip="'Change Priority'"></a>
+                </template>
+                <b-dropdown-item id="PriorityStandard" :class="[incident.priority === 'Standard' ? 'active' : '']" href="#" type="submit">Standard</b-dropdown-item>
+                <b-dropdown-item id="PriorityPrompt" :class="[incident.priority === 'Prompt' ? 'active' : '']" href="#" type="submit">Prompt</b-dropdown-item>
+                <b-dropdown-item id="PriorityImmediate" :class="[incident.priority === 'Immediate' ? 'active' : '']" href="#" type="submit">Immediate</b-dropdown-item>
+              </b-dropdown>
               <div class="card-body">
                 <div class="row no-gutters align-items-center">
                   <div class="col mr-2">
@@ -127,7 +129,7 @@
               <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 font-weight-bold text-primary">Incident Overview</h6>
                 <a href="#" role="button" data-toggle="modal" data-target="#editOverviewModal">
-                  <i class="fas fa-cog" data-toggle="tooltip" title="Edit Incident Overview"></i>
+                  <i class="fas fa-cog" v-tooltip="'Edit Incident Overview'"></i>
                 </a>
               </div>
               <div class="card-body">
@@ -144,7 +146,7 @@
               <div class="card-header py-3 d-flex align-items-center justify-content-between">
                 <h6 class="m-0 font-weight-bold text-primary">Tasks</h6>
                 <a class="text-success" href="#" role="button" data-toggle="modal" data-target="#addTaskModal">
-                  <i class="fas fa-plus" data-toggle="tooltip" title="Add Task"></i>
+                  <i class="fas fa-plus" v-tooltip="'Add Task'"></i>
                 </a>
               </div>
               <ul class="list-group">
@@ -174,9 +176,10 @@
             <div class="card shadow mb-4">
               <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 font-weight-bold text-primary">Updates</h6>
-                <a class="text-success" href="#" role="button" data-toggle="modal" data-target="#addCommentModal">
-                  <i class="fas fa-plus" data-toggle="tooltip" title="Add Comment"></i>
-                </a>
+                <button class="btn btn-xs text-success" @click="isNewCommentModalVisible = true">
+                  <i class="fas fa-plus" v-tooltip="'Add Comment'"></i>
+                </button>
+                <NewCommentModal v-show="isNewCommentModalVisible" :visible="isNewCommentModalVisible" @close="isNewCommentModalVisible = false" />
               </div>
               <div class="card-body bg-light">
                 <ul class="list-unstyled">
@@ -205,14 +208,21 @@
 </template>
 
 <script>
+import Vue from 'vue'
 import { LMap, LTileLayer, LMarker } from 'vue2-leaflet'
 import L from 'leaflet'
+import { DropdownPlugin } from 'bootstrap-vue'
 
 import Topbar from '@/components/Topbar.vue'
 import Sidebar from '@/components/Sidebar.vue'
 import Task from '@/components/Task.vue'
 import Comment from '@/components/Comment.vue'
 import Activity from '@/components/Activity.vue'
+import FlagToSupervisorModal from '@/components/modals/FlagToSupervisor.vue'
+import ChangeAllocationModal from '@/components/modals/ChangeAllocation.vue'
+import NewCommentModal from '@/components/modals/NewComment.vue'
+
+Vue.use(DropdownPlugin)
 
 // Fix for markers not loading.
 delete L.Icon.Default.prototype._getIconUrl
@@ -223,7 +233,7 @@ L.Icon.Default.mergeOptions({
 })
 
 export default {
-  name: 'viewIncident',
+  name: 'incident',
   components: {
     Topbar,
     Sidebar,
@@ -232,7 +242,16 @@ export default {
     Activity,
     LMap,
     LTileLayer,
-    LMarker
+    LMarker,
+    FlagToSupervisorModal,
+    ChangeAllocationModal,
+    NewCommentModal
+  },
+  props: {
+    deploymentName: String,
+    deploymentId: Number,
+    incidentName: String,
+    incidentId: Number
   },
   data () {
     return {
@@ -247,7 +266,7 @@ export default {
         'location': 'Test',
         'coordinates': [55.872326, -4.288094],
         'createdByUser': 'Test User',
-        'priority': 'Standard',
+        'priority': 'Prompt',
         'assignedTo': [{ 'name': 'Test User', 'avatarUrl': 'http://c5-dissertation.herokuapp.com/static/img/avatars/24_Jaffer_Naheem.png' }],
         'createdAt': '2019-10-12 10:08:08.033814',
         'lastUpdated': '2019-12-12 10:08:08.033814',
@@ -260,7 +279,12 @@ export default {
         zoom: 15,
         url: 'https://maps.wikimedia.org/osm-intl/{z}/{x}/{y}.png',
         attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors | <a href="https://foundation.wikimedia.org/wiki/Maps_Terms_of_Use">Wikimedia Maps</a>'
-      }
+      },
+      showFlagDropdown: false,
+      showPriorityDropdown: false,
+      isFlagToSupervisorModalVisible: false,
+      isChangeAllocationModalVisible: false,
+      isNewCommentModalVisible: false
     }
   },
   methods: {

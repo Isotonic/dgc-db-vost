@@ -3,26 +3,40 @@ from config import Config
 from flask_cors import CORS
 from flask_moment import Moment
 from flask_argon2 import Argon2
+from flask_restx import abort
 from flask_migrate import Migrate
 from flask_socketio import SocketIO
 from flask_login import LoginManager
 from flask_wtf.csrf import CSRFProtect
-from flask_sqlalchemy import SQLAlchemy
+from flask_marshmallow import Marshmallow
 from flask_jwt_extended import JWTManager
-from flask_bootstrap import Bootstrap
+from flask_sqlalchemy import SQLAlchemy, BaseQuery
+
+class CustomBaseQuery(BaseQuery):
+    def get_or_error(self, ident):
+        model_class_name = ''
+        try:
+            model_class_name = self._mapper_zero().class_.__name__
+        except Exception as e:
+            print(e)
+
+        rv = self.get(ident)
+        if not rv:
+            abort(404, message=f'{model_class_name} {ident} was not found.')
+        return rv
 
 app = Flask(__name__)
 app.config.from_object(Config)
 cors = CORS(app)
 jwt = JWTManager(app)
-db = SQLAlchemy(app)
+db = SQLAlchemy(app, query_class=CustomBaseQuery)
 migrate = Migrate(app, db)
 login = LoginManager(app)
+ma = Marshmallow(app)
 moment = Moment(app)
 csrf = CSRFProtect(app)
 socketio = SocketIO(app)
 argon2 = Argon2(app)
-bootstrap = Bootstrap(app)
 
 from .api import api_blueprint
 app.register_blueprint(api_blueprint, url_prefix='/api')
@@ -32,9 +46,3 @@ from app import routes, models
 login.login_view = 'login'
 
 db.create_all()
-
-@jwt.token_in_blacklist_loader
-def check_if_token_in_blacklist(decrypted_token):
-    jti = decrypted_token['jti']
-    return models.RevokedToken.is_jti_blacklisted(jti)
-

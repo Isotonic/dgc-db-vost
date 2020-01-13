@@ -2,17 +2,18 @@
   <div>
     <div id="wrapper">
       <div id="content-wrapper" class="d-flex flex-column">
-        <topbar :nosidebar="true"></topbar>
+        <topbar :nosidebar="true" />
         <div class="container-fluid">
           <div class="d-sm-flex align-items-center justify-content-between mb-4">
             <h1 class="h3 mb-0">Deployments</h1>
-            <a href="#newDeploymentModal" data-toggle="modal" data-target="#newDeploymentModal" class="btn btn-icon-split btn-success mb-1 mt-2">
+            <button class="btn btn-icon-split btn-success mb-1 mt-2" @click="isNewDeploymentModalVisible = true">
               <span class="btn-icon">
                 <i class="fas fa-plus"></i>
               </span>
               <span class="text">New Deployment</span>
-            </a>
+            </button>
           </div>
+          <NewDeploymentModal v-show="isNewDeploymentModalVisible" :visible="isNewDeploymentModalVisible" @close="isNewDeploymentModalVisible = false" />
           <div class="row">
             <div class="col-xl-12 col-lg-10">
               <div class="card shadow mb-4">
@@ -28,7 +29,7 @@
             </div>
           </div>
           <div class="row">
-            <deployment-card v-for="deployment in deployments" :key="deployment.id" :deployment="deployment"></deployment-card>
+            <deployment-card v-for="deployment in deployments" :key="deployment.id" :deployment="deployment" />
           </div>
         </div>
       </div>
@@ -37,22 +38,41 @@
 </template>
 
 <script>
+import { mapGetters, mapActions } from 'vuex'
 import Topbar from '@/components/Topbar.vue'
 import DeploymentCard from '@/components/DeploymentCard.vue'
+import NewDeploymentModal from '@/components/modals/NewDeployment.vue'
 
 export default {
   name: 'deployments',
   components: {
     Topbar,
-    DeploymentCard
+    DeploymentCard,
+    NewDeploymentModal
   },
   data () {
     return {
-      deployments: [
-        { 'id': 1, 'name': 'Storm Test', 'description': 'Hmmm', 'createdAt': '2019-12-12 10:08:08.033814', 'openStatus': true },
-        { 'id': 2, 'name': 'Storm Test', 'description': 'Hmmm', 'createdAt': '2019-12-12 10:08:08.033814', 'openStatus': true }
-      ]
+      isNewDeploymentModalVisible: false
     }
+  },
+  methods: {
+    openModal (modal) {
+      modal = true
+    },
+    closeModal (modal) {
+      modal = false
+    },
+    ...mapActions('deployments', {
+      checkLoaded: 'checkLoaded'
+    })
+  },
+  computed: {
+    ...mapGetters('deployments', {
+      deployments: 'getAll'
+    })
+  },
+  async created () {
+    this.checkLoaded()
   }
 }
 </script>

@@ -74,7 +74,11 @@
 .incident-cog {
   margin-bottom: -1.2rem;
   margin-right: 0.4rem;
-  z-index: 999;
+  z-index: 100;
+}
+
+.incident-cog:hover {
+  cursor: pointer;
 }
 
 .pointer {
@@ -232,7 +236,7 @@ MODIFIED VERSION
   }
 }
 
-.mt-2.dropdown-toggle::after {
+.btn-warning.dropdown-toggle::after {
     margin-top: 16px;
     margin-right: 8px;
 }

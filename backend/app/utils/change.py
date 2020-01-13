@@ -16,7 +16,6 @@ def change_incident_status(incident, status, changed_by):
     else:
         incident.closed_at = None
         action_type = 'marked_incomplete'
-    incident.last_updated = datetime.utcnow()
     emit('change_incident_status', {'status': status, 'code': 200}, room=f'{incident.deployment_id}-{incident.id}')
     incident_action(user=changed_by, action_type=IncidentLog.action_values[action_type], incident=incident)
 
@@ -27,7 +26,6 @@ def change_allocation(incident, allocated_to, changed_by):
     added = list(set(allocated_to) - set(incident.assigned_to))
     removed = list(set(incident.assigned_to) - set(allocated_to))
     incident.assigned_to = allocated_to
-    incident.last_updated = datetime.utcnow()
     emit('change_incident_allocation',
          {'html': [render_template('assigned_to.html', user=m) for m in incident.assigned_to], 'code': 200},
          room=f'{incident.deployment_id}-{incident.id}')
@@ -43,7 +41,6 @@ def change_incident_priority(incident, priority, changed_by):
     if incident.priority == priority:
         return False
     incident.priority = priority
-    incident.last_updated = datetime.utcnow()
     emit('change_incident_priority', {'priority': incident.priority, 'code': 200},
          room=f'{incident.deployment_id}-{incident.id}')
     incident_action(user=changed_by, action_type=IncidentLog.action_values['changed_priority'],
@@ -54,7 +51,6 @@ def change_public(incident, public, changed_by):
     if incident.public == public:
         return False
     incident.public = public
-    incident.last_updated = datetime.utcnow()
     emit('change_public', {'public': incident.public, 'code': 200},
          room=f'{incident.deployment_id}-{incident.id}')
     incident_action(user=changed_by, action_type=IncidentLog.action_values['public' if public else 'not_public'],

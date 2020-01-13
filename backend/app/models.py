@@ -73,7 +73,8 @@ class User(db.Model, UserMixin):
     surname = db.Column(db.String(64))
     email = db.Column(db.String(120), index=True, unique=True)
     password_hash = db.Column(db.String(128))
-    superuser = db.Column(db.Boolean(), default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    password_last_updated = db.Column(db.DateTime, default=datetime.utcnow)
     group_id = db.Column(db.Integer, db.ForeignKey('group.id'))
     group = db.relationship('Group', backref='users')
     deployments = db.relationship('Deployment', secondary=deployment_user_junction)
@@ -113,7 +114,7 @@ class User(db.Model, UserMixin):
                 deployments.append(x)
         return deployments
 
-    def get_incidents(self, deployment, open_only=True, ignore_permissions=False):
+    def get_incidents(self, deployment, open_only=False, closed_only=False, ignore_permissions=False):
         incidents = []
         if not isinstance(deployment, Deployment):
             deployment = Deployment.query.filter_by(id=deployment).first()
@@ -122,24 +123,14 @@ class User(db.Model, UserMixin):
         if not self.has_deployment_access(deployment):
             return incidents
         if not ignore_permissions and self.has_permission('view_all_incidents'):
-            return [m for m in deployment.incidents if m.open_status and m.supervisor_approved] if open_only else deployment.incidents
+            if open_only:
+                return [m for m in deployment.incidents if m.open_status and m.supervisor_approved]
+            elif closed_only:
+                return [m for m in deployment.incidents if not m.open_status and m.supervisor_approved]
+            else:
+                return deployment.incidents
         for x in deployment.incidents:
-            if (not open_only or (open_only and x.open_status)) and self in x.assigned_to and x.supervisor_approved:
-                incidents.append(x)
-        return incidents
-
-    def get_closed_incidents(self, deployment, ignore_permissions=False):
-        incidents = []
-        if not isinstance(deployment, Deployment):
-            deployment = Deployment.query.filter_by(id=deployment).first()
-        if not deployment:
-            return False
-        if not self.has_deployment_access(deployment):
-            return incidents
-        if not ignore_permissions and self.has_permission('view_all_incidents'):
-            return [m for m in deployment.incidents if not m.open_status and m.supervisor_approved]
-        for x in deployment.incidents:
-            if not x.open_status and self in x.assigned_to and x.supervisor_approved:
+            if ((open_only and x.open_status) or (closed_only and not x.open_status)) and self in x.assigned_to and x.supervisor_approved:
                 incidents.append(x)
         return incidents
 
@@ -153,19 +144,23 @@ class User(db.Model, UserMixin):
             deployment = Deployment.query.filter_by(id=deployment).first()
         if not deployment:
             return False
-        if (not deployment.groups and not deployment.users) or self in deployment.users:
+        if self.has_permission('supervisor') or (not deployment.groups and not deployment.users) or self in deployment.users:
             return True
         for x in deployment.groups:
             if x.id == self.group_id:
                 return True
 
-    def has_incident_access(self, deployment_id, incident_id):
-        incident = Incident.query.filter(Deployment.id == deployment_id, Incident.id == incident_id).first()
-        if not self.has_deployment_access(incident.deployment):
+    def has_incident_access(self, incident):
+        if not isinstance(incident, Incident):
+            incident = Incident.query.filter_by(id=incident).first()
+        if not incident:
+            return False
+        if not self.has_deployment_access(incident.deployment_id):
             return False
         if self.has_permission('view_all_incidents') or self in incident.assigned_to:
             return True
         return False
+
 
     def __repr__(self):
         return f'{self.firstname} {self.surname}'
@@ -196,6 +191,13 @@ class Group(db.Model):
                 pass
         self.permissions = int(permission_value)
 
+    def get_permissions(self):
+        permissions = []
+        for key, value in self.permission_values.items():
+            if self.permissions & value > 0:
+                permissions.append(key)
+        return permissions
+
     def has_permission(self, permission):
         if self.permissions == self.permission_values['supervisor']:
             return True
@@ -203,7 +205,7 @@ class Group(db.Model):
             if self.permissions & self.permission_values[permission.lower()] > 0:
                 return True
             return False
-        except ValueError:
+        except KeyError:
             return False
 
     def __repr__(self):
@@ -282,7 +284,7 @@ class Incident(db.Model):
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
     created_by_user = db.relationship('User', backref='created_incidents')
     closed_at = db.Column(db.DateTime)
-    last_updated = db.Column(db.DateTime, default=datetime.utcnow)
+    last_updated = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     public = db.Column(db.Boolean(), default=False)
     supervisor_approved = db.Column(db.Boolean(), default=False)
     flagged = db.Column(db.Boolean(), default=False)
@@ -313,6 +315,9 @@ class Incident(db.Model):
         if self.incident_type in self.incident_types and self.incident_types[self.incident_type] != '':
             return self.incident_types[self.incident_type]
         return 'exclamation'
+
+    def get_coordinates(self):
+        return [self.longitude, self.latitude]
 
     def generate_geojson(self):
         if not self.longitude or not self.latitude:

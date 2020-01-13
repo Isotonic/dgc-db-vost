@@ -1,6 +1,7 @@
-from app import jwt
-from flask_restplus import Api
+from app import jwt, db
+from flask_restx import Api
 from flask import Blueprint, url_for
+from ..models import User, RevokedToken
 
 @property
 def specs_url(self):
@@ -10,6 +11,14 @@ def specs_url(self):
     :rtype: str
     """
     return url_for(self.endpoint('specs'), _external=False)
+
+@jwt.token_in_blacklist_loader
+def check_if_token_in_blacklist(decrypted_token): ##TODO Check if it returns false when the password updated is greater than iat
+    jti = decrypted_token['jti']
+    iat = decrypted_token['iat']
+    identity = int(decrypted_token['identity'])
+    user = User.query.filter_by(id=identity).first()
+    return not user or user.password_last_updated.timestamp() > iat or RevokedToken.is_jti_blacklisted(jti)
 
 api_blueprint = Blueprint('api', __name__)
 
@@ -25,15 +34,39 @@ authorizations = {
     }
 }
 
-Api.specs_url = specs_url
 
-dgvost_api = Api(api_blueprint,
+api = Api(api_blueprint,
                  title='DGVOST API',
                  version='1.0',
                  description='An API allowing you to carry out actions on behalf of a user.',
                  authorizations=authorizations)
 
-jwt._set_error_handler_callbacks(dgvost_api)  # Fix for Flask-RestPlus error handler not working.
+import sys
+
+
+def get_type_or_class_name(var) -> str:
+    if type(var).__name__ == 'type':
+        return var.__name__
+    else:
+        return type(var).__name__
+
+@api.errorhandler(Exception)
+def generic_exception_handler(e: Exception):
+    exc_type, exc_value, exc_traceback = sys.exc_info()
+
+    if exc_traceback:
+        traceback_details = {
+            'filename': exc_traceback.tb_frame.f_code.co_filename,
+            'lineno': exc_traceback.tb_lineno,
+            'name': exc_traceback.tb_frame.f_code.co_name,
+            'type': get_type_or_class_name(exc_type),
+            'message': str(exc_value),
+        }
+        return {'message': traceback_details['message']}, 500
+    else:
+        return {'message': 'Internal Server Error'}, 500
+
+jwt._set_error_handler_callbacks(api)  # Fix for Flask-RestPlus error handler not working.
 
 from .authentication import ns_auth
 from .user import ns_user
@@ -41,8 +74,8 @@ from .group import ns_group
 from .deployment import ns_deployment
 from .incident import ns_incident
 
-dgvost_api.add_namespace(ns_auth)
-dgvost_api.add_namespace(ns_user)
-dgvost_api.add_namespace(ns_group)
-dgvost_api.add_namespace(ns_deployment)
-dgvost_api.add_namespace(ns_incident)
+api.add_namespace(ns_auth)
+api.add_namespace(ns_user)
+api.add_namespace(ns_group)
+api.add_namespace(ns_deployment)
+api.add_namespace(ns_incident)

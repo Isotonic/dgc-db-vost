@@ -11,7 +11,6 @@ class Config(object):
 
     load_dotenv()
 
-    # Setup Postgres details.
     POSTGRES_URL = get_env_variable('POSTGRES_URL')
     POSTGRES_USER = get_env_variable('POSTGRES_USER')
     POSTGRES_PASSWORD = get_env_variable('POSTGRES_PASSWORD')
@@ -25,6 +24,8 @@ class Config(object):
     SECRET_KEY = get_env_variable('FLASK_SECRET_KEY')
 
     JWT_SECRET_KEY = get_env_variable('JWT_SECRET_KEY')
+    JWT_ACCESS_TOKEN_EXPIRES = int(os.getenv('JWT_ACCESS_TOKEN_EXPIRES', 1800))
+    JWT_REFRESH_TOKEN_EXPIRES = int(os.getenv('JWT_REFRESH_TOKEN_EXPIRES', 172800))
     JWT_BLACKLIST_ENABLED = True
     JWT_BLACKLIST_TOKEN_CHECKS = ['access', 'refresh']
 

@@ -1,67 +1,66 @@
+from app.api import api
 from sqlalchemy import func
-from app.api import dgvost_api
 from app.models import User, Group
 from app.utils.create import create_group
-from flask_restplus import Resource, Namespace
+from app.api.utils.resource import Resource
+from app.api.utils.namespace import Namespace
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.api.utils.models import new_group_model, group_model
 
-ns_group = Namespace('Group', description='Used to carry out operations related to groups.', path='/group')
+ns_group = Namespace('Group', description='Used to carry out operations related to groups.', path='/groups')
 
 
-@ns_group.route('/list')
-class GetAllGroups(Resource):
+@ns_group.route('')
+class AllGroups(Resource):
     @jwt_required
     @ns_group.doc(security='access_token')
     @ns_group.response(200, 'Success', [group_model])
-    @ns_group.response(404, 'No groups exist')
+    @ns_group.response(401, 'Incorrect credentials')
+    @api.marshal_with(group_model)
     def get(self):
         """
                 Returns all groups.
         """
-        all_groups = [{'id': m.id, 'name': m.name, 'permissions': m.permissions} for m in Group.query.all()]
-        if not all_groups:
-            ns_group.abort(404, 'No groups exist')
+        all_groups = Group.query.all()
         return all_groups, 200
 
 
-@ns_group.route('/get/<int:group_id>')
-class GetGroup(Resource):
-    @jwt_required
-    @ns_group.doc(security='access_token')
-    @ns_group.response(200, 'Success', [group_model])
-    @ns_group.response(401, 'Group doesn\'t exist')
-    def get(self, group_id):
-        """
-                Returns group info.
-        """
-        group = Group.query.filter_by(id=id).first()
-        if not group:
-            ns_group.abort(401, 'Group doesn\'t exist')
-        return {'id': group.id, 'name': group.name, 'permissions': group.permissions}, 200
-
-
-@ns_group.route('/create')
-class CreateNewGroup(Resource):
     @jwt_required
     @ns_group.expect(new_group_model, validate=True)
     @ns_group.doc(security='access_token')
     @ns_group.response(200, 'Success', group_model)
     @ns_group.response(401, 'Incorrect credentials')
     @ns_group.response(403, 'Missing Supervisor permission')
+    @api.marshal_with(group_model)
     def post(self):
         """
                 Creates a new group, requires the Supervisor permission. Supplying a list of permissions is optional.
         """
-        payload = dgvost_api.payload
+        payload = api.payload
         current_user = User.query.filter_by(id=get_jwt_identity()).first()
 
-        if not current_user.group.has_permission('Supervisor'):
-            ns_group.abort(403, 'Missing Supervisor permission')
+        ns_group.has_permission(current_user, 'supervisor')
 
         group = Group.query.filter(func.lower(Group.name) == func.lower(payload['name'])).first()
         if group is not None:
             ns_group.abort(409, 'Group already exists')
 
         created_group = create_group(payload['name'], payload['permissions'], current_user)
-        return {'group_id': created_group.id, 'name': created_group.name, 'permissions': created_group.permissions}, 200
+        return created_group, 200
+
+
+@ns_group.route('/<int:id>')
+@ns_group.doc(params={'id': 'Group ID.'})
+@ns_group.resolve_object('group', lambda kwargs: Group.query.get_or_error(kwargs.pop('id')))
+class GetGroup(Resource):
+    @jwt_required
+    @ns_group.doc(security='access_token')
+    @ns_group.response(200, 'Success', [group_model])
+    @ns_group.response(401, 'Incorrect credentials')
+    @ns_group.response(404, 'Group doesn\'t exist')
+    @api.marshal_with(group_model)
+    def get(self, group):
+        """
+                Returns group info.
+        """
+        return group, 200

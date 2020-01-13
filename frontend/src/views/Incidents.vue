@@ -1,18 +1,19 @@
 <template>
   <div>
     <div id="wrapper">
-      <sidebar :title="deployment.name"></sidebar>
+    <sidebar :title="deployment.name" :deploymentId="deployment.id" :deploymentName="deployment.name"/>
       <div id="content-wrapper" class="d-flex flex-column">
           <topbar />
           <div class="container-fluid">
             <div class="d-sm-flex align-items-center justify-content-between mb-4">
                 <h1 class="h3 mb-0">{{ deployment.name }}</h1>
-                <a href="#newIncidentModal" data-toggle="modal" data-target="#newIncidentModal" class="btn btn-icon-split btn-success mb-1">
+                <button class="btn btn-icon-split btn-success mb-1" @click="isNewIncidentModalVisible = true">
                   <span class="btn-icon">
                   <i class="fas fa-plus"></i>
                   </span>
                   <span class="text">New Incident</span>
-                </a>
+                </button>
+                <NewIncidentModal v-show="isNewIncidentModalVisible" :visible="isNewIncidentModalVisible" @close="isNewIncidentModalVisible = false" />
             </div>
             <div class="row">
             <div class="col-xl-3 col-md-6 mb-4">
@@ -83,10 +84,12 @@
 <script>
 import Vue from 'vue'
 import router from '@/router/index.js'
+import { mapGetters, mapActions } from 'vuex'
 import { ClientTable, Event } from 'vue-tables-2'
 
 import Topbar from '@/components/Topbar.vue'
 import Sidebar from '@/components/Sidebar.vue'
+import NewIncidentModal from '@/components/modals/NewIncident.vue'
 
 Vue.use(ClientTable)
 
@@ -94,11 +97,15 @@ export default {
   name: 'deployments',
   components: {
     Topbar,
-    Sidebar
+    Sidebar,
+    NewIncidentModal
+  },
+  props: {
+    deploymentName: String,
+    deploymentId: Number
   },
   data () {
     return {
-      deployment: { 'id': 1, 'name': 'Storm Test', 'description': 'Hmmm', 'createdAt': '2019-12-12 10:08:08.033814', 'openStatus': true },
       incidents: [
         { 'id': 1, 'pinned': true, 'name': 'Hmm', 'location': 'Test', 'priority': 'Standard', 'assigned_to': 'Idk', 'taskPercentage': 10, 'lastUpdated': '2019-12-12 10:08:08.033814' },
         { 'id': 2, 'pinned': true, 'name': 'DKSJD', 'location': 'EFSEF', 'priority': 'Standard', 'assignedTo': 'fESFS', 'taskPercentage': 60, 'lastUpdated': '2019-12-14 10:08:08.033814' },
@@ -154,16 +161,22 @@ export default {
           }
           ]
         }
-      }
+      },
+      isNewIncidentModalVisible: false
     }
   },
-  mounted () {
-    let self = this
-    Event.$on('vue-tables.row-click', function (data) {
-      router.push({ name: 'viewIncident', params: { deploymentName: self.deployment.name.replace(' ', '-'), deploymentId: self.deployment.id, incidentName: data.row.name.replace(' ', '-'), incidentId: data.row.id } })
+  methods: {
+    ...mapActions('deployments', {
+      checkLoaded: 'checkLoaded'
     })
   },
   computed: {
+    ...mapGetters('deployments', {
+      getDeployment: 'getDeployment'
+    }),
+    deployment: function () {
+      return this.getDeployment(this.deploymentId)
+    },
     incidentStatText: function () {
       return {
         'text-success': this.incidentStat.incidents < 0,
@@ -177,6 +190,15 @@ export default {
         'fa-down': this.incidentStat.incidents > 0
       }
     }
+  },
+  async created () {
+    this.checkLoaded()
+  },
+  mounted () {
+    let self = this
+    Event.$on('vue-tables.row-click', function (data) {
+      router.push({ name: 'incident', params: { deploymentName: self.deployment.name.replace(' ', '-'), deploymentId: self.deployment.id, incidentName: data.row.name.replace(' ', '-'), incidentId: data.row.id } })
+    })
   }
 }
 </script>
