@@ -1,5 +1,5 @@
 from app.api import api
-from flask_restx import fields, Model
+from flask_restx import fields
 
 login_model = api.model('Login',
                                {'email': fields.String(required=True), 'password': fields.String(required=True)})
@@ -33,16 +33,16 @@ new_incident_model = api.model('Create Incident',
                                        'latitude': fields.Float(required=True), 'reported_via': fields.String(),
                                        'reference': fields.String()})  ##TODO Convert to GEOJson
 
-point_geometry_model = Model('PointGeometry', {
+point_geometry_model = api.model('Point Geometry', {
     'type': fields.String(default="Point"),
     'coordinates': fields.List(fields.Integer, attribute=lambda x: x.get_coordinates(), description='Longitude and latitude, in that order. Can return null too.', type="Array")
 })
 
-point_properties_model = Model('PointProperties', {
+point_properties_model = api.model('Point Properties', {
     'address': fields.String(attribute='location')
 })
 
-point_feature_model = Model('PointFeature', {
+point_feature_model = api.model('Point Feature', {
     'type': fields.String(default="Feature"),
     'geometry': fields.Nested(point_geometry_model, attribute=lambda x: x),
     'properties': fields.Nested(point_properties_model, attribute=lambda x: x)

@@ -34,6 +34,7 @@ authorizations = {
     }
 }
 
+Api.specs_url = specs_url
 
 api = Api(api_blueprint,
                  title='DGVOST API',
