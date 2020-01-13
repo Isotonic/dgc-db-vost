@@ -65,6 +65,6 @@ incident_model = api.model('Incident',
                                   {'id': fields.Integer(), 'name': fields.String(), 'description': fields.String(),
                                    'type': fields.String(attribute='incident_type'),
                                    'open': fields.Boolean(attribute='open_status'), 'public': fields.Boolean(),
-                                   'priority': fields.String(), 'geo_json': fields.Nested(point_feature_model, attribute=lambda x: x, description='GeoJSON Point of the location.'),
+                                   'priority': fields.String(), 'location': fields.Nested(point_feature_model, attribute=lambda x: x, description='GeoJSON Point of the location.'),
                                    'created_at': fields.Float(attribute=lambda x: x.created_at.timestamp(), description='UTC Timestamp.')})
 
