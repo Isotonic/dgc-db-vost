@@ -8,7 +8,6 @@ from flask_migrate import Migrate
 from flask_socketio import SocketIO
 from flask_login import LoginManager
 from flask_wtf.csrf import CSRFProtect
-from flask_marshmallow import Marshmallow
 from flask_jwt_extended import JWTManager
 from flask_sqlalchemy import SQLAlchemy, BaseQuery
 
@@ -32,7 +31,6 @@ jwt = JWTManager(app)
 db = SQLAlchemy(app, query_class=CustomBaseQuery)
 migrate = Migrate(app, db)
 login = LoginManager(app)
-ma = Marshmallow(app)
 moment = Moment(app)
 csrf = CSRFProtect(app)
 socketio = SocketIO(app)

@@ -24,7 +24,6 @@ workers = web_concurrency
 bind = '0.0.0.0:5000'
 keepalive = 120
 errorlog = '-'
-worker_tmp_dir = '/dev/shm'
 
 # For debugging and testing
 log_data = {

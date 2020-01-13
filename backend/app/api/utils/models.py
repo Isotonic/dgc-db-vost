@@ -1,5 +1,5 @@
 from app.api import api
-from flask_restplus import fields, Model
+from flask_restx import fields, Model
 
 login_model = api.model('Login',
                                {'email': fields.String(required=True), 'password': fields.String(required=True)})
