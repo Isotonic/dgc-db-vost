@@ -101,6 +101,7 @@ class User(db.Model, UserMixin):
         avatar.generate().save(f'./app/static/img/avatars/{self.id}_{self.firstname}_{self.surname}.png')
 
     def get_avatar(self, static=True):
+        return 'https://c5-dissertation.herokuapp.com/static/img/avatars/24_Jaffer_Naheem.png'
         avatar_path = f'{"/static/" if static else ""}img/avatars/{self.id}_{self.firstname}_{self.surname}.png'
         if path.exists(f'./app{avatar_path}'):
             return avatar_path

@@ -1,5 +1,5 @@
 from app.api import api
-from flask_restx import fields
+from flask_restplus import fields
 
 id_model = api.model('ID', {'id': fields.Integer()})
 
