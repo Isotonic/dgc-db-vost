@@ -1,16 +1,15 @@
 import functools
 from itertools import groupby
 from app import app, db, socketio
-from app.utils.delete import delete_subtask
+from .utils.delete import delete_subtask
 from flask_socketio import emit, join_room, disconnect
 from flask import render_template, redirect, url_for, request
-from app.forms import LoginForm, CreateUser, CreateGroup, SetPassword
+from .forms import LoginForm, CreateUser, CreateGroup, SetPassword
 from flask_login import current_user, login_user, logout_user, login_required
 from app.utils.supervisor import request_incident_complete, mark_request_complete, flag_to_supervisor
-from app.models import User, Group, Deployment, Incident, IncidentTask, IncidentSubTask, SupervisorActions, EmailLink, AuditLog
-from app.utils.create import create_user, create_group, create_deployment, create_incident, create_task, create_subtask, create_task_comment, create_comment
-from app.utils.change import change_incident_status, change_allocation, change_public, change_incident_priority, change_task_status, change_task_description, change_task_assigned, change_subtask_status
-
+from .models import User, Group, Deployment, Incident, IncidentTask, IncidentSubTask, SupervisorActions, EmailLink, AuditLog
+from .utils.create import create_user, create_group, create_deployment, create_incident, create_task, create_subtask, create_task_comment, create_comment
+from .utils.change import change_incident_status, change_incident_allocation, change_incident_public, change_incident_priority, change_task_status, change_task_description, change_task_assigned, change_subtask_status
 
 def login_required_sockets(f):
     @functools.wraps(f)
@@ -249,7 +248,7 @@ def create_incident_task_socket(data):
     if users:
         users = User.query.filter(User.id.in_(data['users'])).all()
         if set(users) - set(incident.assigned_to):
-            change_allocation(incident, users, current_user)
+            change_incident_allocation(incident, users, current_user)
     create_task(name, users, description, incident, current_user)
 
 
@@ -270,7 +269,7 @@ def create_incident_subtask_socket(data):
     if users:
         users = User.query.filter(User.id.in_(data['users'])).all()
         if any([m for m in users if m not in task.incident.assigned_to]):
-            change_allocation(task.incident, users + task.incident.assigned_to, current_user)
+            change_incident_allocation(task.incident, users + task.incident.assigned_to, current_user)
         print(task.assigned_to)
         if any([m for m in users if m not in task.assigned_to]):
             change_task_assigned(task, users + task.assigned_to, current_user)
@@ -333,7 +332,7 @@ def change_incident_allocation_socket(data):
     if not incident:
         return emit('change_incident_allocation', {'message': 'Unable to find the deployment or incident.', 'code': 404})
     users = [n for n in [User.query.filter_by(id=int(m)).first() for m in data['users'] if m] if n and n.has_deployment_access(incident.deployment)]
-    if change_allocation(incident, users, current_user) is False:
+    if change_incident_allocation(incident, users, current_user) is False:
         return emit('change_incident_allocation', {'message': 'Didn\'t change assigned users.', 'code': 400})
 
 
@@ -349,7 +348,7 @@ def change_public_socket(data):
     incident = Incident.query.filter(Deployment.id == data['deployment_id'], Incident.id == data['incident_id']).first()
     if not incident:
         return emit('change_incident_priority', {'message': 'Unable to find the deployment or incident.', 'code': 404})
-    if change_public(incident, public, current_user) is False:
+    if change_incident_public(incident, public, current_user) is False:
         return emit('change_public', {'message': 'Incident already has this priority.', 'code': 400})
 
 
@@ -419,7 +418,7 @@ def change_task_assigned_socket(data):
     if users:
         users = User.query.filter(User.id.in_(data['users'])).all()
         if any([m for m in users if m not in task.incident.assigned_to]):
-            change_allocation(task.incident, users + task.incident.assigned_to, current_user)
+            change_incident_allocation(task.incident, users + task.incident.assigned_to, current_user)
         if any([m for m in users if m not in task.assigned_to]):
             change_task_assigned(task, users + task.assigned_to, current_user)
 

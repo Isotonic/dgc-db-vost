@@ -9,7 +9,7 @@ def incident_action(user, action_type, incident, task=None, subtask=None, target
     action = IncidentLog(user=user, action_type=action_type, incident_id=incident.id, task=task, subtask=subtask, target_users=target_users, extra=extra)
     db.session.add(action)
     db.session.commit()
-    emit('activity', {'html': [render_template('action.html', action=action)], 'code': 200}, room=f'{incident.deployment_id}-{incident.id}')
+#    emit('activity', {'html': [render_template('action.html', action=action)], 'code': 200}, room=f'{incident.deployment_id}-{incident.id}')
 
 def task_action(user, action_type, task, subtask=None, target_users=None, extra=None):
     if not target_users:
@@ -17,4 +17,4 @@ def task_action(user, action_type, task, subtask=None, target_users=None, extra=
     action = TaskLog(user=user, action_type=action_type, task=task, subtask=subtask, target_users=target_users, extra=extra)
     db.session.add(action)
     db.session.commit()
-    emit('task_activity', {'html': [render_template('action.html', action=action)], 'code': 200}, room=f'{task.incident.id}-{task.id}')
+#    emit('task_activity', {'html': [render_template('action.html', action=action)], 'code': 200}, room=f'{task.incident.id}-{task.id}')

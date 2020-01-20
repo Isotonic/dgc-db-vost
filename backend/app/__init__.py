@@ -3,7 +3,7 @@ from config import Config
 from flask_cors import CORS
 from flask_moment import Moment
 from flask_argon2 import Argon2
-from flask_restx import abort
+from flask_restplus import abort
 from flask_migrate import Migrate
 from flask_socketio import SocketIO
 from flask_login import LoginManager
@@ -21,12 +21,12 @@ class CustomBaseQuery(BaseQuery):
 
         rv = self.get(ident)
         if not rv:
-            abort(404, message=f'{model_class_name} {ident} was not found.')
+            abort(404, message=f'{model_class_name} {ident} doesn\'t exist')
         return rv
 
 app = Flask(__name__)
 app.config.from_object(Config)
-cors = CORS(app)
+cors = CORS(app, resources={r'/api/*': {'origins': '*'}})
 jwt = JWTManager(app)
 db = SQLAlchemy(app, query_class=CustomBaseQuery)
 migrate = Migrate(app, db)

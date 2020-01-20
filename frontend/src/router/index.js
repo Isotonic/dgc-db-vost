@@ -7,17 +7,17 @@ const routes = [
   {
     path: '/login',
     name: 'login',
-    component: () => import(/* webpackChunkName: "about" */ '../views/Login.vue'),
+    component: () => import(/* webpackChunkName: "login" */ '../views/Login.vue'),
     meta: {
       title: _ => 'Login',
       requiresAuth: false
     }
   },
   {
-    path: '/',
-    alias: '/deployments',
+    path: '/deployments',
+    alias: '/',
     name: 'deployments',
-    component: () => import(/* webpackChunkName: "about" */ '../views/Deployments.vue'),
+    component: () => import(/* webpackChunkName: "deployments" */ '../views/Deployments.vue'),
     meta: {
       title: _ => 'Deployments',
       requiresAuth: true
@@ -25,50 +25,23 @@ const routes = [
   },
   {
     path: '/deployments/:deploymentName-:deploymentId(\\d+)/incidents',
+    alias: '/deployments/:deploymentName-:deploymentId(\\d+)',
     name: 'incidents',
-    component: () => import(/* webpackChunkName: "about" */ '../views/Incidents.vue'),
+    component: () => import(/* webpackChunkName: "incidents" */ '../views/Incidents.vue'),
     props (route) {
       const props = { ...route.params }
       props.deploymentId = +props.deploymentId
       return props
     },
     meta: {
-      title: _ => 'All Incidents',
-      requiresAuth: true
-    }
-  },
-  {
-    path: '/deployments/:deploymentName-:deploymentId(\\d+)/assigned-incidents',
-    name: 'assignedIncidents',
-    component: () => import(/* webpackChunkName: "about" */ '../views/Incidents.vue'),
-    props (route) {
-      const props = { ...route.params }
-      props.deploymentId = +props.deploymentId
-      return props
-    },
-    meta: {
-      title: _ => 'Assigned Incidents',
-      requiresAuth: true
-    }
-  },
-  {
-    path: '/deployments/:deploymentName-:deploymentId(\\d+)/closed-incidents',
-    name: 'closedIncidents',
-    component: () => import(/* webpackChunkName: "about" */ '../views/Incidents.vue'),
-    props (route) {
-      const props = { ...route.params }
-      props.deploymentId = +props.deploymentId
-      return props
-    },
-    meta: {
-      title: _ => 'Closed Incidents',
+      title: _ => 'Incidents',
       requiresAuth: true
     }
   },
   {
     path: '/deployments/:deploymentName-:deploymentId(\\d+)/incidents/:incidentName-:incidentId(\\d+)',
     name: 'incident',
-    component: () => import(/* webpackChunkName: "about" */ '../views/Incident.vue'),
+    component: () => import(/* webpackChunkName: "incident" */ '../views/Incident.vue'),
     props (route) {
       const props = { ...route.params }
       props.deploymentId = +props.deploymentId
@@ -83,7 +56,7 @@ const routes = [
   {
     path: '/notifications',
     name: 'notifications',
-    component: () => import(/* webpackChunkName: "about" */ '../views/Incident.vue'),
+    component: () => import(/* webpackChunkName: "notifications" */ '../views/Incident.vue'),
     meta: {
       title: _ => 'Notifications',
       requiresAuth: true
@@ -92,7 +65,7 @@ const routes = [
   {
     path: '/deployments/:deploymentName-:deploymentId(\\d+)/map',
     name: 'map',
-    component: () => import(/* webpackChunkName: "about" */ '../views/Incident.vue'),
+    component: () => import(/* webpackChunkName: "map" */ '../views/Incident.vue'),
     props (route) {
       const props = { ...route.params }
       props.deploymentId = +props.deploymentId
@@ -106,7 +79,7 @@ const routes = [
   {
     path: '/deployments/:deploymentName-:deploymentId(\\d+)/live-feed',
     name: 'liveFeed',
-    component: () => import(/* webpackChunkName: "about" */ '../views/Incident.vue'),
+    component: () => import(/* webpackChunkName: "live feed" */ '../views/Incident.vue'),
     props (route) {
       const props = { ...route.params }
       props.deploymentId = +props.deploymentId
@@ -120,7 +93,7 @@ const routes = [
   {
     path: '/deployments/:deploymentName-:deploymentId(\\d+)/decision-making-log',
     name: 'decisionMakingLog',
-    component: () => import(/* webpackChunkName: "about" */ '../views/Incident.vue'),
+    component: () => import(/* webpackChunkName: "decision-making log" */ '../views/Incident.vue'),
     props (route) {
       const props = { ...route.params }
       props.deploymentId = +props.deploymentId
@@ -134,7 +107,7 @@ const routes = [
   {
     path: '/deployments/:deploymentName-:deploymentId(\\d+)/actions-required',
     name: 'actionsRequired',
-    component: () => import(/* webpackChunkName: "about" */ '../views/Incident.vue'),
+    component: () => import(/* webpackChunkName: "actions required" */ '../views/Incident.vue'),
     props (route) {
       const props = { ...route.params }
       props.deploymentId = +props.deploymentId
@@ -148,8 +121,8 @@ const routes = [
   {
     path: '/404',
     alias: '*',
-    name: 'PageNotFound',
-    component: () => import(/* webpackChunkName: "about" */ '../views/PageNotFound.vue'),
+    name: 'pageNotFound',
+    component: () => import(/* webpackChunkName: "page not found" */ '../views/PageNotFound.vue'),
     props: true,
     meta: {
       title: _ => 'Page Not Found',

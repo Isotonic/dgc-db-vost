@@ -4,7 +4,7 @@
       <a href="#">
         <img class="media-object rounded-circle" :src="comment.user.avatarUrl" alt="Avatar">
       </a>
-      <div class="update-log-name text-muted">{{ comment.user.name }}</div>
+      <div class="update-log-name text-muted">{{ comment.user.firstname }} {{ comment.user.surname }}</div>
     </div>
     <div class="update-log-text">
       <span class="d-block">{{ comment.text }}</span>

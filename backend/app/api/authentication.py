@@ -1,8 +1,8 @@
-from app.api import api
+from ..api import api
 from sqlalchemy import func
-from app.models import User, RevokedToken
-from flask_restx import Resource, Namespace
-from app.api.utils.models import login_model, tokens_model
+from ..models import User, RevokedToken
+from flask_restplus import Resource, Namespace
+from .utils.models import login_model, tokens_model
 from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt
 
 ns_auth = Namespace('Authentication', description='Used to authenticate the user.', path='/auth')

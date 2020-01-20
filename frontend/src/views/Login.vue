@@ -11,10 +11,10 @@
               <form class="user" @submit.prevent="login">
                 <div class="alert alert-danger text-center" v-if="error">Incorrect login details provided</div>
                 <div class="form-group">
-                  <input v-model="email" type="email" class="form-control form-control-user" name="email" placeholder="Enter Email" required autofocus>
+                  <input v-model="email" type="email" class="form-control form-control-user" name="email" placeholder="Enter Email" aria-label="Email" required autofocus>
                 </div>
                 <div class="form-group">
-                  <input v-model="password" type="password" class="form-control form-control-user" name="password" placeholder="Enter Password" required>
+                  <input v-model="password" type="password" class="form-control form-control-user" name="password" placeholder="Enter Password" aria-label="Password" required>
                 </div>
                 <div class="form-group">
                   <div class="custom-control custom-checkbox small">

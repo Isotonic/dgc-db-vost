@@ -1,17 +1,16 @@
-from app.api import api
-from app.api.utils.resource import Resource
-from app.api.utils.namespace import Namespace
-from app.models import User, Deployment, Incident
+from ..api import api
+from .utils.resource import Resource
+from ..models import User, Deployment
+from .utils.namespace import Namespace
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from app.utils.create import create_deployment, create_incident
-from app.api.utils.models import new_deployment_model, deployment_model, new_incident_model, incident_model
+from ..utils.create import create_deployment, create_incident
+from .utils.models import new_deployment_model, deployment_model, new_incident_model, incident_model
 
-ns_deployment = Namespace('Deployment', description='Used to carry out operations related to deployments.', path='/deployments')
+ns_deployment = Namespace('Deployment', description='Used to carry out operations related to deployments.', path='/deployments', decorators=[jwt_required])
 
 
 @ns_deployment.route('')
 class AllDeployments(Resource):
-    @jwt_required
     @ns_deployment.doc(security='access_token')
     @ns_deployment.response(200, 'Success', [deployment_model])
     @ns_deployment.response(401, 'Incorrect credentials')
@@ -25,7 +24,6 @@ class AllDeployments(Resource):
         return all_deployments, 200
 
 
-    @jwt_required
     @ns_deployment.expect(new_deployment_model, validate=True)
     @ns_deployment.doc(security='access_token')
     @ns_deployment.response(200, 'Success', deployment_model)
@@ -38,7 +36,7 @@ class AllDeployments(Resource):
         """
         payload = api.payload
         current_user = User.query.filter_by(id=get_jwt_identity()).first()
-        ns_deployment.has_permission(current_user, 'Supervisor')
+        ns_deployment.has_permission(current_user, 'supervisor')
         created_deployment = create_deployment(payload['name'], payload['description'], payload['groups'], payload['users'], current_user)
         return created_deployment, 200
 
@@ -47,7 +45,6 @@ class AllDeployments(Resource):
 @ns_deployment.doc(params={'id': 'Deployment ID.'})
 @ns_deployment.resolve_object('deployment', lambda kwargs: Deployment.query.get_or_error(kwargs.pop('id')))
 class GetDeployment(Resource):
-    @jwt_required
     @ns_deployment.doc(security='access_token')
     @ns_deployment.response(200, 'Success', [deployment_model])
     @ns_deployment.response(401, 'Incorrect credentials')
@@ -63,7 +60,6 @@ class GetDeployment(Resource):
         return deployment, 200
 
 
-    @jwt_required
     @ns_deployment.expect(new_incident_model, validate=True)
     @ns_deployment.doc(security='access_token')
     @ns_deployment.response(200, 'Success', incident_model)
@@ -86,7 +82,6 @@ class GetDeployment(Resource):
 @ns_deployment.doc(params={'id': 'Deployment ID.'})
 @ns_deployment.resolve_object('deployment', lambda kwargs: Deployment.query.get_or_error(kwargs.pop('id')))
 class GetAllIncidents(Resource):
-    @jwt_required
     @ns_deployment.doc(security='access_token')
     @ns_deployment.response(200, 'Success', [incident_model])
     @ns_deployment.response(401, 'Incorrect credentials')
@@ -103,11 +98,10 @@ class GetAllIncidents(Resource):
         return all_incidents, 200
 
 
-@ns_deployment.route('/incidents/<int:id>/assigned')
+@ns_deployment.route('/incidents/<int:id>/open')
 @ns_deployment.doc(params={'id': 'Deployment ID.'})
 @ns_deployment.resolve_object('deployment', lambda kwargs: Deployment.query.get_or_error(kwargs.pop('id')))
 class GetAllOpenIncidents(Resource):
-    @jwt_required
     @ns_deployment.doc(security='access_token')
     @ns_deployment.response(200, 'Success', [incident_model])
     @ns_deployment.response(401, 'Incorrect credentials')
@@ -128,7 +122,6 @@ class GetAllOpenIncidents(Resource):
 @ns_deployment.doc(params={'id': 'Deployment ID.'})
 @ns_deployment.resolve_object('deployment', lambda kwargs: Deployment.query.get_or_error(kwargs.pop('id')))
 class GetAllAssignedIncidents(Resource):
-    @jwt_required
     @ns_deployment.doc(security='access_token')
     @ns_deployment.response(200, 'Success', [incident_model])
     @ns_deployment.response(401, 'Incorrect credentials')
@@ -149,7 +142,6 @@ class GetAllAssignedIncidents(Resource):
 @ns_deployment.doc(params={'id': 'Deployment ID.'})
 @ns_deployment.resolve_object('deployment', lambda kwargs: Deployment.query.get_or_error(kwargs.pop('id')))
 class GetAllClosedIncidents(Resource):
-    @jwt_required
     @ns_deployment.doc(security='access_token')
     @ns_deployment.response(200, 'Success', [incident_model])
     @ns_deployment.response(401, 'Incorrect credentials')

@@ -1,8 +1,9 @@
 <template>
   <transition name="fade">
-    <div class="modal" tabindex="-1" role="dialog" aria-labelledby="changeAllocationModal" :aria-hidden="!visible">
-      <div class="modal-backdrop" @click="close"/>
-      <div class="modal-dialog" role="document">
+    <div>
+      <div class="modal" tabindex="-1" role="dialog" :aria-labelledby="title" :aria-hidden="!visible">
+        <div class="modal-backdrop" @click="close"/>
+        <div :class="['modal-dialog', bigger ? 'modal-bigger' : '']" role="document">
           <div class="modal-content">
             <div class="modal-body p-0">
               <div class="card shadow">
@@ -19,6 +20,7 @@
             </div>
           </div>
         </div>
+      </div>
     </div>
   </transition>
 </template>
@@ -28,7 +30,11 @@ export default {
   name: 'Modal',
   props: {
     title: String,
-    visible: Boolean
+    visible: Boolean,
+    bigger: {
+      type: Boolean,
+      default: false
+    }
   },
   methods: {
     close () {

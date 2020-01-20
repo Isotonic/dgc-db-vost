@@ -1,21 +1,21 @@
 <template>
   <div>
     <div id="wrapper">
-    <sidebar :title="deployment.name" :deploymentId="deployment.id" :deploymentName="deployment.name"/>
+    <sidebar :deploymentId="this.deploymentId" :deploymentName="deploymentNameApi"/>
       <div id="content-wrapper" class="d-flex flex-column">
-          <topbar />
-          <div class="container-fluid">
-            <div class="d-sm-flex align-items-center justify-content-between mb-4">
-                <h1 class="h3 mb-0">{{ deployment.name }}</h1>
-                <button class="btn btn-icon-split btn-success mb-1" @click="isNewIncidentModalVisible = true">
-                  <span class="btn-icon">
-                  <i class="fas fa-plus"></i>
-                  </span>
-                  <span class="text">New Incident</span>
-                </button>
-                <NewIncidentModal v-show="isNewIncidentModalVisible" :visible="isNewIncidentModalVisible" @close="isNewIncidentModalVisible = false" />
-            </div>
-            <div class="row">
+        <topbar />
+        <div class="container-fluid">
+          <div class="d-sm-flex align-items-center justify-content-between mb-4">
+            <h1 v-if="this.deployment" class="h3 mb-0">{{ this.deployment.name }}</h1>
+            <button class="btn btn-icon-split btn-success mb-1" @click="isNewIncidentModalVisible = true">
+              <span class="btn-icon">
+              <i class="fas fa-plus"></i>
+              </span>
+              <span class="text">New Incident</span>
+            </button>
+            <NewIncidentModal v-show="isNewIncidentModalVisible" :visible="isNewIncidentModalVisible" @close="isNewIncidentModalVisible = false" />
+          </div>
+          <div class="row">
             <div class="col-xl-3 col-md-6 mb-4">
               <div class="card border-left-primary shadow">
                 <div class="card-body">
@@ -65,10 +65,10 @@
             </div>
             <div class="card-body">
               <div class="table-responsive">
-                <div id="IncidentsTable">
+                <div>
                   <v-client-table :data="incidents" :columns="columns" :options="options">
-                  <div slot="child_row" slot-scope="props">
-                    {{ props.row.name }}
+                    <div slot="child_row" slot-scope="props">
+                      {{ props.row.name }}
                     </div>
                   </v-client-table>
                 </div>
@@ -89,12 +89,13 @@ import { ClientTable, Event } from 'vue-tables-2'
 
 import Topbar from '@/components/Topbar.vue'
 import Sidebar from '@/components/Sidebar.vue'
+import assignedTo from '@/components/TableAssignedTo.vue'
 import NewIncidentModal from '@/components/modals/NewIncident.vue'
 
 Vue.use(ClientTable)
 
 export default {
-  name: 'deployments',
+  name: 'incidents',
   components: {
     Topbar,
     Sidebar,
@@ -106,13 +107,8 @@ export default {
   },
   data () {
     return {
-      incidents: [
-        { 'id': 1, 'pinned': true, 'name': 'Hmm', 'location': 'Test', 'priority': 'Standard', 'assigned_to': 'Idk', 'taskPercentage': 10, 'lastUpdated': '2019-12-12 10:08:08.033814' },
-        { 'id': 2, 'pinned': true, 'name': 'DKSJD', 'location': 'EFSEF', 'priority': 'Standard', 'assignedTo': 'fESFS', 'taskPercentage': 60, 'lastUpdated': '2019-12-14 10:08:08.033814' },
-        { 'id': 3, 'pinned': false, 'name': 'DKSJD', 'location': 'EFSEF', 'priority': 'Standard', 'assignedTo': 'fESFS', 'taskPercentage': 60, 'lastUpdated': '2019-12-14 10:08:08.033814' },
-        { 'id': 1, 'pinned': false, 'name': 'Hmm', 'location': 'Test', 'priority': 'Standard', 'assigned_to': 'Idk', 'taskPercentage': 10, 'lastUpdated': '2019-12-12 10:08:08.033814' }
-      ],
       incidentStat: { incidents: 12 },
+      showing: 'open',
       columns: ['pinned', 'name', 'location', 'priority', 'assignedTo', 'taskPercentage', 'lastUpdated'],
       options: {
         headings: {
@@ -125,22 +121,85 @@ export default {
           lastUpdated: 'Last Updated'
         },
         templates: {
+          assignedTo,
           pinned: function (h, row, index) {
             return <i class={row.pinned ? 'fas fa-bookmark' : 'far fa-bookmark'}></i>
           },
+          location: function (h, row, index) {
+            return <span class='font-smaller'>{row.location.properties.address}</span>
+          },
+          priority: function (h, row, index) {
+            return <span class="badge badge-dot mr-4">
+              <i class={'bg-' + row.priority}></i> {row.priority}
+            </span>
+          },
           taskPercentage: function (h, row, index) {
             let bgClass = 'bg-danger'
-            if (row.taskPercentage >= 80) {
+            if (!row.tasks.length) {
+              return 'None'
+            }
+            const taskPercentage = Math.round((row.tasks.filter(task => task.completed).length / row.tasks.length) * 100)
+            if (taskPercentage >= 80) {
               bgClass = 'bg-success'
-            } else if (row.taskPercentage >= 50) {
+            } else if (taskPercentage >= 50) {
               bgClass = 'bg-orange'
-            } else if (row.taskPercentage >= 25) {
+            } else if (taskPercentage >= 25) {
               bgClass = 'bg-warning'
             }
-            return <span class={'badge text-light ' + bgClass}>{row.taskPercentage}%</span>
+            return <span class={'badge text-light ' + bgClass}>{taskPercentage}%</span>
           },
           lastUpdated: function (h, row, index) {
-            return this.$moment(row.lastUpdated).fromNow()
+            return this.$moment.unix(row.lastUpdatedAt).fromNow()
+          }
+        },
+        customSorting: {
+          pinned: function (ascending) {
+            return function (a, b) {
+              let lastA = a.pinned
+              let lastB = b.pinned
+
+              if (lastA === lastB) {
+                lastA = a.lastUpdatedAt
+                lastB = b.lastUpdatedAt
+              }
+              if (ascending) {
+                return lastA >= lastB ? 1 : -1
+              }
+              return lastA <= lastB ? 1 : -1
+            }
+          },
+          assignedTo: function (ascending) {
+            return function (a, b) {
+              let lastA = a.assignedTo.length
+              let lastB = b.assignedTo.length
+
+              if (lastA === lastB) {
+                lastA = a.lastUpdated
+                lastB = b.lastUpdated
+              }
+              if (ascending) {
+                return lastA >= lastB ? 1 : -1
+              }
+              return lastA <= lastB ? 1 : -1
+            }
+          },
+          taskPercentage: function (ascending) {
+            return function (a, b) {
+              let lastA = Math.round((a.tasks.filter(task => task.completed).length / a.tasks.length) * 100)
+              let lastB = Math.round((b.tasks.filter(task => task.completed).length / b.tasks.length) * 100)
+
+              lastA = isNaN(lastA) ? -1 : lastA
+              lastB = isNaN(lastB) ? -1 : lastB
+
+              if (lastA === lastB) {
+                lastA = a.lastUpdated
+                lastB = b.lastUpdated
+              }
+              if (ascending) {
+                return lastA >= lastB ? 1 : -1
+              }
+              return lastA <= lastB ? 1 : -1
+            }
           }
         },
         orderBy: {
@@ -166,16 +225,36 @@ export default {
     }
   },
   methods: {
+    ...mapActions('user', {
+      checkUserLoaded: 'checkLoaded'
+    }),
     ...mapActions('deployments', {
-      checkLoaded: 'checkLoaded'
+      checkDeploymentsLoaded: 'checkLoaded'
+    }),
+    ...mapActions('incidents', {
+      checkIncidentsLoaded: 'checkLoaded'
     })
   },
   computed: {
-    ...mapGetters('deployments', {
-      getDeployment: 'getDeployment'
-    }),
     deployment: function () {
       return this.getDeployment(this.deploymentId)
+    },
+    deploymentNameApi: function () {
+      if (this.deployment) {
+        return this.deployment.name
+      }
+      return this.deploymentName
+    },
+    incidents: function () {
+      if (this.showing === 'open') {
+        return this.getOpenIncidents
+      } else if (this.showing === 'assigned') {
+        return this.getAssignedIncidents
+      } else if (this.showing === 'closed') {
+        return this.getClosedIncidents
+      } else {
+        return this.getIncidents
+      }
     },
     incidentStatText: function () {
       return {
@@ -189,10 +268,33 @@ export default {
         'fa-plus': this.incidentStat.incidents < 0,
         'fa-down': this.incidentStat.incidents > 0
       }
+    },
+    ...mapGetters('deployments', {
+      getDeployment: 'getDeployment'
+    }),
+    ...mapGetters('incidents', {
+      getDeploymentId: 'getDeploymentId',
+      getIncidents: 'getIncidents',
+      getOpenIncidents: 'getOpenIncidents',
+      getAssignedIncidents: 'getAssignedIncidents',
+      getClosedIncidents: 'getClosedIncidents'
+    })
+  },
+  watch: {
+    deployment: {
+      deep: true,
+      handler () {
+        if (this.deployment && this.deploymentName !== this.deployment.name) {
+          this.deploymentName = this.deployment.name
+          history.pushState(null, '', `/deployments/${this.deployment.name.replace(' ', '-')}-${this.deploymentId}/incidents`)
+        }
+      }
     }
   },
   async created () {
-    this.checkLoaded()
+    this.checkUserLoaded()
+    this.checkDeploymentsLoaded()
+    this.checkIncidentsLoaded(this.deploymentId)
   },
   mounted () {
     let self = this

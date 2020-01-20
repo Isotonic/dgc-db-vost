@@ -11,7 +11,7 @@
         <div class="media-body">
           {{ action.occurredAt | moment("from", "now") }}
         </div>
-        <span class="card-text"><a href="#">{{ action.user.name }}</a> {{ action.text }}</span>
+        <span class="card-text"><a href="#">{{ action.user.firstname }} {{ action.user.surname }}</a> {{ action.text }}</span>
       </div>
     </div>
   </li>

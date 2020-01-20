@@ -1,18 +1,17 @@
-from app.api import api
+from ..api import api
 from sqlalchemy import func
-from app.models import User, Group
-from app.utils.create import create_group
-from app.api.utils.resource import Resource
-from app.api.utils.namespace import Namespace
+from ..models import User, Group
+from .utils.resource import Resource
+from .utils.namespace import Namespace
+from ..utils.create import create_group
+from .utils.models import new_group_model, group_model
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from app.api.utils.models import new_group_model, group_model
 
-ns_group = Namespace('Group', description='Used to carry out operations related to groups.', path='/groups')
+ns_group = Namespace('Group', description='Used to carry out operations related to groups.', path='/groups', decorators=[jwt_required])
 
 
 @ns_group.route('')
 class AllGroups(Resource):
-    @jwt_required
     @ns_group.doc(security='access_token')
     @ns_group.response(200, 'Success', [group_model])
     @ns_group.response(401, 'Incorrect credentials')
@@ -25,7 +24,6 @@ class AllGroups(Resource):
         return all_groups, 200
 
 
-    @jwt_required
     @ns_group.expect(new_group_model, validate=True)
     @ns_group.doc(security='access_token')
     @ns_group.response(200, 'Success', group_model)
@@ -53,9 +51,8 @@ class AllGroups(Resource):
 @ns_group.doc(params={'id': 'Group ID.'})
 @ns_group.resolve_object('group', lambda kwargs: Group.query.get_or_error(kwargs.pop('id')))
 class GetGroup(Resource):
-    @jwt_required
     @ns_group.doc(security='access_token')
-    @ns_group.response(200, 'Success', [group_model])
+    @ns_group.response(200, 'Success', group_model)
     @ns_group.response(401, 'Incorrect credentials')
     @ns_group.response(404, 'Group doesn\'t exist')
     @api.marshal_with(group_model)

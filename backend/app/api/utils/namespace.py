@@ -1,7 +1,7 @@
 # Credit to Vlad Frolov
 # https://github.com/frol/flask-restplus-server-example/blob/master/flask_restplus_patched/namespace.py
 from functools import wraps
-from flask_restx import Namespace as OriginalNamespace
+from flask_restplus import Namespace as OriginalNamespace
 
 class Namespace(OriginalNamespace):
 

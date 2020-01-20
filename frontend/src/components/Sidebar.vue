@@ -1,8 +1,8 @@
 <template>
   <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
-    <a class="sidebar-brand d-flex align-items-center justify-content-center" href="routerline">
+    <router-link :to="{ name: 'deployments' }" class="sidebar-brand d-flex align-items-center justify-content-center">
       <img class="mx-4" src="@/assets/img/Logos/White.png">
-    </a>
+    </router-link>
     <hr class="sidebar-divider my-0">
     <li class="nav-item">
       <router-link :to="{ name: 'deployments' }" class="nav-link">
@@ -12,24 +12,12 @@
     </li>
     <hr class="sidebar-divider">
     <div class="sidebar-heading">
-      {{ title }}
+      {{ deploymentName }}
     </div>
     <li class="nav-item">
       <router-link :to="{ name: 'incidents', params: {deploymentName: deploymentName.replace(' ', '-'), deploymentId: deploymentId} }" class="nav-link">
         <i class="fas fa-fw fa-clone"></i>
         <span>Incidents</span>
-      </router-link>
-    </li>
-    <li class="nav-item">
-      <router-link :to="{ name: 'assignedIncidents', params: {deploymentName: deploymentName.replace(' ', '-'), deploymentId: deploymentId} }" class="nav-link">
-        <i class="fas fa-fw fa-clone"></i>
-        <span>Assigned Incidents</span>
-      </router-link>
-    </li>
-    <li class="nav-item">
-      <router-link :to="{ name: 'closedIncidents', params: {deploymentName: deploymentName.replace(' ', '-'), deploymentId: deploymentId} }" class="nav-link">
-        <i class="fas fa-fw fa-clone"></i>
-        <span>Closed Incidents</span>
       </router-link>
     </li>
     <li class="nav-item">
@@ -56,16 +44,18 @@
         <span>Decision-Making Log</span>
       </router-link>
     </li>
-    <hr class="sidebar-divider">
-    <div class="sidebar-heading">
-      Supervisor
+    <div v-if="isSupervisor">
+      <hr class="sidebar-divider">
+      <div class="sidebar-heading">
+        Supervisor
+      </div>
+      <li class="nav-item">
+        <router-link :to="{ name: 'actionsRequired', params: {deploymentName: deploymentName.replace(' ', '-'), deploymentId: deploymentId} }" class="nav-link">
+          <i class="fas fa-fw fa-flag"></i>
+          <span>Actions Required </span>
+        </router-link>
+      </li>
     </div>
-    <li class="nav-item">
-      <router-link :to="{ name: 'actionsRequired', params: {deploymentName: deploymentName.replace(' ', '-'), deploymentId: deploymentId} }" class="nav-link">
-        <i class="fas fa-fw fa-flag"></i>
-        <span>Actions Required </span>
-      </router-link>
-    </li>
     <hr class="sidebar-divider d-none d-md-block">
     <div class="text-center d-none d-md-inline">
       <button class="rounded-circle border-0" id="sidebarToggle"></button>
@@ -77,9 +67,13 @@
 export default {
   name: 'Sidebar',
   props: {
-    title: String,
     deploymentId: Number,
     deploymentName: String
+  },
+  computed: {
+    isSupervisor: function () {
+      return this.$store.getters['user/hasPermission']('supervisor')
+    }
   }
 }
 </script>

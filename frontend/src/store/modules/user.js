@@ -1,8 +1,8 @@
 import Vue from 'vue'
 import router from '@/router'
-// import { cloneDeep } from 'lodash'
 
 const state = {
+  user: null,
   accessToken: localStorage.getItem('accessToken') || '',
   refreshToken: localStorage.getItem('refreshToken') || ''
 }
@@ -13,11 +13,45 @@ const getters = {
   },
   getAccessToken: (state) => {
     return state.accessToken
+  },
+  getUser: (state) => {
+    return state.user
+  },
+  getName: (state) => {
+    if (!state.user) {
+      return ''
+    }
+    return `${state.user.firstname} ${state.user.surname}`
+  },
+  getAvatarUrl: (state) => {
+    if (!state.user) {
+      return ''
+    }
+    return state.user.avatarUrl
+  },
+  hasPermission: (state) => (permission) => {
+    if (!state.user) {
+      return false
+    }
+    return state.user.group && (state.user.group.permissions.includes('supervisor') || state.user.group.permissions.includes(permission))
   }
 }
 
 const actions = {
-  login ({ commit }, [email, password]) {
+  checkLoaded ({ state, commit }) {
+    if (!state.user) {
+      Vue.prototype.$api
+        .get('users/me')
+        .then(r => r.data)
+        .then(user => {
+          commit('setUser', user)
+        })
+        .catch(response => {
+          console.log(response.data.errors)
+        })
+    }
+  },
+  login ({ commit, dispatch }, [email, password]) {
     return new Promise((resolve, reject) => {
       Vue.prototype.$http
         .post('auth/login', { email: email, password: password })
@@ -25,7 +59,8 @@ const actions = {
         .then(tokens => {
           commit('setAccessToken', tokens.access_token)
           commit('setRefreshToken', tokens.refresh_token)
-          resolve(tokens)
+          dispatch('checkLoaded')
+          resolve()
         })
         .catch(error => {
           console.log(error)
@@ -33,7 +68,7 @@ const actions = {
         })
     })
   },
-  authRefresh ({ state, commit }) {
+  authRefresh ({ state, commit, dispatch }) {
     return new Promise((resolve, reject) => {
       Vue.prototype.$http
         .get('auth/refresh-access', { headers: { 'Authorization': `Bearer ${state.refreshToken}` } })
@@ -42,7 +77,8 @@ const actions = {
           console.log(tokens)
           commit('setAccessToken', tokens.access_token)
           commit('setRefreshToken', tokens.refresh_token)
-          resolve(tokens)
+          dispatch('checkLoaded')
+          resolve()
         })
         .catch((error) => {
           console.log(error)
@@ -86,6 +122,9 @@ const mutations = {
   deleteRefreshToken (state) {
     localStorage.removeItem('refreshToken')
     state.refreshToken = ''
+  },
+  setUser (state, value) {
+    state.user = value
   }
 }
 

@@ -1,13 +1,13 @@
-from app.api import api
+from ..api import api
 from sqlalchemy import func
-from app.models import User, Group
-from app.utils.create import create_user
-from app.api.utils.resource import Resource
-from app.api.utils.namespace import Namespace
+from ..models import User, Group
+from .utils.resource import Resource
+from .utils.namespace import Namespace
+from ..utils.create import create_user
+from .utils.models import create_user_modal, user_model
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from app.api.utils.models import create_user_modal, user_model, incident_model
 
-ns_user = Namespace('User', description='Used to carry out operations related to users.', path='/users')
+ns_user = Namespace('User', description='Used to carry out operations related to users.', path='/users', decorators=[jwt_required])
 
 @ns_user.route('')
 class AllUsers(Resource):
@@ -22,7 +22,6 @@ class AllUsers(Resource):
         return User.query.all(), 200
 
 
-    @jwt_required
     @ns_user.expect(create_user_modal, validate=True)
     @ns_user.doc(security='access_token')
     @ns_user.response(200, 'Success', user_model)
@@ -53,7 +52,6 @@ class AllUsers(Resource):
 
 @ns_user.route('/me')
 class GetCurrentUser(Resource):
-    @jwt_required
     @ns_user.doc(security='access_token')
     @ns_user.response(200, 'Success', user_model)
     @api.marshal_with(user_model)
@@ -69,9 +67,8 @@ class GetCurrentUser(Resource):
 @ns_user.doc(params={'id': 'User ID.'})
 @ns_user.resolve_object('user', lambda kwargs: User.query.get_or_error(kwargs.pop('id')))
 class GetUser(Resource):
-    @jwt_required
     @ns_user.doc(security='access_token')
-    @ns_user.response(200, 'Success', [user_model])
+    @ns_user.response(200, 'Success', user_model)
     @ns_user.response(401, 'Incorrect credentials')
     @ns_user.response(404, 'User doesn\'t exist')
     @api.marshal_with(user_model)

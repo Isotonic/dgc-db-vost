@@ -6,11 +6,11 @@ const state = {
 }
 
 const getters = {
+  getDeployment: (state) => (id) => {
+    return state.deployments.find(deployment => deployment.id === id)
+  },
   getAll: (state) => {
     return state.deployments
-  },
-  getDeployment: (state) => (id) => {
-    return state.deployments.find(deployments => deployments.id === id)
   }
 }
 
@@ -22,12 +22,14 @@ const actions = {
     }
   },
   fetchAll ({ commit }) {
-    console.log(Vue.prototype.$api.defaults.headers.common['Authorization'])
     Vue.prototype.$api
-      .get('deployments/list')
+      .get('deployments')
       .then(r => r.data)
       .then(deployments => {
         commit('setDeployments', deployments)
+      })
+      .catch(error => {
+        console.log(error.response.data.message)
       })
   },
   destroy ({ commit }) {

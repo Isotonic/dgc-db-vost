@@ -37,7 +37,7 @@ const interceptor = (axiosInstance) => (error) => {
     isRefreshing = true
     return new Promise((resolve, reject) => {
       store.dispatch('user/authRefresh')
-        .then(tokens => {
+        .then(() => {
           const token = store.getters['user/getAccessToken']
           originalRequest.headers['Authorization'] = `Bearer ${token}`
           processQueue(null, token)

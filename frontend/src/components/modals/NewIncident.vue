@@ -114,6 +114,20 @@ export default {
     close () {
       this.$emit('close')
     }
+  },
+  watch: {
+    visible: function () {
+      if (this.visible) {
+        document.body.classList.add('modal-open')
+        return
+      }
+      document.body.classList.remove('modal-open')
+    }
+  },
+  created: function () {
+    if (this.visible) {
+      document.body.classList.add('modal-open')
+    }
   }
 }
 </script>

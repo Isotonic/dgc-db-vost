@@ -29,7 +29,7 @@
             </div>
           </div>
           <div class="row">
-            <deployment-card v-for="deployment in deployments" :key="deployment.id" :deployment="deployment" />
+            <deployment-card v-for="deployment in orderBy(deployments, 'createdAt', -1)" :key="deployment.id" :deployment="deployment" />
           </div>
         </div>
       </div>
@@ -38,13 +38,16 @@
 </template>
 
 <script>
+import Vue2Filters from 'vue2-filters'
 import { mapGetters, mapActions } from 'vuex'
+
 import Topbar from '@/components/Topbar.vue'
 import DeploymentCard from '@/components/DeploymentCard.vue'
 import NewDeploymentModal from '@/components/modals/NewDeployment.vue'
 
 export default {
   name: 'deployments',
+  mixins: [Vue2Filters.mixin],
   components: {
     Topbar,
     DeploymentCard,
@@ -62,8 +65,11 @@ export default {
     closeModal (modal) {
       modal = false
     },
+    ...mapActions('user', {
+      checkUserLoaded: 'checkLoaded'
+    }),
     ...mapActions('deployments', {
-      checkLoaded: 'checkLoaded'
+      checkDeploymentsLoaded: 'checkLoaded'
     })
   },
   computed: {
@@ -72,7 +78,8 @@ export default {
     })
   },
   async created () {
-    this.checkLoaded()
+    this.checkUserLoaded()
+    this.checkDeploymentsLoaded()
   }
 }
 </script>

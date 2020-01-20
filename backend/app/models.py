@@ -238,11 +238,11 @@ class Deployment(db.Model):
                 datetime.utcnow() - timedelta(hours=1))])
         one_hour = len([m for m in incidents if m.created_at >= (datetime.utcnow() - timedelta(hours=1))])
         if two_hours == one_hour:
-            return ["primary", None, 0]
+            return ['primary', None, 0]
         elif one_hour > two_hours:
-            return ["danger", "plus", one_hour - two_hours]
+            return ['danger', 'plus', one_hour - two_hours]
         else:
-            return ["success", "minus", two_hours - one_hour]
+            return ['success', 'minus', two_hours - one_hour]
 
     def __repr__(self):
         return f'{self.name}'
@@ -293,12 +293,12 @@ class Incident(db.Model):
     priority = db.Column(db.String(10))
     longitude = db.Column(db.Float())
     latitude = db.Column(db.Float())
-    assigned_to = db.relationship('User', secondary=incident_user_junction)
-    users_pinned = db.relationship('User', secondary=incident_pinned_junction)
-    tasks = db.relationship('IncidentTask', backref='incident')
-    comments = db.relationship('IncidentComment', backref='incident')
-    medias = db.relationship('IncidentMedia', backref='incident')
-    actions = db.relationship('IncidentLog', backref='incident')
+    assigned_to = db.relationship('User', secondary=incident_user_junction, lazy='selectin')
+    users_pinned = db.relationship('User', secondary=incident_pinned_junction, lazy='selectin')
+    tasks = db.relationship('IncidentTask', backref='incident', lazy='selectin')
+    comments = db.relationship('IncidentComment', backref='incident', lazy='selectin')
+    medias = db.relationship('IncidentMedia', backref='incident', lazy='selectin')
+    actions = db.relationship('IncidentLog', backref='incident', lazy='selectin')
 
     def name_check(self, deployment_name, incident_name):
         return self.deployment.name.lower() == deployment_name.lower() and self.name.lower() == incident_name.lower()
@@ -317,7 +317,7 @@ class Incident(db.Model):
         return 'exclamation'
 
     def get_coordinates(self):
-        return [self.longitude, self.latitude]
+        return [self.latitude, self.longitude]
 
     def generate_geojson(self):
         if not self.longitude or not self.latitude:
@@ -355,7 +355,7 @@ class IncidentTask(db.Model):
     completed = db.Column(db.Boolean(), default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     completed_at = db.Column(db.DateTime)
-    assigned_to = db.relationship('User', secondary=incidenttask_user_junction)
+    assigned_to = db.relationship('User', secondary=incidenttask_user_junction, lazy='selectin')
 
     def get_assigned(self):
         return list_of_names(self.assigned_to)
@@ -385,12 +385,12 @@ class IncidentTask(db.Model):
 class IncidentSubTask(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     task_id = db.Column(db.Integer, db.ForeignKey('incident_task.id'))
-    task = db.relationship('IncidentTask', backref="subtasks", lazy=True)
+    task = db.relationship('IncidentTask', backref='subtasks', lazy='selectin')
     name = db.Column(db.String(64))
     completed = db.Column(db.Boolean(), default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     completed_at = db.Column(db.DateTime)
-    assigned_to = db.relationship('User', secondary=incidentsubtask_user_junction)
+    assigned_to = db.relationship('User', secondary=incidentsubtask_user_junction, lazy='selectin')
 
     def get_assigned(self):
         return list_of_names(self.assigned_to)
@@ -402,9 +402,9 @@ class IncidentSubTask(db.Model):
 class TaskComment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     task_id = db.Column(db.Integer, db.ForeignKey('incident_task.id'))
-    task = db.relationship('IncidentTask', backref="comments", lazy=True)
+    task = db.relationship('IncidentTask', backref='comments', lazy='selectin')
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    user = db.relationship('User', backref="task_comments", lazy=True)
+    user = db.relationship('User', backref='task_comments', lazy='selectin')
     text = db.Column(db.String(1024))
     sent_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -420,7 +420,7 @@ class IncidentComment(db.Model):
     sent_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __repr__(self):
-        return f'{self.test}'
+        return f'{self.text}'
 
 
 class IncidentMedia(db.Model):
@@ -488,10 +488,10 @@ class IncidentLog(db.Model):
     user = db.relationship('User', backref='incident_actions')
     incident_id = db.Column(db.Integer, db.ForeignKey('incident.id'))
     task_id = db.Column(db.Integer, db.ForeignKey('incident_task.id'))
-    task = db.relationship('IncidentTask', backref="logs", lazy=True)
+    task = db.relationship('IncidentTask', backref='logs', lazy='selectin') ##TODO Change to actions
     subtask_id = db.Column(db.Integer, db.ForeignKey('incident_sub_task.id'))
-    subtask = db.relationship('IncidentSubTask', backref="logs", lazy=True)
-    target_users = db.relationship('User', secondary=incidentlog_target_users_junction)
+    subtask = db.relationship('IncidentSubTask', backref='logs', lazy='selectin') ##TODO Change to actions
+    target_users = db.relationship('User', secondary=incidentlog_target_users_junction, lazy='selectin')
     action_type = db.Column(db.Integer())
     reason = db.Column(db.String(256))
     extra = db.Column(db.String(64))
@@ -521,9 +521,9 @@ class TaskLog(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     user = db.relationship('User', backref='task_actions')
     task_id = db.Column(db.Integer, db.ForeignKey('incident_task.id'))
-    task = db.relationship('IncidentTask', backref="task_logs", lazy=True)
+    task = db.relationship('IncidentTask', backref='task_logs', lazy='selectin')
     subtask_id = db.Column(db.Integer, db.ForeignKey('incident_sub_task.id'))
-    subtask = db.relationship('IncidentSubTask', backref="task_logs", lazy=True)
+    subtask = db.relationship('IncidentSubTask', backref='task_logs', lazy='selectin')
     target_users = db.relationship('User', secondary=tasklog_target_users_junction)
     action_type = db.Column(db.Integer())
     reason = db.Column(db.String(256))
