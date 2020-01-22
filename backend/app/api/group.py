@@ -7,11 +7,11 @@ from ..utils.create import create_group
 from .utils.models import new_group_model, group_model
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
-ns_group = Namespace('Group', description='Used to carry out operations related to groups.', path='/groups', decorators=[jwt_required])
+ns_group = Namespace('Group', description='Used to carry out actions related to groups.', path='/groups', decorators=[jwt_required])
 
 
 @ns_group.route('')
-class AllGroups(Resource):
+class GroupsEndpoint(Resource):
     @ns_group.doc(security='access_token')
     @ns_group.response(200, 'Success', [group_model])
     @ns_group.response(401, 'Incorrect credentials')
@@ -50,7 +50,7 @@ class AllGroups(Resource):
 @ns_group.route('/<int:id>')
 @ns_group.doc(params={'id': 'Group ID.'})
 @ns_group.resolve_object('group', lambda kwargs: Group.query.get_or_error(kwargs.pop('id')))
-class GetGroup(Resource):
+class GroupEndpoint(Resource):
     @ns_group.doc(security='access_token')
     @ns_group.response(200, 'Success', group_model)
     @ns_group.response(401, 'Incorrect credentials')

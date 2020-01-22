@@ -5,13 +5,13 @@
       <topbar />
       <div class="container-fluid">
         <div class="d-sm-flex align-items-center justify-content-between mb-4">
-          <h1 class="h3 mb-0">{{ deployment.name }}</h1>
+          <h1 class="h3 mb-0">{{ deploymentNameApi }}</h1>
           <div class="d-flex mb-1 mt-2">
-            <button :class="['btn', 'btn-icon-split', 'mr-2', incident.open ? 'btn-success' : 'btn-info']" @click="markAsComplete">
+            <button v-if="incident" :class="['btn', 'btn-icon-split', 'mr-2', incident.open ? 'btn-success' : 'btn-info']" @click="markAsComplete">
                 <span class="btn-icon">
                     <i class="fas fa-check"></i>
                 </span>
-                <span class="text">{{ incident.open ? 'Mark As Complete' : 'Mark As Incomplete' }}</span>
+                <span v-if="incident" class="text">{{ incident.open ? 'Mark As Complete' : 'Mark As Incomplete' }}</span>
             </button>
             <b-dropdown id="FlagDropdown" toggle-class="btn-icon-split btn-warning dropdown-toggle text-white">
               <template slot="button-content">
@@ -23,16 +23,30 @@
               <b-dropdown-item>User</b-dropdown-item>
               <b-dropdown-item @click="isFlagToSupervisorModalVisible = true">Supervisor</b-dropdown-item>
             </b-dropdown>
-            <FlagToSupervisorModal v-show="isFlagToSupervisorModalVisible" :visible="isFlagToSupervisorModalVisible" @close="isFlagToSupervisorModalVisible = false" />
+            <flag-to-supervisor-modal v-show="isFlagToSupervisorModalVisible" :visible="isFlagToSupervisorModalVisible" @close="isFlagToSupervisorModalVisible = false" />
           </div>
         </div>
         <div class="row">
           <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-primary shadow h-100 py-2">
-              <a v-if="hasPermission('change_allocation')" class="incident-cog" href="#" role="button" @click="isChangeAllocationModalVisible = true">
-                <i class="fas fa-cog float-right" v-tooltip="'Change Allocation'"></i>
-              </a>
-              <ChangeAllocationModal v-show="isChangeAllocationModalVisible" :visible="isChangeAllocationModalVisible" @close="isChangeAllocationModalVisible = false" />
+            <div v-if="!incident" class="card border-left-primary shadow h-100 py-2">
+              <vcl-list />
+            </div>
+            <div v-else class="card border-left-primary shadow h-100 py-2">
+              <b-dropdown id="ChangeAllocationDropdown" v-if="hasPermission('change_allocation')" size="xs" right menu-class="mt-3 width-110" variant="link" toggle-tag="a" @show="openedAllocationDropdown" @hide="closedAllocationDropdown">
+                <template slot="button-content">
+                  <a class="fas fa-cog incident-cog float-right" aria-haspopup="true" v-tooltip="'Change Priority'"></a>
+                </template>
+                <h6 class="text-primary text-center font-weight-bold">Change Allocation</h6>
+                <b-dropdown-divider />
+                <div class="pl-1 pr-1">
+                  <multiselect v-model="allocatedSelected" :options="selectOptions" :multiple="true" group-values="users" group-label="name" :group-select="true" placeholder="Type to search" track-by="id" :custom-label="formatSelect" :closeOnSelect="false" openDirection="bottom" :limit="0" :limitText="count => `${count} users assigned.`" :blockKeys="['Delete']" selectedLabel="Assigned" :loading="isSelectLoading">
+                    <template v-if="allocatedSelected.length" slot="clear" slot-scope="props">
+                      <div class="multiselect__clear" @mousedown.prevent.stop="clearAllAllocated(props.search)"></div>
+                    </template>
+                    <span slot="noResult">Oops! No user found.</span>
+                  </multiselect>
+                </div>
+              </b-dropdown>
               <div class="card-body">
                 <div class="row no-gutters align-items-center">
                   <div class="col mr-2">
@@ -54,7 +68,10 @@
             </div>
           </div>
           <div class="col-xl-3 col-md-6 mb-4">
-            <div :class="['card', 'shadow', 'h-100', 'py-2', 'border-left-' + incident.priority]">
+            <div v-if="!incident" class="card border-left-primary shadow h-100 py-2">
+              <vcl-list />
+            </div>
+            <div v-else :class="['card', 'shadow', 'h-100', 'py-2', 'border-left-' + incident.priority]">
               <b-dropdown id="ChangePriorityDropdown" v-if="hasPermission('change_priority')" size="xs" right menu-class="mt-3" variant="link" toggle-tag="a">
                 <template slot="button-content">
                   <a :class="['fas', 'fa-cog', 'incident-cog', 'float-right', 'text-' + incident.priority]" aria-haspopup="true" v-tooltip="'Change Priority'"></a>
@@ -78,7 +95,7 @@
               </div>
             </div>
           </div>
-          <div v-if="incident.tasks.length" class="col-xl-3 col-md-6 mb-4">
+          <div v-if="incident && incident.tasks.length" class="col-xl-3 col-md-6 mb-4">
             <div class="card border-left-success shadow h-100 py-2">
               <div class="card-body">
                 <div class="row no-gutters align-items-center">
@@ -105,16 +122,19 @@
             </div>
           </div>
           <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-success shadow h-100 py-2">
+            <div v-if="!incident" class="card border-left-primary shadow h-100 py-2">
+              <vcl-list />
+            </div>
+            <div v-else class="card border-left-info shadow h-100 py-2">
               <div class="card-body">
                 <div class="row no-gutters align-items-center">
                   <div class="col mr-2">
-                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Last Updated</div>
+                    <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Last Updated</div>
                     <div class="h5 mb-0 font-weight-bold text-gray-800">{{ incident.lastUpdatedAt | moment("from", "now") }}
                     </div>
                   </div>
                   <div class="col-auto">
-                    <div class="icon icon-shape bg-success text-white rounded-circle shadow">
+                    <div class="icon icon-shape bg-info text-white rounded-circle shadow">
                       <i class="far fa-clock fa-1fourx"></i>
                     </div>
                   </div>
@@ -132,7 +152,10 @@
                   <i class="fas fa-cog" v-tooltip="'Edit Incident Overview'"></i>
                 </a>
               </div>
-              <div class="card-body">
+              <div v-if="!incident" class="card-body">
+                <vcl-facebook />
+              </div>
+              <div v-else class="card-body">
                 <h3 class="font-weight-bold">{{ incident.name }}</h3>
                 <p class="card-text"><b>Created:</b> {{ incident.createdAt | moment("Do MMMM YYYY, h:mma") }}</p>
                 <p class="card-text"><b>Location:</b> {{ incident.location.properties.address }}</p>
@@ -149,11 +172,14 @@
                   <i class="fas fa-plus" v-tooltip="'Add Task'"></i>
                 </a>
               </div>
-              <ul class="list-group">
+              <div v-if="!incident" class="card-body">
+                <vcl-bullet-list :rows="3" />
+              </div>
+              <ul v-else class="list-group">
                 <task v-for="task in orderBy(incident.tasks, 'createdAt')" :key="task.id" :task="task" v-on:openModal="openTaskModal(task)" v-on:toggle="taskToggle"></task>
               </ul>
-              <TaskModal v-if="task" v-show="isTaskModalVisible" :visible="isTaskModalVisible" @close="isTaskModalVisible = false" :task="task" />
-              <div v-if="!incident.tasks.length" class="card-body">
+              <task-modal v-if="task" v-show="isTaskModalVisible" :visible="isTaskModalVisible" @close="isTaskModalVisible = false" :task="task" />
+              <div v-if="incident && !incident.tasks.length" class="card-body">
                 <p class="card-text text-center">No tasks currently.</p>
               </div>
             </div>
@@ -162,13 +188,16 @@
             <div class="card shadow mb-4">
               <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 font-weight-bold text-primary">Map</h6>
-                <div v-if="hasPermission('mark_as_public')" class="custom-switch" data-toggle="tooltip" title="Toggle public visibility">
+                <div v-if="incident && hasPermission('mark_as_public')" class="custom-switch" data-toggle="tooltip" title="Toggle public visibility">
                   <input type="checkbox" class="custom-control-input" id="PublicToggle" autocomplete="off" :checked="incident.public" @click="togglePublic">
                   <label class="custom-control-label" for="PublicToggle"></label>
                 </div>
               </div>
               <div class="card-body">
-                <l-map :zoom="mapSettings.zoom" :center="incident.location.geometry.coordinates" class="map-container-incident">
+                <div v-if="!incident">
+                  <vcl-facebook />
+                </div>
+                <l-map v-else :zoom="mapSettings.zoom" :center="incident.location.geometry.coordinates" class="map-container-incident">
                   <l-tile-layer :url="mapSettings.url" :attribution="mapSettings.attribution"></l-tile-layer>
                   <l-marker :lat-lng="incident.location.geometry.coordinates"></l-marker>
                 </l-map>
@@ -180,13 +209,14 @@
                 <button class="btn btn-xs text-success" @click="isNewCommentModalVisible = true">
                   <i class="fas fa-plus" v-tooltip="'Add Comment'"></i>
                 </button>
-                <NewCommentModal v-show="isNewCommentModalVisible" :visible="isNewCommentModalVisible" @close="isNewCommentModalVisible = false" />
+                <new-comment-modal v-show="isNewCommentModalVisible" :visible="isNewCommentModalVisible" @close="isNewCommentModalVisible = false" />
               </div>
               <div class="card-body bg-light">
-                <ul class="list-unstyled">
+                <vcl-bullet-list v-if="!incident" :rows="3" />
+                <ul v-else class="list-unstyled">
                   <comment v-for="comment in orderBy(incident.comments, 'sentAt')" :key="comment.id" :comment="comment"></comment>
                 </ul>
-                <div v-if="!incident.comments.length">
+                <div v-if="incident && !incident.comments.length">
                   <p class="card-text text-center">No updates currently.</p>
                 </div>
               </div>
@@ -196,7 +226,8 @@
                 <h6 class="m-0 font-weight-bold text-primary">Recent Activity</h6>
               </div>
               <div class="card-body bg-light">
-                <ul class="activity">
+                <vcl-bullet-list v-if="!incident" :rows="3" />
+                <ul v-else class="activity">
                   <activity v-for="action in orderBy(incident.activity, 'occurredAt', -1)" :key="action.id" :action="action"></activity>
                 </ul>
               </div>
@@ -212,9 +243,11 @@
 import Vue from 'vue'
 import L from 'leaflet'
 import Vue2Filters from 'vue2-filters'
+import Multiselect from 'vue-multiselect'
 import { mapGetters, mapActions } from 'vuex'
 import { DropdownPlugin } from 'bootstrap-vue'
 import { LMap, LTileLayer, LMarker } from 'vue2-leaflet'
+import { VclList, VclFacebook, VclBulletList } from 'vue-content-loading'
 
 import Topbar from '@/components/Topbar.vue'
 import Sidebar from '@/components/Sidebar.vue'
@@ -222,7 +255,6 @@ import Task from '@/components/Task.vue'
 import Comment from '@/components/Comment.vue'
 import Activity from '@/components/Activity.vue'
 import FlagToSupervisorModal from '@/components/modals/FlagToSupervisor.vue'
-import ChangeAllocationModal from '@/components/modals/ChangeAllocation.vue'
 import NewCommentModal from '@/components/modals/NewComment.vue'
 import TaskModal from '@/components/modals/Task.vue'
 
@@ -248,8 +280,11 @@ export default {
     LMap,
     LTileLayer,
     LMarker,
+    VclList,
+    VclFacebook,
+    VclBulletList,
+    Multiselect,
     FlagToSupervisorModal,
-    ChangeAllocationModal,
     NewCommentModal,
     TaskModal
   },
@@ -261,30 +296,15 @@ export default {
   },
   data () {
     return {
-      /* incident: {
-        'id': 1,
-        'pinned': true,
-        'name': 'Hmm',
-        'description': 'sadasda',
-        'reportedVia': '999',
-        'location': 'Test',
-        'coordinates': [55.872326, -4.288094],
-        'createdByUser': 'Test User',
-        'priority': 'Prompt',
-        'assignedTo': [{ 'name': 'Test User', 'avatarUrl': 'http://c5-dissertation.herokuapp.com/static/img/avatars/24_Jaffer_Naheem.png' }],
-        'created_at': '2019-10-12 10:08:08.033814',
-        'lastUpdated': '2019-12-12 10:08:08.033814',
-        'openStatus': true,
-        'icon': 'exclamation',
-        'tasks': [{ 'id': 1, 'name': 'Test', 'createdAt': '2019-10-12 11:08:08.033814', 'completed': true, 'assignedTo': ['Test User', 'Hmm'], 'subtasks': [{ 'completedAt': false }], 'comments': [{ 'name': 'Test User', 'text': 'dasdas' }] }],
-        'comments': [{ 'id': 1, 'sentAt': '2019-12-08 11:08:08.033814', 'text': 'dsada', 'user': { 'name': 'Test User', 'avatarUrl': '#' } }],
-        'activity': [{ 'user': { 'name': 'Test User', 'avatarUrl': 'http://c5-dissertation.herokuapp.com/static/img/avatars/24_Jaffer_Naheem.png' }, 'occurredAt': '2019-12-03 11:08:08.033814', 'text': 'dsadasd' }] }, */
+      allocatedSelected: [],
       mapSettings: {
         zoom: 15,
         url: 'https://maps.wikimedia.org/osm-intl/{z}/{x}/{y}.png',
         attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors | <a href="https://foundation.wikimedia.org/wiki/Maps_Terms_of_Use">Wikimedia Maps</a>'
       },
       task: null,
+      selectOptions: [],
+      isSelectLoading: false,
       showFlagDropdown: false,
       showPriorityDropdown: false,
       isFlagToSupervisorModalVisible: false,
@@ -317,7 +337,7 @@ export default {
         .put(url, data)
         .then(r => r.data)
         .then(data => {
-          Vue.noty.error(data)
+          Vue.noty.success(data)
         })
         .catch(error => {
           console.log(error.response.data.message)
@@ -327,6 +347,43 @@ export default {
     openTaskModal: function (task) {
       this.task = task
       this.isTaskModalVisible = true
+    },
+    openedAllocationDropdown () {
+      this.setAllocatedSelecter()
+      if (this.selectOptions.length) {
+        return
+      }
+      this.isSelectLoading = true
+      Vue.prototype.$api
+        .get('groups')
+        .then(r => r.data)
+        .then(data => {
+          this.selectOptions = data
+          const noGroupUsers = this.getDeploymentUsers.filter(user => !user.group)
+          if (noGroupUsers) { // TODO Test
+            this.selectOptions.push({ name: 'No Group', users: [noGroupUsers] })
+          }
+        })
+        .catch(error => {
+          console.log(error.response.data.message)
+          Vue.noty.error(error.response.data.message)
+        })
+      this.isSelectLoading = false
+    },
+    closedAllocationDropdown () {
+      if (this.allocatedSelected.length !== this.incident.assignedTo.length ||
+      !this.allocatedSelected.every(e => this.incident.assignedTo.includes(e))) {
+        this.ApiUpdate(`incidents/${this.incidentId}/allocation`, { users: this.allocatedSelected.map(user => user.id) })
+      }
+    },
+    formatSelect: function ({ firstname, surname }) {
+      return `${firstname} ${surname}`
+    },
+    setAllocatedSelecter: function () {
+      this.allocatedSelected = this.incident.assignedTo
+    },
+    clearAllAllocated () {
+      this.allocatedSelected = []
     },
     ...mapActions('user', {
       checkUserLoaded: 'checkLoaded'
@@ -352,6 +409,9 @@ export default {
       return this.getIncident(this.incidentId)
     },
     calculateProgressPercentage: function () {
+      if (!this.incident) {
+        return 0
+      }
       let completedCounter = 0
       for (let value of this.incident.tasks) {
         if (value.completed) {
@@ -373,7 +433,8 @@ export default {
       hasPermission: 'hasPermission'
     }),
     ...mapGetters('deployments', {
-      getDeployment: 'getDeployment'
+      getDeployment: 'getDeployment',
+      getDeploymentUsers: 'getUsers'
     }),
     ...mapGetters('incidents', {
       getIncident: 'getIncident'
@@ -404,3 +465,5 @@ export default {
   }
 }
 </script>
+
+<style src="vue-multiselect/dist/vue-multiselect.min.css"></style>

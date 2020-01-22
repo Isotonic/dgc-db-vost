@@ -1,6 +1,6 @@
 # Credit to Vlad Frolov
 # https://github.com/frol/flask-restplus-server-example/blob/master/flask_restplus_patched/resource.py
-from flask_restplus import Resource as OriginalResource
+from flask_restx import Resource as OriginalResource
 
 class Resource(OriginalResource):
     """

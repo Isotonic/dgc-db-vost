@@ -1,6 +1,6 @@
 from app import jwt, db
 from jwt import exceptions
-from flask_restplus import Api
+from flask_restx import Api
 from flask import Blueprint, url_for
 from ..models import User, RevokedToken
 
@@ -40,7 +40,7 @@ Api.specs_url = specs_url
 api = Api(api_blueprint,
                  title='DGVOST API',
                  version='1.0',
-                 description='An API allowing you to carry out actions on behalf of a user.',
+                 description='An API allowing you to interact with the DGVOST backend.',
                  authorizations=authorizations)
 
 jwt._set_error_handler_callbacks(api)  # Fix for Flask-RestPlus error handler not working.
@@ -56,6 +56,7 @@ from .deployment import ns_deployment
 from .incident import ns_incident
 from .task import ns_task
 from .subtask import ns_subtask
+from .public import ns_public
 
 api.add_namespace(ns_auth)
 api.add_namespace(ns_user)
@@ -64,3 +65,4 @@ api.add_namespace(ns_deployment)
 api.add_namespace(ns_incident)
 api.add_namespace(ns_task)
 api.add_namespace(ns_subtask)
+api.add_namespace(ns_public)

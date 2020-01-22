@@ -7,10 +7,10 @@ from ..utils.create import create_user
 from .utils.models import create_user_modal, user_model
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
-ns_user = Namespace('User', description='Used to carry out operations related to users.', path='/users', decorators=[jwt_required])
+ns_user = Namespace('User', description='Used to carry out actions related to users.', path='/users', decorators=[jwt_required])
 
 @ns_user.route('')
-class AllUsers(Resource):
+class UsersEndpoint(Resource):
     @ns_user.doc(security='access_token')
     @ns_user.response(200, 'Success', [user_model])
     @ns_user.response(401, 'Incorrect credentials')
@@ -51,7 +51,7 @@ class AllUsers(Resource):
 
 
 @ns_user.route('/me')
-class GetCurrentUser(Resource):
+class CurrentUserEndpoint(Resource):
     @ns_user.doc(security='access_token')
     @ns_user.response(200, 'Success', user_model)
     @api.marshal_with(user_model)
@@ -66,7 +66,7 @@ class GetCurrentUser(Resource):
 @ns_user.route('/<int:id>')
 @ns_user.doc(params={'id': 'User ID.'})
 @ns_user.resolve_object('user', lambda kwargs: User.query.get_or_error(kwargs.pop('id')))
-class GetUser(Resource):
+class UserEndpoint(Resource):
     @ns_user.doc(security='access_token')
     @ns_user.response(200, 'Success', user_model)
     @ns_user.response(401, 'Incorrect credentials')

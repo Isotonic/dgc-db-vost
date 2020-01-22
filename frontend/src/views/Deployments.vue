@@ -13,7 +13,7 @@
               <span class="text">New Deployment</span>
             </button>
           </div>
-          <NewDeploymentModal v-show="isNewDeploymentModalVisible" :visible="isNewDeploymentModalVisible" @close="isNewDeploymentModalVisible = false" />
+          <new-deployment-modal v-show="isNewDeploymentModalVisible" :visible="isNewDeploymentModalVisible" @close="isNewDeploymentModalVisible = false" />
           <div class="row">
             <div class="col-xl-12 col-lg-10">
               <div class="card shadow mb-4">

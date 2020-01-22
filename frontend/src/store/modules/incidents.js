@@ -12,7 +12,6 @@ const getters = {
     return state.deploymentId
   },
   getIncident: (state) => (id) => {
-    console.log(state.incidents.find(incident => incident.id === id))
     return state.incidents.find(incident => incident.id === id)
   },
   getIncidents: (state) => {

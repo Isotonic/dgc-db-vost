@@ -13,7 +13,7 @@
               </span>
               <span class="text">New Incident</span>
             </button>
-            <NewIncidentModal v-show="isNewIncidentModalVisible" :visible="isNewIncidentModalVisible" @close="isNewIncidentModalVisible = false" />
+            <new-incident-modal v-show="isNewIncidentModalVisible" :visible="isNewIncidentModalVisible" @close="isNewIncidentModalVisible = false" />
           </div>
           <div class="row">
             <div class="col-xl-3 col-md-6 mb-4">

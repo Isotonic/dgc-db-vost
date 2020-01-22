@@ -1,7 +1,7 @@
 from ..api import api
 from sqlalchemy import func
 from ..models import User, RevokedToken
-from flask_restplus import Resource, Namespace
+from flask_restx import Resource, Namespace
 from .utils.models import login_model, tokens_model
 from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, jwt_refresh_token_required, get_jwt_identity, get_raw_jwt
 
@@ -9,7 +9,7 @@ ns_auth = Namespace('Authentication', description='Used to authenticate the user
 
 
 @ns_auth.route('/login')
-class Login(Resource):
+class LoginEndpoint(Resource):
     @ns_auth.expect(login_model, validate=True)
     @ns_auth.response(200, 'Success', tokens_model)
     @ns_auth.response(401, 'Incorrect credentials')
@@ -33,7 +33,7 @@ class Login(Resource):
 
 
 @ns_auth.route('/refresh-access')
-class RefreshToken(Resource):
+class RefreshTokenEndpoint(Resource):
     @jwt_refresh_token_required
     @ns_auth.doc(security='access_token')
     @ns_auth.response(200, 'Success')
@@ -41,7 +41,7 @@ class RefreshToken(Resource):
     @ns_auth.param(name='Authorization', description='Requires your refresh_token.', _in='header')
     def get(self):
         """
-                Returns a new access_token.
+                Returns a new access token.
         """
         current_user = User.query.filter_by(id=get_jwt_identity()).first()
         access_token = create_access_token(identity=current_user.id)
@@ -53,7 +53,7 @@ class RefreshToken(Resource):
 
 
 @ns_auth.route('/revoke-access')
-class UserLogoutAccess(Resource):
+class RevokeAccessEndpoint(Resource):
     @jwt_required
     @ns_auth.doc(security='access_token')
     @ns_auth.response(200, 'Success')
@@ -61,7 +61,7 @@ class UserLogoutAccess(Resource):
     @ns_auth.param(name='Authorization', description='Requires your access_token.', _in='header')
     def delete(self):
         """
-                Revokes access to an access_token
+                Revokes access to an access token.
         """
         jti = get_raw_jwt()['jti']
         try:
@@ -73,7 +73,7 @@ class UserLogoutAccess(Resource):
 
 
 @ns_auth.route('/revoke-refresh')
-class UserLogoutRefresh(Resource):
+class RevokeRefreshEndpoint(Resource):
     @jwt_refresh_token_required
     @ns_auth.doc(security='refresh_token')
     @ns_auth.response(200, 'Success')
@@ -81,7 +81,7 @@ class UserLogoutRefresh(Resource):
     @ns_auth.param(name='Authorization', description='Requires your refresh_token.', _in="header")
     def delete(self):
         """
-                Revokes access to a refresh_token
+                Revokes access to a refresh token.
         """
         jti = get_raw_jwt()['jti']
         try:

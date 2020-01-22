@@ -1,5 +1,5 @@
 from app.api import api
-from flask_restplus import fields
+from flask_restx import fields
 
 id_model = api.model('ID', {'id': fields.Integer()})
 
@@ -50,9 +50,16 @@ point_feature_model = api.model('Point Feature', {
     'properties': fields.Nested(point_properties_model, attribute=lambda x: x)
 })
 
+user_model_without_group = api.model('User Without Group',
+                        {'id': fields.Integer(description='ID of the user.'),
+                        'firstname': fields.String(description='Firstname of the user.'),
+                        'surname': fields.String(description='Surname of the user.'),
+                        'avatarUrl': fields.String(attribute=lambda x: x.get_avatar(), description='URL for the user\'s avatar.')})
+
 group_model = api.model('Group',
                         {'id': fields.Integer(description='ID of the group.'),
-                        'name': fields.String(description='Name of the group'),
+                        'name': fields.String(description='Name of the group.'),
+                        'users': fields.Nested(user_model_without_group, description='Users in the group.'),
                         'permissions': fields.List(fields.String, attribute=lambda x: x.get_permissions() if x else None, description='Group\'s permissions.')})
 
 user_model = api.model('User',

@@ -1,16 +1,16 @@
 from ..api import api
 from .utils.resource import Resource
-from ..models import User, Deployment
 from .utils.namespace import Namespace
+from ..models import User, Group, Deployment
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from ..utils.create import create_deployment, create_incident
-from .utils.models import new_deployment_model, deployment_model, new_incident_model, incident_model
+from .utils.models import new_deployment_model, deployment_model, new_incident_model, incident_model, group_model
 
-ns_deployment = Namespace('Deployment', description='Used to carry out operations related to deployments.', path='/deployments', decorators=[jwt_required])
+ns_deployment = Namespace('Deployment', description='Used to carry out actions related to deployments.', path='/deployments', decorators=[jwt_required])
 
 
 @ns_deployment.route('')
-class AllDeployments(Resource):
+class DeploymentsEndpoint(Resource):
     @ns_deployment.doc(security='access_token')
     @ns_deployment.response(200, 'Success', [deployment_model])
     @ns_deployment.response(401, 'Incorrect credentials')
@@ -44,7 +44,7 @@ class AllDeployments(Resource):
 @ns_deployment.route('/<int:id>')
 @ns_deployment.doc(params={'id': 'Deployment ID.'})
 @ns_deployment.resolve_object('deployment', lambda kwargs: Deployment.query.get_or_error(kwargs.pop('id')))
-class GetDeployment(Resource):
+class DeploymentEndpoint(Resource):
     @ns_deployment.doc(security='access_token')
     @ns_deployment.response(200, 'Success', [deployment_model])
     @ns_deployment.response(401, 'Incorrect credentials')
@@ -81,7 +81,7 @@ class GetDeployment(Resource):
 @ns_deployment.route('/<int:id>/incidents')
 @ns_deployment.doc(params={'id': 'Deployment ID.'})
 @ns_deployment.resolve_object('deployment', lambda kwargs: Deployment.query.get_or_error(kwargs.pop('id')))
-class GetAllIncidents(Resource):
+class IncidentsEndpoint(Resource):
     @ns_deployment.doc(security='access_token')
     @ns_deployment.response(200, 'Success', [incident_model])
     @ns_deployment.response(401, 'Incorrect credentials')
@@ -101,7 +101,7 @@ class GetAllIncidents(Resource):
 @ns_deployment.route('/incidents/<int:id>/open')
 @ns_deployment.doc(params={'id': 'Deployment ID.'})
 @ns_deployment.resolve_object('deployment', lambda kwargs: Deployment.query.get_or_error(kwargs.pop('id')))
-class GetAllOpenIncidents(Resource):
+class OpenIncidentsEndpoint(Resource):
     @ns_deployment.doc(security='access_token')
     @ns_deployment.response(200, 'Success', [incident_model])
     @ns_deployment.response(401, 'Incorrect credentials')
@@ -121,7 +121,7 @@ class GetAllOpenIncidents(Resource):
 @ns_deployment.route('/incidents/<int:id>/assigned')
 @ns_deployment.doc(params={'id': 'Deployment ID.'})
 @ns_deployment.resolve_object('deployment', lambda kwargs: Deployment.query.get_or_error(kwargs.pop('id')))
-class GetAllAssignedIncidents(Resource):
+class AssignedIncidentsEndpoint(Resource):
     @ns_deployment.doc(security='access_token')
     @ns_deployment.response(200, 'Success', [incident_model])
     @ns_deployment.response(401, 'Incorrect credentials')
@@ -141,7 +141,7 @@ class GetAllAssignedIncidents(Resource):
 @ns_deployment.route('/incidents/<int:id>/closed')
 @ns_deployment.doc(params={'id': 'Deployment ID.'})
 @ns_deployment.resolve_object('deployment', lambda kwargs: Deployment.query.get_or_error(kwargs.pop('id')))
-class GetAllClosedIncidents(Resource):
+class ClosedIncidentsEndpoint(Resource):
     @ns_deployment.doc(security='access_token')
     @ns_deployment.response(200, 'Success', [incident_model])
     @ns_deployment.response(401, 'Incorrect credentials')
@@ -156,3 +156,25 @@ class GetAllClosedIncidents(Resource):
         ns_deployment.has_deployment_access(current_user, deployment)
         all_incidents = current_user.get_incidents(deployment.id, closed_only=False)
         return all_incidents, 200
+
+
+@ns_deployment.route('/incidents/<int:id>/groups')
+@ns_deployment.doc(params={'id': 'Deployment ID.'})
+@ns_deployment.resolve_object('deployment', lambda kwargs: Deployment.query.get_or_error(kwargs.pop('id')))
+class DeploymentGroupsEndpoint(Resource):
+    @ns_deployment.doc(security='access_token')
+    @ns_deployment.response(200, 'Success', [group_model])
+    @ns_deployment.response(401, 'Incorrect credentials')
+    @ns_deployment.response(403, 'Missing deployment access')
+    @ns_deployment.response(404, 'Deployment doesn\'t exist')
+    @api.marshal_with(group_model)
+    def get(self, deployment):
+        """
+                Returns all groups with access to the deployment.
+        """
+        current_user = User.query.filter_by(id=get_jwt_identity()).first()
+        ns_deployment.has_deployment_access(current_user, deployment)
+        if not deployment.groups and not deployment.users:
+            all_groups = Group.query.all()
+            return all_groups, 200
+        return deployment.groups, 200

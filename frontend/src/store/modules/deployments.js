@@ -11,6 +11,9 @@ const getters = {
   },
   getAll: (state) => {
     return state.deployments
+  },
+  getUsers: (state) => {
+    return state.deployments.users
   }
 }
 
