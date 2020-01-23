@@ -87,10 +87,10 @@ import router from '@/router/index.js'
 import { mapGetters, mapActions } from 'vuex'
 import { ClientTable, Event } from 'vue-tables-2'
 
-import Topbar from '@/components/Topbar.vue'
-import Sidebar from '@/components/Sidebar.vue'
-import assignedTo from '@/components/TableAssignedTo.vue'
-import NewIncidentModal from '@/components/modals/NewIncident.vue'
+import Topbar from '@/components/Topbar'
+import Sidebar from '@/components/Sidebar'
+import assignedTo from '@/components/TableAssignedTo'
+import NewIncidentModal from '@/components/modals/NewIncident'
 
 Vue.use(ClientTable)
 

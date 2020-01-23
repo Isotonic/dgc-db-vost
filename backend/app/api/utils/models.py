@@ -9,22 +9,23 @@ login_model = api.model('Login',
 tokens_model = api.model('Token', {'access_token': fields.String(required=True),
                                           'refresh_token': fields.String(required=True)})
 
-create_user_modal = api.model('Create User',
+create_user_modal = api.model('New User',
                                   {'firstname': fields.String(required=True), 'surname': fields.String(required=True),
                                    'email': fields.String(required=True), 'group_id': fields.Integer(
                                       description='Optional ID of the group for the user to be added to.')})
 
-new_group_model = api.model('Create Group',
+new_group_model = api.model('New Group',
                                    {'name': fields.String(required=True), 'permissions': fields.List(fields.String)})
 
 
-new_deployment_model = api.model('Create Deployment',  ##TODO Add areas
+new_deployment_model = api.model('New Deployment',  ##TODO Add areas
                                         {'name': fields.String(required=True), 'description': fields.String(),
                                          'group_ids': fields.List(fields.Integer,
                                                                   description='Leave blank for everyone to have access.'),
                                          'user_ids': fields.List(fields.Integer,
                                                                  description='Leave blank for everyone to have access.')})
 
+new_comment_model = api.model('New Comment', {'text': fields.String(required=True, description='Comment text.')})
 
 new_incident_model = api.model('Create Incident',
                                       {'name': fields.String(required=True),
@@ -86,10 +87,10 @@ activity_model = api.model('Activity',
                             'text': fields.String(attribute=lambda x: str(x)),
                             'occurredAt': fields.Integer(attribute=lambda x: int(x.occurred_at.timestamp()))})
 
-comment_model = api.model('Update',
-                            {'id': fields.Integer(),
-                            'user': fields.Nested(user_model),
-                            'text': fields.String(),
+comment_model = api.model('Comment',
+                            {'id': fields.Integer(description='ID of the comment.'),
+                            'user': fields.Nested(user_model, description='The user that sent the comment.'),
+                            'text': fields.String(description='Comment text, can be a stringified ProseMirror JSON object.'),
                             'sentAt': fields.Integer(attribute=lambda x: int(x.sent_at.timestamp()), description='UTC timestamp of when the update was sent.')})
 
 subtask_model = api.model('Subtask',

@@ -99,8 +99,8 @@ def create_comment(text, incident, added_by):
     comment = IncidentComment(text=text, user_id=added_by.id, incident=incident)
     db.session.add(comment)
     db.session.commit()
-    emit('create_incident_comment', {'html': render_template('comment.html', comment=comment), 'code': 200},
-         room=f'{incident.deployment_id}-{incident.id}')
+    #emit('create_incident_comment', {'html': render_template('comment.html', comment=comment), 'code': 200},
+    #     room=f'{incident.deployment_id}-{incident.id}')
     incident_action(user=added_by, action_type=IncidentLog.action_values['add_comment'],
                    incident=incident)
     return comment

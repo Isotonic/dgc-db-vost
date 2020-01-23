@@ -89,7 +89,7 @@ input[type=checkbox][disabled]{
   cursor: not-allowed;
 }
 
-.list-group-item.random.list-group-flush:hover,
+.list-group-item.list-group-flush:hover,
 tbody > tr:hover {
   cursor: pointer;
   background-color: #f6f8fe !important;
@@ -543,7 +543,7 @@ input[type="checkbox"]:hover, input[type="radio"]:hover {
 }
 
 .tooltip[x-placement^="right"] {
-  margin-left: 5px;
+  margin-left: 10px;
 }
 
 .tooltip[x-placement^="right"] .tooltip-arrow {
@@ -636,4 +636,276 @@ input[type="checkbox"]:hover, input[type="radio"]:hover {
   top: 12px;
   right: 4px;
   transform: rotate(45deg);
+}
+
+.menubar {
+  margin-bottom: 1rem;
+  transition: visibility 0.2s 0.4s, opacity 0.2s 0.4s;
+  width: 120%;
+}
+.menubar.is-hidden {
+  visibility: hidden;
+  opacity: 0;
+}
+.menubar.is-focused {
+  visibility: visible;
+  opacity: 1;
+  transition: visibility 0.2s, opacity 0.2s;
+}
+.menubar__button {
+  font-weight: bold;
+  display: inline-flex;
+  background: transparent;
+  border: 0;
+  color: #000000;
+  padding: 0.2rem 0.5rem;
+  margin-right: 0.2rem;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.menubar__button:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+.menubar__button.is-active {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+.menubar span.menubar__button {
+  font-size: 13.3333px;
+}
+
+.editor {
+  position: relative;
+  max-width: 30rem;
+}
+.editor__content {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+}
+.editor__content * {
+  caret-color: currentColor;
+}
+.editor__content pre {
+  padding: 0.7rem 1rem;
+  border-radius: 5px;
+  background: #000000;
+  color: #ffffff;
+  font-size: 0.8rem;
+  overflow-x: auto;
+}
+.editor__content pre code {
+  display: block;
+}
+.editor__content p code {
+  display: inline-block;
+  padding: 0 0.4rem;
+  border-radius: 5px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  background: rgba(0, 0, 0, 0.1);
+  color: rgba(0, 0, 0, 0.8);
+}
+.editor__content ul,
+.editor__content ol {
+  padding-left: 1rem;
+}
+.editor__content li > p,
+.editor__content li > ol,
+.editor__content li > ul {
+  margin: 0;
+}
+
+.editor__content blockquote {
+  border-left: 3px solid rgba(0, 0, 0, 0.1);
+  color: rgba(0, 0, 0, 0.8);
+  padding-left: 0.8rem;
+  font-style: italic;
+}
+.editor__content blockquote p {
+  margin: 0;
+}
+.editor__content img {
+  max-width: 100%;
+  border-radius: 3px;
+}
+.editor__content table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+.editor__content table td, .editor__content table th {
+  min-width: 1em;
+  border: 2px solid #dddddd;
+  padding: 3px 5px;
+  vertical-align: top;
+  box-sizing: border-box;
+  position: relative;
+}
+.editor__content table td > *, .editor__content table th > * {
+  margin-bottom: 0;
+}
+.editor__content table th {
+  font-weight: bold;
+  text-align: left;
+}
+.editor__content table .selectedCell:after {
+  z-index: 2;
+  position: absolute;
+  content: "";
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background: rgba(200, 200, 255, 0.4);
+  pointer-events: none;
+}
+.editor__content table .column-resize-handle {
+  position: absolute;
+  right: -2px;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  z-index: 20;
+  background-color: #adf;
+  pointer-events: none;
+}
+.editor__content .tableWrapper {
+  margin: 1em 0;
+  overflow-x: auto;
+}
+.editor__content .resize-cursor {
+  cursor: ew-resize;
+  cursor: col-resize;
+}
+
+.menububble {
+  position: absolute;
+  display: flex;
+  z-index: 20;
+  background: #000000;
+  border-radius: 5px;
+  padding: 0.3rem;
+  margin-bottom: 0.5rem;
+  transform: translateX(-50%);
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.2s, visibility 0.2s;
+}
+.menububble.is-active {
+  opacity: 1;
+  visibility: visible;
+}
+.menububble__button {
+  display: inline-flex;
+  background: transparent;
+  border: 0;
+  color: #ffffff;
+  padding: 0.2rem 0.5rem;
+  margin-right: 0.2rem;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.menububble__button:last-child {
+  margin-right: 0;
+}
+.menububble__button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+.menububble__button.is-active {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+.menububble__form {
+  display: flex;
+  align-items: center;
+}
+.menububble__input {
+  font: inherit;
+  border: none;
+  background: transparent;
+  color: #ffffff;
+}
+
+ul[data-type=todo_list] {
+  padding-left: 0;
+}
+
+li[data-type=todo_item] {
+  display: flex;
+  flex-direction: row;
+}
+
+.todo-checkbox {
+  border: 2px solid #000000;
+  height: 0.9em;
+  width: 0.9em;
+  box-sizing: border-box;
+  margin-right: 10px;
+  margin-top: 0.3rem;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: pointer;
+  border-radius: 0.2em;
+  background-color: transparent;
+  transition: 0.4s background;
+}
+
+.todo-content {
+  flex: 1;
+}
+.todo-content > p:last-of-type {
+  margin-bottom: 0;
+}
+.todo-content > ul[data-type=todo_list] {
+  margin: 0.5rem 0;
+}
+
+li[data-done=true] > .todo-content > p {
+  text-decoration: line-through;
+}
+li[data-done=true] > .todo-checkbox {
+  background-color: #000000;
+}
+
+li[data-done=false] {
+  text-decoration: none;
+}
+
+.editor .is-editor-empty.is-empty:nth-child(1)::before,
+.editor .is-editor-empty.is-empty:nth-child(2)::before {
+  content: attr(data-empty-text);
+  float: left;
+  color: #aaa;
+  pointer-events: none;
+  height: 0;
+  font-style: italic;
+}
+
+.ProseMirror {
+  padding: 0.375rem 0.75rem;
+  background-color: #fff;
+  border: 1px solid #d1d3e2;
+  border-radius: 0.35rem;
+  outline: 0;
+}
+
+.ProseMirror p {
+  margin-bottom: 0px;
+}
+
+.comment-icon {
+  top: -30px;
+  left: 35px;
+  position: relative;
+}
+
+.comment-icon:hover {
+  cursor: pointer;
+  color: #4e73df;
+}
+
+.update-log-text > .editor__content > .ProseMirror {
+  padding: 0px;
+  border: none;
 }

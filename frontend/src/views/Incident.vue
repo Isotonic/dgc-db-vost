@@ -40,8 +40,8 @@
                 <b-dropdown-divider />
                 <div class="pl-1 pr-1">
                   <multiselect v-model="allocatedSelected" :options="selectOptions" :multiple="true" group-values="users" group-label="name" :group-select="true" placeholder="Type to search" track-by="id" :custom-label="formatSelect" :closeOnSelect="false" openDirection="bottom" :limit="0" :limitText="count => `${count} users assigned.`" :blockKeys="['Delete']" selectedLabel="Assigned" :loading="isSelectLoading">
-                    <template v-if="allocatedSelected.length" slot="clear" slot-scope="props">
-                      <div class="multiselect__clear" @mousedown.prevent.stop="clearAllAllocated(props.search)"></div>
+                    <template v-if="didAllocatedChange" slot="clear">
+                      <div class="multiselect__clear" v-tooltip.right="'Reset changes'" @mousedown.prevent.stop="setAllocatedSelecter"></div>
                     </template>
                     <span slot="noResult">Oops! No user found.</span>
                   </multiselect>
@@ -206,9 +206,6 @@
             <div class="card shadow mb-4">
               <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 font-weight-bold text-primary">Updates</h6>
-                <button class="btn btn-xs text-success" @click="isNewCommentModalVisible = true">
-                  <i class="fas fa-plus" v-tooltip="'Add Comment'"></i>
-                </button>
                 <new-comment-modal v-show="isNewCommentModalVisible" :visible="isNewCommentModalVisible" @close="isNewCommentModalVisible = false" />
               </div>
               <div class="card-body bg-light">
@@ -219,6 +216,7 @@
                 <div v-if="incident && !incident.comments.length">
                   <p class="card-text text-center">No updates currently.</p>
                 </div>
+                <comment-box v-if="incident" @addComment="addComment" />
               </div>
             </div>
             <div class="card shadow mb-4">
@@ -249,14 +247,14 @@ import { DropdownPlugin } from 'bootstrap-vue'
 import { LMap, LTileLayer, LMarker } from 'vue2-leaflet'
 import { VclList, VclFacebook, VclBulletList } from 'vue-content-loading'
 
-import Topbar from '@/components/Topbar.vue'
-import Sidebar from '@/components/Sidebar.vue'
-import Task from '@/components/Task.vue'
-import Comment from '@/components/Comment.vue'
-import Activity from '@/components/Activity.vue'
-import FlagToSupervisorModal from '@/components/modals/FlagToSupervisor.vue'
-import NewCommentModal from '@/components/modals/NewComment.vue'
-import TaskModal from '@/components/modals/Task.vue'
+import Topbar from '@/components/Topbar'
+import Sidebar from '@/components/Sidebar'
+import Task from '@/components/Task'
+import Comment from '@/components/Comment'
+import Activity from '@/components/Activity'
+import CommentBox from '@/components/CommentBox'
+import FlagToSupervisorModal from '@/components/modals/FlagToSupervisor'
+import TaskModal from '@/components/modals/Task'
 
 Vue.use(DropdownPlugin)
 
@@ -285,8 +283,8 @@ export default {
     VclBulletList,
     Multiselect,
     FlagToSupervisorModal,
-    NewCommentModal,
-    TaskModal
+    TaskModal,
+    CommentBox
   },
   props: {
     deploymentName: String,
@@ -316,25 +314,40 @@ export default {
   methods: {
     markAsComplete: function () {
       if (this.hasPermission('change_status')) {
-        this.ApiUpdate(`incidents/${this.incidentId}/status`, { open: !this.incident.open })
+        this.ApiPut(`incidents/${this.incidentId}/status`, { open: !this.incident.open })
       }
     },
     changePriority: function (priority) {
       if (this.hasPermission('change_priority')) {
-        this.ApiUpdate(`incidents/${this.incidentId}/priority`, { priority: priority })
+        this.ApiPut(`incidents/${this.incidentId}/priority`, { priority: priority })
       }
     },
     togglePublic: function () {
       if (this.hasPermission('mark_as_public')) {
-        this.ApiUpdate(`incidents/${this.incidentId}/public`, { public: !this.incident.public })
+        this.ApiPut(`incidents/${this.incidentId}/public`, { public: !this.incident.public })
       }
     },
     taskToggle: function (taskId, toggle) {
-      this.ApiUpdate(`tasks/${taskId}/status`, { completed: toggle })
+      this.ApiPut(`tasks/${taskId}/status`, { completed: toggle })
     },
-    ApiUpdate: function (url, data) {
+    addComment (text) {
+      this.ApiPost(`incidents/${this.incidentId}/comments`, { text: JSON.stringify(text) })
+    },
+    ApiPut: function (url, data) {
       Vue.prototype.$api
         .put(url, data)
+        .then(r => r.data)
+        .then(data => {
+          Vue.noty.success(data)
+        })
+        .catch(error => {
+          console.log(error.response.data.message)
+          Vue.noty.error(error.response.data.message)
+        })
+    },
+    ApiPost: function (url, data) {
+      Vue.prototype.$api
+        .post(url, data)
         .then(r => r.data)
         .then(data => {
           Vue.noty.success(data)
@@ -371,9 +384,8 @@ export default {
       this.isSelectLoading = false
     },
     closedAllocationDropdown () {
-      if (this.allocatedSelected.length !== this.incident.assignedTo.length ||
-      !this.allocatedSelected.every(e => this.incident.assignedTo.includes(e))) {
-        this.ApiUpdate(`incidents/${this.incidentId}/allocation`, { users: this.allocatedSelected.map(user => user.id) })
+      if (this.didAllocatedChange) {
+        this.ApiPut(`incidents/${this.incidentId}/allocation`, { users: this.allocatedSelected.map(user => user.id) })
       }
     },
     formatSelect: function ({ firstname, surname }) {
@@ -381,9 +393,6 @@ export default {
     },
     setAllocatedSelecter: function () {
       this.allocatedSelected = this.incident.assignedTo
-    },
-    clearAllAllocated () {
-      this.allocatedSelected = []
     },
     ...mapActions('user', {
       checkUserLoaded: 'checkLoaded'
@@ -418,7 +427,7 @@ export default {
           completedCounter += 1
         }
       }
-      return (completedCounter / this.incident.tasks.length) * 100
+      return Math.round((completedCounter / this.incident.tasks.length) * 100)
     },
     calculateProgressColour: function () {
       let percentage = this.calculateProgressPercentage
@@ -428,6 +437,10 @@ export default {
         'bg-warning': percentage >= 25 && percentage < 50,
         'bg-danger': percentage >= 0 && percentage < 25
       }
+    },
+    didAllocatedChange: function () {
+      return this.allocatedSelected.length !== this.incident.assignedTo.length ||
+      !this.allocatedSelected.every(e => this.incident.assignedTo.includes(e))
     },
     ...mapGetters('user', {
       hasPermission: 'hasPermission'
@@ -462,6 +475,9 @@ export default {
     this.checkUserLoaded()
     this.checkDeploymentsLoaded()
     this.checkIncidentsLoaded(this.deploymentId)
+  },
+  beforeDestroy () {
+    this.editor.destroy()
   }
 }
 </script>

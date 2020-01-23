@@ -41,9 +41,9 @@
 import Vue2Filters from 'vue2-filters'
 import { mapGetters, mapActions } from 'vuex'
 
-import Topbar from '@/components/Topbar.vue'
-import DeploymentCard from '@/components/DeploymentCard.vue'
-import NewDeploymentModal from '@/components/modals/NewDeployment.vue'
+import Topbar from '@/components/Topbar'
+import DeploymentCard from '@/components/DeploymentCard'
+import NewDeploymentModal from '@/components/modals/NewDeployment'
 
 export default {
   name: 'deployments',

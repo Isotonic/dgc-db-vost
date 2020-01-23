@@ -17,11 +17,11 @@
         </h5>
         <div class="row">
           <div class="col-auto">
-            <div class="h5 ml-1 mb-2 font-weight-bold text-gray-800">20%</div>
+            <div class="h5 ml-1 mb-2 font-weight-bold text-gray-800">{{ calculateProgressPercentage }}%</div>
           </div>
           <div class="col">
             <div class="progress progress-sm mt-2">
-              <div id="TaskProgressBar" class="progress-bar bg-success" style="width: 20%" aria-valuenow="9" aria-valuemin="0" aria-valuemax="100"></div>
+              <div :class="['progress-bar', calculateProgressColour]" :style="{ width: calculateProgressPercentage + '%' }" aria-valuenow="9" aria-valuemin="0" aria-valuemax="100"></div>
             </div>
           </div>
         </div>
@@ -54,10 +54,10 @@
 <script>
 import Vue2Filters from 'vue2-filters'
 
-import Task from '@/components/Task.vue'
-import Comment from '@/components/Comment.vue'
-import Activity from '@/components/Activity.vue'
-import Modal from '@/components/utils/Modal.vue'
+import Task from '@/components/Task'
+import Comment from '@/components/Comment'
+import Activity from '@/components/Activity'
+import Modal from '@/components/utils/Modal'
 
 export default {
   name: 'TaskModal',
@@ -75,6 +75,26 @@ export default {
   methods: {
     close () {
       this.$emit('close')
+    }
+  },
+  computed: {
+    calculateProgressPercentage: function () {
+      let completedCounter = 0
+      for (let value of this.task.subtasks) {
+        if (value.completed) {
+          completedCounter += 1
+        }
+      }
+      return Math.round((completedCounter / this.task.subtasks.length) * 100)
+    },
+    calculateProgressColour: function () {
+      let percentage = this.calculateProgressPercentage
+      return {
+        'bg-success': percentage >= 80,
+        'bg-orange': percentage >= 50 && percentage < 80,
+        'bg-warning': percentage >= 25 && percentage < 50,
+        'bg-danger': percentage >= 0 && percentage < 25
+      }
     }
   },
   watch: {

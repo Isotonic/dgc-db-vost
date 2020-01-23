@@ -99,7 +99,7 @@
 </template>
 
 <script>
-import Modal from '@/components/utils/Modal.vue'
+import Modal from '@/components/utils/Modal'
 
 export default {
   name: 'NewIncidentModal',
