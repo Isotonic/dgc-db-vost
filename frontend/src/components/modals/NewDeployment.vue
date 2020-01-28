@@ -1,5 +1,5 @@
 <template>
-  <Modal :title="'New Deployment'" @close="close">
+  <modal :title="'New Deployment'" @close="close">
     <form aria-label="Create a new deployment">
       <div class="form-group mb-3">
         <input class="form-control was-validated" name="name" placeholder="Deployment Name" type="text" required>
@@ -15,7 +15,7 @@
         <button type="submit" class="btn btn-primary my-4">Submit</button>
       </div>
     </form>
-  </Modal>
+  </modal>
 </template>
 
 <script>

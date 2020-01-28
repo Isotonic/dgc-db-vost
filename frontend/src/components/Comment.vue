@@ -1,5 +1,6 @@
 <template>
-  <li class="update-log">
+  <comment-box v-if="this.editor.options.editable" :editing="true" :existingContent="parseText" @cancelEdit="cancelEdit" @editComment="editComment" />
+  <li v-else class="update-log">
     <div class="update-log-avatar">
       <a href="#">
         <img class="media-object rounded-circle" :src="comment.user.avatarUrl" alt="Avatar">
@@ -8,12 +9,33 @@
     </div>
     <div class="update-log-text">
       <editor-content class="editor__content" :editor="editor" />
-      <div class="update-body">{{ comment.sentAt | moment("from", "now") }}</div>
+      <div class="update-body">
+        <i v-if="comment.public" class="fas fa-eye mr-1" v-tooltip="publicIncident ? 'Viewable by the public' : 'Viewable by the public when incident is marked public'"></i>
+        {{ comment.sentAt | moment("from", "now") }}
+        <b-dropdown variant="link" size="xs" toggle-tag="div">
+          <template slot="button-content">
+              <i class="fas fa-ellipsis-v text-white ml-1"></i>
+          </template>
+          <b-dropdown-item v-if="isUsersComment" @click="editable">Edit update</b-dropdown-item>
+          <b-dropdown-item @click="isCommentQuestionModalVisible = true">Delete update</b-dropdown-item>
+          <b-dropdown-item @click="togglePublic">{{ comment.public ? 'Hide update from public' : 'Show update to public'}}</b-dropdown-item>
+        </b-dropdown>
+      </div>
     </div>
+    <span v-if="comment.editedAt" class="text-xs font-weight-bold float-right mt-1 mb-2">Edited {{ comment.editedAt | moment("from", "now") }}</span>
+    <comment-question-modal v-if="isCommentQuestionModalVisible" :commentHtml="editor.getHTML()" v-show="isCommentQuestionModalVisible" :visible="isCommentQuestionModalVisible" @btnAction="deleteComment" @close="isCommentQuestionModalVisible = false">
+      <template v-slot:question>
+        <span class="font-weight-bold">Are you sure you wish to delete this update?</span>
+      </template>
+    </comment-question-modal>
   </li>
 </template>
 
 <script>
+import Vue from 'vue'
+import CommentBox from './CommentBox'
+import CommentQuestionModal from './modals/CommentQuestion'
+
 import { Editor, EditorContent } from 'tiptap'
 import {
   Blockquote,
@@ -37,10 +59,13 @@ import {
 export default {
   name: 'Comment',
   components: {
+    CommentBox,
+    CommentQuestionModal,
     EditorContent
   },
   props: {
-    comment: Object
+    comment: Object,
+    publicIncident: Boolean
   },
   data () {
     return {
@@ -65,20 +90,86 @@ export default {
         ],
         editable: false,
         content: ''
-      })
+      }),
+      isCommentQuestionModalVisible: false
     }
   },
   methods: {
+    setContent: function () {
+      this.editor.setContent(this.parseText)
+    },
+    editable: function () {
+      this.editor.setOptions({
+        editable: true
+      })
+      this.$emit('showCommentBox', false)
+    },
+    cancelEdit: function () {
+      this.editor.setOptions({
+        editable: false
+      })
+      this.$emit('showCommentBox', true)
+    },
+    editComment: function (editor) {
+      this.cancelEdit()
+      this.$emit('showCommentBox', true)
+      Vue.prototype.$api
+        .put(`comments/${this.comment.id}`, { text: JSON.stringify(editor.getJSON()) })
+        .then(r => r.data)
+        .then(data => {
+          Vue.noty.success(data)
+        })
+        .catch(error => {
+          console.log(error.response.data.message)
+          Vue.noty.error(error.response.data.message)
+        })
+    },
+    deleteComment: function (modalAnswer) {
+      this.isCommentQuestionModalVisible = false
+      if (modalAnswer) {
+        Vue.prototype.$api
+          .delete(`comments/${this.comment.id}`)
+          .then(r => r.data)
+          .then(data => {
+            Vue.noty.success(data)
+          })
+          .catch(error => {
+            console.log(error.response.data.message)
+            Vue.noty.error(error.response.data.message)
+          })
+      }
+    },
+    togglePublic: function () {
+      Vue.prototype.$api
+        .put(`comments/${this.comment.id}/public`, { public: !this.comment.public })
+        .then(r => r.data)
+        .then(data => {
+          Vue.noty.success(data)
+        })
+        .catch(error => {
+          console.log(error.response.data.message)
+          Vue.noty.error(error.response.data.message)
+        })
+    }
+  },
+  computed: {
     parseText: function () {
       try {
-        this.editor.setContent(JSON.parse(this.comment.text))
+        return JSON.parse(this.comment.text)
       } catch (_) {
-        this.editor.setContent(this.comment.text)
+        return this.comment.text
       }
+    },
+    isUsersComment: function () {
+      const user = this.$store.getters['user/getUser']
+      if (user && user.id === this.comment.user.id) {
+        return true
+      }
+      return false
     }
   },
   created () {
-    this.parseText()
+    this.setContent()
   },
   beforeDestroy () {
     this.editor.destroy()

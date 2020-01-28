@@ -1,5 +1,5 @@
 <template>
-  <Modal :title="'New Incident'" @close="close">
+  <modal :title="'New Incident'" @close="close">
     <form aria-label="Add a new incident">
       <div class="form-group mb-3">
         <input class="form-control was-validated" name="name" placeholder="Incident Name" type="text" required>
@@ -95,7 +95,7 @@
         <button type="submit" class="btn btn-primary my-4">Submit</button>
       </div>
     </form>
-  </Modal>
+  </modal>
 </template>
 
 <script>

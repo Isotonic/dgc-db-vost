@@ -171,7 +171,7 @@ class Public(Resource):
     @api.marshal_with(public_model)
     def get(self, incident):
         """
-                Returns if an incident is viewable by the public or not.
+                Returns if incident is viewable by the public or not.
         """
         current_user = User.query.filter_by(id=get_jwt_identity()).first()
         ns_incident.has_incident_access(current_user, incident)
@@ -181,7 +181,8 @@ class Public(Resource):
     @ns_incident.doc(security='access_token')
     @ns_incident.expect(public_model, validate=True)
     @ns_incident.response(200, 'Success', public_model)
-    @ns_incident.response(400, 'Incident already has this priority')
+    @ns_incident.response(400, 'Incident is already public')
+    @ns_incident.response(400, 'Incident is already not public')
     @ns_incident.response(400, 'Input payload validation failed')
     @ns_incident.response(401, 'Incorrect credentials')
     @ns_incident.response(403, 'Missing incident access')
@@ -190,13 +191,13 @@ class Public(Resource):
     @api.marshal_with(public_model)
     def put(self, incident):
         """
-                Changes if an incident is viewable by the public or not.
+                Changes if incident is viewable by the public or not.
         """
         current_user = User.query.filter_by(id=get_jwt_identity()).first()
         ns_incident.has_incident_access(current_user, incident)
         ns_incident.has_permission(current_user, 'mark_as_public')
         if change_incident_public(incident, api.payload['public'], current_user) is False:
-            ns_incident.abort(400, f'Incident already is {"public" if api.payload["public"] else "not public"}')
+            ns_incident.abort(400, f'Incident is already {"public" if api.payload["public"] else "not public"}')
         return incident, 200
 
 
@@ -234,5 +235,5 @@ class Public(Resource):
         """
         current_user = User.query.filter_by(id=get_jwt_identity()).first()
         ns_incident.has_incident_access(current_user, incident)
-        comment = create_comment(api.payload['text'], incident, current_user)
+        comment = create_comment(api.payload['text'], api.payload['public'], incident, current_user)
         return comment, 200

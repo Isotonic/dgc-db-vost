@@ -95,8 +95,8 @@ def create_task_comment(text, task, added_by):
     return comment
 
 
-def create_comment(text, incident, added_by):
-    comment = IncidentComment(text=text, user_id=added_by.id, incident=incident)
+def create_comment(text, public, incident, added_by):
+    comment = IncidentComment(text=text, public=public, user_id=added_by.id, incident=incident)
     db.session.add(comment)
     db.session.commit()
     #emit('create_incident_comment', {'html': render_template('comment.html', comment=comment), 'code': 200},

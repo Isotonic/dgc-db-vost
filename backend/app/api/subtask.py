@@ -1,11 +1,11 @@
 from ..api import api
 from .utils.resource import Resource
 from .utils.namespace import Namespace
-from ..models import User, IncidentSubTask
-from flask_jwt_extended import jwt_required, get_jwt_identity
-from .utils.models import subtask_model, completion_model
 from ..utils.delete import delete_subtask
+from ..models import User, IncidentSubTask
 from ..utils.change import change_subtask_status
+from .utils.models import subtask_model, completion_model
+from flask_jwt_extended import jwt_required, get_jwt_identity
 
 ns_subtask = Namespace('Subtask', description='Used to carry out actions related to subtasks.', path='/subtasks', decorators=[jwt_required])
 
@@ -33,10 +33,9 @@ class SubtaskEndpoint(Resource):
     @ns_subtask.response(401, 'Incorrect credentials')
     @ns_subtask.response(403, 'Missing incident access')
     @ns_subtask.response(404, 'Task doesn\'t exist')
-    @api.marshal_with(subtask_model)
     def delete(self, subtask):
         """
-                Delets subtask.
+                Deletes subtask.
         """
         current_user = User.query.filter_by(id=get_jwt_identity()).first()
         ns_subtask.has_incident_access(current_user, subtask.task.incident)
@@ -69,7 +68,6 @@ class StatusEndpoint(Resource):
     @ns_subtask.response(400, 'Subtask already has this status')
     @ns_subtask.response(401, 'Incorrect credentials')
     @ns_subtask.response(403, 'Missing incident access')
-    @ns_subtask.response(403, 'Missing permission')
     @ns_subtask.response(404, 'Task doesn\'t exist')
     @api.marshal_with(completion_model)
     def put(self, subtask):

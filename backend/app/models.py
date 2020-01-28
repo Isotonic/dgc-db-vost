@@ -104,9 +104,9 @@ class User(db.Model, UserMixin):
         return 'https://c5-dissertation.herokuapp.com/static/img/avatars/24_Jaffer_Naheem.png'
         avatar_path = f'{"/static/" if static else ""}img/avatars/{self.id}_{self.firstname}_{self.surname}.png'
         if path.exists(f'./app{avatar_path}'):
-            return avatar_path
+            return f'http://localhost:5000{avatar_path}'
         self.create_avatar()
-        return avatar_path
+        return f'http://localhost:5000{avatar_path}'
 
     def get_deployments(self):
         deployments = []
@@ -317,6 +317,9 @@ class Incident(db.Model):
             return self.incident_types[self.incident_type]
         return 'exclamation'
 
+    def public_comments(self):
+        return [m for m in self.comments if m.public]
+
     def get_coordinates(self):
         return [self.latitude, self.longitude]
 
@@ -406,8 +409,9 @@ class TaskComment(db.Model):
     task = db.relationship('IncidentTask', backref='comments', lazy='selectin')
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     user = db.relationship('User', backref='task_comments', lazy='selectin')
-    text = db.Column(db.String(1024))
+    text = db.Column(db.String())
     sent_at = db.Column(db.DateTime, default=datetime.utcnow)
+    edited_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __repr__(self):
         return f'{self.text}'
@@ -417,8 +421,10 @@ class IncidentComment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     incident_id = db.Column(db.Integer, db.ForeignKey('incident.id'))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    text = db.Column(db.String(1024))
+    text = db.Column(db.String())
+    public = db.Column(db.Boolean(), default=False)
     sent_at = db.Column(db.DateTime, default=datetime.utcnow)
+    edited_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __repr__(self):
         return f'{self.text}'
@@ -474,20 +480,24 @@ class IncidentLog(db.Model):
                      'delete_comment': 6, 'incomplete_task': 7, 'assigned_user': 8, 'removed_user': 9,
                      'marked_complete': 10, 'marked_incomplete': 11, 'changed_priority': 12,
                      'changed_task_description': 13, 'assigned_user_task': 14,
-                     'removed_user_task': 15, 'public': 16, 'not_public': 17, 'complete_subtask': 18, 'incomplete_subtask': 19, 'create_subtask': 20, 'add_subtask_comment': 21}  ##TODO RE-ORDER ONCE DONE
+                     'removed_user_task': 15, 'marked_public': 16, 'marked_not_public': 17, 'complete_subtask': 18, 'incomplete_subtask': 19, 'create_subtask': 20, 'add_subtask_comment': 21,
+                     'marked_comment_public': 22, 'marked_comment_not_public': 23, 'update_comment': 24}  ##TODO RE-ORDER ONCE DONE
     action_strings = {1: 'created incident', 2: 'created task $task', 3: 'marked $task as complete',
                       4: 'deleted task $task',
-                      5: 'added update', 6: 'deleted update', 7: 'marked $task as incomplete',
+                      5: 'added an update', 6: 'deleted an update', 7: 'marked $task as incomplete',
                       8: 'assigned $target_users to incident',
                       9: 'removed $target_users from incident', 10: 'marked incident as complete',
                       11: 'marked incident as incomplete', 12: 'changed priority to $extra',
                       13: 'changed $task description to "$extra"', 14: 'added $target_users to $task',
-                      15: 'removed $target_users from $task', 16: 'set the incident to public', 17: 'set the incident to private', 18: 'marked $extra as complete', 19: 'marked $extra as incomplete', 20: 'created sub-task $extra', 21: 'added comment to $task'}
+                      15: 'removed $target_users from $task', 16: 'set the incident to public', 17: 'set the incident to private', 18: 'marked $extra as complete', 19: 'marked $extra as incomplete', 20: 'created sub-task $extra', 21: 'added comment to $task',
+                      22: 'marked comment as publicly viewable', 23: 'marked comment as not publicly viewable', 24: 'edited update'}
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     user = db.relationship('User', backref='incident_actions')
     incident_id = db.Column(db.Integer, db.ForeignKey('incident.id'))
+    comment_id = db.Column(db.Integer, db.ForeignKey('incident_comment.id'))
+    comment = db.relationship('IncidentComment', backref='action', lazy='selectin')
     task_id = db.Column(db.Integer, db.ForeignKey('incident_task.id'))
     task = db.relationship('IncidentTask', backref='logs', lazy='selectin') ##TODO Change to actions
     subtask_id = db.Column(db.Integer, db.ForeignKey('incident_sub_task.id'))

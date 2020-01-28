@@ -1,11 +1,11 @@
 <template>
-  <modal :title="'Flag To Supervisor'" @close="close">
-    <form aria-label="Flag incident to supervisor">
-      <textarea class="form-control" rows="3" name="reason" placeholder="Add a reason..." required></textarea>
-      <div class="text-center">
-        <button type="submit" class="btn btn-primary my-4">Submit</button>
-      </div>
-    </form>
+  <modal :title="'Public Update'" @close="close">
+    <slot name="question"></slot>
+    <div class="editor__content comment-public-text mt-3" v-html="commentHtml" />
+    <div class="text-center">
+      <button type="submit" class="btn btn-block btn-success mt-3" @click="btnAction(true)">Yes</button>
+      <button type="submit" class="btn btn-block btn-danger" @click="btnAction(false)">No</button>
+    </div>
   </modal>
 </template>
 
@@ -13,15 +13,18 @@
 import Modal from '@/components/utils/Modal'
 
 export default {
-  name: 'FlagToSupervisorModal',
+  name: 'CommentQuestionModal',
   components: {
     Modal
   },
   props: {
-    title: String,
+    commentHtml: String,
     visible: Boolean
   },
   methods: {
+    btnAction (actionBoolean) {
+      this.$emit('btnAction', actionBoolean)
+    },
     close () {
       this.$emit('close')
     }

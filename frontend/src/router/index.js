@@ -119,6 +119,21 @@ const routes = [
     }
   },
   {
+    path: '/incidents/:incidentName-:incidentId(\\d+)',
+    name: 'public incident',
+    component: () => import(/* webpackChunkName: "public incident" */ '../views/PublicIncident.vue'),
+    props (route) {
+      const props = { ...route.params }
+      props.deploymentId = +props.deploymentId
+      props.incidentId = +props.incidentId
+      return props
+    },
+    meta: {
+      title: route => route.params.incidentName.replace('-', ' '),
+      requiresAuth: false
+    }
+  },
+  {
     path: '/404',
     alias: '*',
     name: 'pageNotFound',

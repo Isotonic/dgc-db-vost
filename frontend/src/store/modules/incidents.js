@@ -50,7 +50,6 @@ const actions = {
       })
       .catch(error => {
         console.log(error.response.data.message)
-        // Vue.noty.error(error.response.data.message)
         router.push({ name: 'pageNotFound' })
       })
   },

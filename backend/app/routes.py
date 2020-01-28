@@ -4,7 +4,6 @@ from app import app, db, socketio
 from .utils.delete import delete_subtask
 from flask_socketio import emit, join_room, disconnect
 from flask import render_template, redirect, url_for, request
-from .forms import LoginForm, CreateUser, CreateGroup, SetPassword
 from flask_login import current_user, login_user, logout_user, login_required
 from app.utils.supervisor import request_incident_complete, mark_request_complete, flag_to_supervisor
 from .models import User, Group, Deployment, Incident, IncidentTask, IncidentSubTask, SupervisorActions, EmailLink, AuditLog
@@ -34,23 +33,6 @@ def has_permission_sockets(f):
 def logout():
     logout_user()
     return redirect(url_for('login'))
-
-
-@app.route('/verify/<link>/', methods=['GET', 'POST'])
-@login_required
-def verify_user(link):
-    email = EmailLink.query.filter_by(link=link).first()
-    if not email:
-        return "Invalid Link"
-    form = SetPassword()
-    if form.validate_on_submit():
-        email.user.set_password(form.password.data)
-        action = AuditLog(user=email.user, action_type=AuditLog.action_values["verify_user"])
-        db.session.add(action)
-        db.session.delete(email)
-        db.session.commit()
-        return redirect(url_for('login'))
-    return render_template('base.html', title='Set Password', form=form, username=email.user.username)
 
 
 @app.route('/deployments/', methods=['GET'])

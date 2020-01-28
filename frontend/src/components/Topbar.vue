@@ -20,28 +20,18 @@
         </div>
       </li>
       <div class="topbar-divider d-none d-sm-block"></div>
-      <li class="nav-item dropdown no-arrow">
-        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" @click="logout">
-          <span class="mr-2 d-none d-lg-inline text-gray-600 small">{{ name }}</span>
-          <img class="img-profile rounded-circle" :src="avatarUrl">
-        </a>
-        <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="userDropdown">
-          <a class="dropdown-item" href="#">
-            <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
-            Profile
-          </a>
-          <a class="dropdown-item" href="#">
-            <i class="fas fa-cogs fa-sm fa-fw mr-2 text-gray-400"></i>
-            Settings
-          </a>
-          <a class="dropdown-item" href="#">
-            <i class="fas fa-list fa-sm fa-fw mr-2 text-gray-400"></i>
-            Activity Log
-          </a>
+      <b-dropdown variant="link" size="xs" toggle-tag="li" toggle-class="nav-item">
+          <template slot="button-content">
+              <a class="nav-link">
+                <span class="mr-2 d-none d-lg-inline text-gray-600 small">{{ name }}</span>
+                <img class="img-profile rounded-circle" :src="avatarUrl">
+              </a>
+          </template>
+          <b-dropdown-item><i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>Profile</b-dropdown-item>
+          <b-dropdown-item><i class="fas fa-cogs fa-sm fa-fw mr-2 text-gray-400"></i>Settings</b-dropdown-item>
           <div class="dropdown-divider"></div>
-          <router-link :to="'logout'" class="dropdown-item"><i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>Logout</router-link>">
-        </div>
-      </li>
+          <router-link :to="'logout'" class="dropdown-item"><i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>Logout</router-link>
+      </b-dropdown>
     </ul>
   </nav>
 </template>

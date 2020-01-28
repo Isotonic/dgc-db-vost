@@ -206,18 +206,22 @@
             <div class="card shadow mb-4">
               <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 font-weight-bold text-primary">Updates</h6>
-                <new-comment-modal v-show="isNewCommentModalVisible" :visible="isNewCommentModalVisible" @close="isNewCommentModalVisible = false" />
               </div>
               <div class="card-body bg-light">
                 <vcl-bullet-list v-if="!incident" :rows="3" />
                 <ul v-else class="list-unstyled">
-                  <comment v-for="comment in orderBy(incident.comments, 'sentAt')" :key="comment.id" :comment="comment"></comment>
+                  <comment v-for="comment in orderBy(incident.comments, 'sentAt')" :key="comment.id" :comment="comment" :publicIncident="incident.public" @showCommentBox="showCommentBox"></comment>
                 </ul>
                 <div v-if="incident && !incident.comments.length">
                   <p class="card-text text-center">No updates currently.</p>
                 </div>
-                <comment-box v-if="incident" @addComment="addComment" />
+                <comment-box v-if="incident" v-show="commentBoxVisible" @submitComment="submitComment" ref="commentBox" />
               </div>
+              <comment-question-modal v-if="incident" v-show="isCommentQuestionModalVisible" :visible="isCommentQuestionModalVisible" :commentHtml="commentHtml" @btnAction="addComment" @close="isCommentQuestionModalVisible = false">
+                <template v-slot:question>
+                  <span class="font-weight-bold">Would you like to make this update viewable by the public{{ incident.public ? '?' : ' when the incident is marked public?'}}</span>
+                </template>
+              </comment-question-modal>
             </div>
             <div class="card shadow mb-4">
               <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
@@ -234,6 +238,7 @@
         </div>
       </div>
     </div>
+    <file-uploader-modal v-if="isFileUploaderModalVisible" v-show="isFileUploaderModalVisible" :visible="isFileUploaderModalVisible" @close="isFileUploaderModalVisible = false" />
   </div>
 </template>
 
@@ -243,7 +248,6 @@ import L from 'leaflet'
 import Vue2Filters from 'vue2-filters'
 import Multiselect from 'vue-multiselect'
 import { mapGetters, mapActions } from 'vuex'
-import { DropdownPlugin } from 'bootstrap-vue'
 import { LMap, LTileLayer, LMarker } from 'vue2-leaflet'
 import { VclList, VclFacebook, VclBulletList } from 'vue-content-loading'
 
@@ -255,8 +259,8 @@ import Activity from '@/components/Activity'
 import CommentBox from '@/components/CommentBox'
 import FlagToSupervisorModal from '@/components/modals/FlagToSupervisor'
 import TaskModal from '@/components/modals/Task'
-
-Vue.use(DropdownPlugin)
+import FileUploaderModal from '@/components/modals/FileUploader'
+import CommentQuestionModal from '@/components/modals/CommentQuestion'
 
 // Fix for markers not loading.
 delete L.Icon.Default.prototype._getIconUrl
@@ -275,16 +279,18 @@ export default {
     Task,
     Comment,
     Activity,
+    CommentBox,
+    FlagToSupervisorModal,
+    TaskModal,
+    FileUploaderModal,
+    CommentQuestionModal,
     LMap,
     LTileLayer,
     LMarker,
     VclList,
     VclFacebook,
     VclBulletList,
-    Multiselect,
-    FlagToSupervisorModal,
-    TaskModal,
-    CommentBox
+    Multiselect
   },
   props: {
     deploymentName: String,
@@ -301,14 +307,17 @@ export default {
         attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors | <a href="https://foundation.wikimedia.org/wiki/Maps_Terms_of_Use">Wikimedia Maps</a>'
       },
       task: null,
+      commentHtml: null,
+      commentJson: null,
       selectOptions: [],
       isSelectLoading: false,
       showFlagDropdown: false,
       showPriorityDropdown: false,
       isFlagToSupervisorModalVisible: false,
-      isChangeAllocationModalVisible: false,
-      isNewCommentModalVisible: false,
-      isTaskModalVisible: false
+      isTaskModalVisible: false,
+      isFileUploaderModalVisible: false,
+      isCommentQuestionModalVisible: false,
+      commentBoxVisible: true
     }
   },
   methods: {
@@ -330,8 +339,15 @@ export default {
     taskToggle: function (taskId, toggle) {
       this.ApiPut(`tasks/${taskId}/status`, { completed: toggle })
     },
-    addComment (text) {
-      this.ApiPost(`incidents/${this.incidentId}/comments`, { text: JSON.stringify(text) })
+    submitComment (editor) {
+      this.commentHtml = editor.getHTML()
+      this.commentJson = editor.getJSON()
+      this.isCommentQuestionModalVisible = true
+    },
+    addComment (publicBoolean) {
+      this.ApiPost(`incidents/${this.incidentId}/comments`, { text: JSON.stringify(this.commentJson), public: publicBoolean })
+      this.isCommentQuestionModalVisible = false
+      this.$refs.commentBox.resetContent()
     },
     ApiPut: function (url, data) {
       Vue.prototype.$api
@@ -393,6 +409,9 @@ export default {
     },
     setAllocatedSelecter: function () {
       this.allocatedSelected = this.incident.assignedTo
+    },
+    showCommentBox: function (show) {
+      this.commentBoxVisible = show
     },
     ...mapActions('user', {
       checkUserLoaded: 'checkLoaded'

@@ -1,5 +1,5 @@
 <template>
-  <Modal :title="task.name" :bigger="true" @close="close">
+  <modal :title="task.name" :bigger="true" @close="close">
     <div class="row">
       <div class="col-xl-12 col-sm-8 mb-4">
         <h5>
@@ -11,7 +11,7 @@
       </div>
     </div>
     <div class="row">
-      <div class="col-xl-12 col-sm-8 mb-2">
+      <div v-if="task.subtasks.length" class="col-xl-12 col-sm-8 mb-2">
         <h5>
           <i class="fas fa-tasks mb-3 mr-2"></i> Tasks
         </h5>
@@ -48,7 +48,7 @@
         </ul>
       </div>
     </div>
-  </Modal>
+  </modal>
 </template>
 
 <script>

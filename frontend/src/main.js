@@ -8,6 +8,7 @@ import VTooltip from 'v-tooltip'
 import vueMoment from 'vue-moment'
 import Vue2Filters from 'vue2-filters'
 import VueNoty from 'vuejs-noty'
+import { DropdownPlugin } from 'bootstrap-vue'
 
 import '@/assets/css/sb-admin-2.css'
 import '@/assets/css/temp.css'
@@ -18,10 +19,24 @@ Vue.prototype.$http = Axios
 Vue.use(VTooltip)
 Vue.use(vueMoment)
 Vue.use(Vue2Filters)
+Vue.use(DropdownPlugin)
 
 Vue.use(VueNoty, {
   timeout: 2000,
   progressBar: true
+})
+
+Vue.filter('formatSize', function (size) {
+  if (size > 1024 * 1024 * 1024 * 1024) {
+    return (size / 1024 / 1024 / 1024 / 1024).toFixed(2) + ' TB'
+  } else if (size > 1024 * 1024 * 1024) {
+    return (size / 1024 / 1024 / 1024).toFixed(2) + ' GB'
+  } else if (size > 1024 * 1024) {
+    return (size / 1024 / 1024).toFixed(2) + ' MB'
+  } else if (size > 1024) {
+    return (size / 1024).toFixed(2) + ' KB'
+  }
+  return size.toString() + ' B'
 })
 
 Vue.prototype.$http.defaults.baseURL = '/api/'

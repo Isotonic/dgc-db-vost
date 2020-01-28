@@ -54,6 +54,7 @@ from .user import ns_user
 from .group import ns_group
 from .deployment import ns_deployment
 from .incident import ns_incident
+from .comment import ns_comment
 from .task import ns_task
 from .subtask import ns_subtask
 from .public import ns_public
@@ -63,6 +64,7 @@ api.add_namespace(ns_user)
 api.add_namespace(ns_group)
 api.add_namespace(ns_deployment)
 api.add_namespace(ns_incident)
+api.add_namespace(ns_comment)
 api.add_namespace(ns_task)
 api.add_namespace(ns_subtask)
 api.add_namespace(ns_public)

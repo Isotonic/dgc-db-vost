@@ -1,7 +1,13 @@
 from app import db
-from app.models import TaskLog
 from flask_socketio import emit
-from .actions import task_action
+from app.models import IncidentLog, TaskLog
+from .actions import incident_action, task_action
+
+
+def delete_comment(comment, deleted_by):
+    incident = comment.incident
+    db.session.delete(comment)
+    incident_action(user=deleted_by, action_type=IncidentLog.action_values['delete_comment'], incident=incident)
 
 
 def delete_subtask(subtask, deleted_by):

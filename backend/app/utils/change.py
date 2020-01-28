@@ -53,8 +53,29 @@ def change_incident_public(incident, public, changed_by):
     incident.public = public
     #emit('change_public', {'public': incident.public, 'code': 200},
     #     room=f'{incident.deployment_id}-{incident.id}')
-    incident_action(user=changed_by, action_type=IncidentLog.action_values['public' if public else 'not_public'],
+    incident_action(user=changed_by, action_type=IncidentLog.action_values['marked_public' if public else 'marked_not_public'],
                     incident=incident)
+
+
+def change_comment_public(comment, public, changed_by):
+    if comment.public == public:
+        return False
+    comment.public = public
+    #emit('change_public', {'public': incident.public, 'code': 200},
+    #     room=f'{incident.deployment_id}-{incident.id}')
+    incident_action(user=changed_by, action_type=IncidentLog.action_values['marked_comment_public' if public else 'marked_comment_not_public'],
+                    incident=comment.incident, comment=comment)
+
+
+def change_comment_text(comment, text, changed_by):
+    if comment.text == text:
+        return False
+    comment.text = text
+    comment.edited_at = datetime.utcnow()
+    #emit('change_public', {'public': incident.public, 'code': 200},
+    #     room=f'{incident.deployment_id}-{incident.id}')
+    incident_action(user=changed_by, action_type=IncidentLog.action_values['update_comment'],
+                    incident=comment.incident, comment=comment)
 
 
 def change_task_status(task, status, changed_by):
