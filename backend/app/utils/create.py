@@ -79,7 +79,7 @@ def create_subtask(name, users, task, created_by):
     incident_action(user=created_by, action_type=IncidentLog.action_values['create_subtask'], incident=task.incident, task=task, extra=subtask.name)
     if len([m for m in task.subtasks if m.completed]) != len(task.subtasks) and  task.completed:
         change_task_status(task, False, created_by)
-    emit('create_incident_subtask', {'html': render_template('subtask.html', subtask=subtask), 'code': 200}, room=f'{task.incident.id}-{task.id}')
+    #emit('create_incident_subtask', {'html': render_template('subtask.html', subtask=subtask), 'code': 200}, room=f'{task.incident.id}-{task.id}')
     return task
 
 

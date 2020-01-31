@@ -57,7 +57,12 @@ user_model_without_group = api.model('User Without Group',
                         {'id': fields.Integer(description='ID of the user.'),
                          'firstname': fields.String(description='Firstname of the user.'),
                          'surname': fields.String(description='Surname of the user.'),
-                         'avatarUrl': fields.String(attribute=lambda x: x.get_avatar(), description='URL for the user\'s avatar.')})
+                         'avatarUrl': fields.String(attribute=lambda x: x.get_avatar() if x else '', description='URL for the user\'s avatar.')})
+
+group_model_without_users = api.model('Group Without Users',
+                        {'id': fields.Integer(description='ID of the group.'),
+                         'name': fields.String(description='Name of the group.'),
+                         'permissions': fields.List(fields.String, attribute=lambda x: x.get_permissions() if x else None, description='Group\'s permissions.')})
 
 group_model = api.model('Group',
                         {'id': fields.Integer(description='ID of the group.'),
@@ -70,7 +75,7 @@ user_model = api.model('User',
                          'firstname': fields.String(description='Firstname of the user.'),
                          'surname': fields.String(description='Surname of the user.'),
                          'avatarUrl': fields.String(attribute=lambda x: x.get_avatar(), description='URL for the user\'s avatar.'),
-                         'group': fields.Nested(group_model, skip_none=True, description='Group the user belongs to, can be empty too.')})
+                         'group': fields.Nested(group_model_without_users, skip_none=True, description='Group the user belongs to, can be empty too.')})
 
 
 deployment_model = api.model('Deployment',
@@ -91,7 +96,7 @@ activity_model = api.model('Activity',
 
 comment_model = api.model('Comment',
                             {'id': fields.Integer(description='ID of the comment.'),
-                             'user': fields.Nested(user_model, description='The user that sent the comment.'),
+                             'user': fields.Nested(user_model_without_group, description='The user that sent the comment.'),
                              'text': fields.String(description='Comment text, can be a stringified ProseMirror JSON object.'),
                              'public': fields.Boolean(required=True, description='If the comment will be viewable by the public once the incident is marked public.'),
                              'sentAt': fields.Integer(attribute=lambda x: int(x.sent_at.timestamp()), description='UTC timestamp of when the update was sent.'),
@@ -109,7 +114,7 @@ subtask_model = api.model('Subtask',
                              'completed': fields.Boolean(),
                              'createdAt': fields.Integer(attribute=lambda x: int(x.created_at.timestamp()), description='UTC timestamp of the subtask\'s creation.'),
                              'completedAt': fields.Integer(attribute=lambda x: int(x.created_at.timestamp()), description='UTC timestamp of the subtask\'s completion, will be null if it isn\'t completed.'),
-                             'assignedTo': fields.List(fields.Nested(user_model), attribute='assigned_to')})
+                             'assignedTo': fields.List(fields.Nested(user_model_without_group), attribute='assigned_to')})
 
 task_model = api.model('Task',
                         {'id': fields.Integer(),
@@ -118,7 +123,7 @@ task_model = api.model('Task',
                          'completed': fields.Boolean(),
                          'createdAt': fields.Integer(attribute=lambda x: int(x.created_at.timestamp()), description='UTC timestamp of the task\'s creation.'),
                          'completedAt': fields.Integer(attribute=lambda x: int(x.created_at.timestamp()), description='UTC timestamp of the task\'s completion, will be null if it isn\'t completed.'),
-                         'assignedTo': fields.List(fields.Nested(user_model), attribute='assigned_to'),
+                         'assignedTo': fields.List(fields.Nested(user_model_without_group), attribute='assigned_to'),
                          'subtasks': fields.List(fields.Nested(subtask_model)),
                          'comments': fields.List(fields.Nested(comment_model)),
                          'logs': fields.List(fields.Nested(activity_model))}) ##TODO Change to actions
@@ -169,4 +174,6 @@ text_model = api.model('Text', {'text': fields.String(description='Comment text,
 comment_edited_model = api.model('Commented Edited', {'text': fields.String(description='Comment text, can be a stringified ProseMirror JSON object.', required=True),
                                                       'editedAt': fields.Integer(attribute=lambda x: int(x.edited_at.timestamp()), description='UTC timestamp of when the update was last edited at.')})
 
-
+subtask_edited_model = api.model('Subtask Edited',
+                            {'name': fields.String(required=True),
+                             'assignedTo': fields.List(fields.Integer(), description='Optional IDs of the assigned users.')})

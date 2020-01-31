@@ -23,18 +23,20 @@
       </div>
     </div>
     <span v-if="comment.editedAt" class="text-xs font-weight-bold float-right mt-1 mb-2">Edited {{ comment.editedAt | moment("from", "now") }}</span>
-    <comment-question-modal v-if="isCommentQuestionModalVisible" :commentHtml="editor.getHTML()" v-show="isCommentQuestionModalVisible" :visible="isCommentQuestionModalVisible" @btnAction="deleteComment" @close="isCommentQuestionModalVisible = false">
+    <question-modal v-if="isCommentQuestionModalVisible" v-show="isCommentQuestionModalVisible" :visible="isCommentQuestionModalVisible" @btnAction="deleteComment" @close="isCommentQuestionModalVisible = false">
       <template v-slot:question>
         <span class="font-weight-bold">Are you sure you wish to delete this update?</span>
       </template>
-    </comment-question-modal>
+      <template v-slot:body>
+        <div class="editor__content comment-public-text mt-3" v-html="editor.getHTML()" />
+      </template>
+    </question-modal>
   </li>
 </template>
 
 <script>
-import Vue from 'vue'
 import CommentBox from './CommentBox'
-import CommentQuestionModal from './modals/CommentQuestion'
+import QuestionModal from './modals/Question'
 
 import { Editor, EditorContent } from 'tiptap'
 import {
@@ -60,7 +62,7 @@ export default {
   name: 'Comment',
   components: {
     CommentBox,
-    CommentQuestionModal,
+    QuestionModal,
     EditorContent
   },
   props: {
@@ -113,43 +115,16 @@ export default {
     editComment: function (editor) {
       this.cancelEdit()
       this.$emit('showCommentBox', true)
-      Vue.prototype.$api
-        .put(`comments/${this.comment.id}`, { text: JSON.stringify(editor.getJSON()) })
-        .then(r => r.data)
-        .then(data => {
-          Vue.noty.success(data)
-        })
-        .catch(error => {
-          console.log(error.response.data.message)
-          Vue.noty.error(error.response.data.message)
-        })
+      this.ApiPut(`comments/${this.comment.id}`, { text: JSON.stringify(editor.getJSON()) })
     },
     deleteComment: function (modalAnswer) {
       this.isCommentQuestionModalVisible = false
       if (modalAnswer) {
-        Vue.prototype.$api
-          .delete(`comments/${this.comment.id}`)
-          .then(r => r.data)
-          .then(data => {
-            Vue.noty.success(data)
-          })
-          .catch(error => {
-            console.log(error.response.data.message)
-            Vue.noty.error(error.response.data.message)
-          })
+        this.ApiDelete(`comments/${this.comment.id}`)
       }
     },
     togglePublic: function () {
-      Vue.prototype.$api
-        .put(`comments/${this.comment.id}/public`, { public: !this.comment.public })
-        .then(r => r.data)
-        .then(data => {
-          Vue.noty.success(data)
-        })
-        .catch(error => {
-          console.log(error.response.data.message)
-          Vue.noty.error(error.response.data.message)
-        })
+      this.ApiPut(`comments/${this.comment.id}/public`, { public: !this.comment.public })
     }
   },
   computed: {

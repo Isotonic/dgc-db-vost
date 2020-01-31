@@ -11,7 +11,7 @@
       </div>
     </div>
     <div class="row">
-      <div v-if="task.subtasks.length" class="col-xl-12 col-sm-8 mb-2">
+      <div v-if="task.subtasks" class="col-xl-12 col-sm-8 mb-2">
         <h5>
           <i class="fas fa-tasks mb-3 mr-2"></i> Tasks
         </h5>
@@ -26,7 +26,7 @@
           </div>
         </div>
         <ul class="list-group">
-          <task v-for="subtask in task.subtasks" :key="subtask.id" :task="subtask" :isSubtask="true"></task>
+          <Subtask v-for="subtask in orderBy(task.subtasks, 'createdAt')" :key="subtask.id" :subtask="subtask" :deploymentId="deploymentId" @toggle="toggle" />
         </ul>
       </div>
       <div class="col-xl-12 col-sm-8 mb-4">
@@ -44,7 +44,7 @@
           <i class="fas fa-clipboard-list mb-3 mr-2"></i> Actions
         </h5>
         <ul class="activity">
-          <activity v-for="action in orderBy(task.logs, 'occurredAt')" :key="action.id" :action="action"></activity>
+          <activity v-for="action in orderBy(task.logs, 'occurredAt', -1)" :key="action.id" :action="action"></activity>
         </ul>
       </div>
     </div>
@@ -54,27 +54,26 @@
 <script>
 import Vue2Filters from 'vue2-filters'
 
-import Task from '@/components/Task'
+import Subtask from '@/components/Subtask'
 import Comment from '@/components/Comment'
 import Activity from '@/components/Activity'
-import Modal from '@/components/utils/Modal'
+import { ModalMixin } from '@/utils/mixins'
 
 export default {
   name: 'TaskModal',
-  mixins: [Vue2Filters.mixin],
+  mixins: [Vue2Filters.mixin, ModalMixin],
   components: {
-    Task,
+    Subtask,
     Comment,
-    Activity,
-    Modal
+    Activity
   },
   props: {
-    visible: Boolean,
-    task: Object
+    task: Object,
+    deploymentId: Number
   },
   methods: {
-    close () {
-      this.$emit('close')
+    toggle (id, toogleBoolean) {
+      this.ApiPut(`subtasks/${id}/status`, { completed: toogleBoolean })
     }
   },
   computed: {
@@ -95,19 +94,6 @@ export default {
         'bg-warning': percentage >= 25 && percentage < 50,
         'bg-danger': percentage >= 0 && percentage < 25
       }
-    }
-  },
-  watch: {
-    visible: function () {
-      if (this.visible) {
-        return document.body.classList.add('modal-open')
-      }
-      document.body.classList.remove('modal-open')
-    }
-  },
-  created: function () {
-    if (this.visible) {
-      document.body.classList.add('modal-open')
     }
   }
 }

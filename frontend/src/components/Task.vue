@@ -1,20 +1,18 @@
 <template>
-  <li :class="['list-group-item', 'list-group-flush', task.completed ? 'text-muted' : '']" @click="open">
+  <li :class="['list-group-item', 'list-group-flush', 'task', task.completed ? 'text-muted' : '']" @click="open">
       <div class="row align-items-center no-gutters">
           <div class="col mr-2">
               <h6 class="mb-0">
-                  <strong>{{ task.name }} </strong><span class="text-xs">{{ taskStatusText }}</span>
+                  <strong>{{ task.name }} </strong>
+                  <span class="text-xs">{{ taskStatusText }}</span>
               </h6>
               <span v-if="task.assignedTo.length" class="text-xs">Assigned to {{ assignedToText }}</span>
           </div>
-          <div class="col-auto">
-            <div>
-              <input :class="['task-checkbox', task.completed ? 'text-success' : '']" type="checkbox" :checked="task.completed" @click="toggle">
-              <i v-if="isSubtask" class="fas fa-trash-alt btn-opacity text-danger" v-tooltip="`Delete ${task.name}`"></i>
-            </div>
+          <div>
+            <input  :class="['mr-2', task.completed ? 'text-success' : '']" type="checkbox" :checked="task.completed" @click="toggle">
           </div>
       </div>
-      <ol v-if="!isSubtask" class="map-card-actions-list list-unstyled">
+      <ol class="map-card-actions-list list-unstyled">
           <li class="map-card-actions">
             <div v-if="task.subtasks.length" v-tooltip="'Subtasks'">
               <i class="fas fa-tasks"></i>
@@ -30,18 +28,22 @@
 </template>
 
 <script>
+
 export default {
   name: 'Task',
   props: {
-    task: Object,
-    isSubtask: {
-      type: Boolean,
-      default: false
+    task: Object
+  },
+  data () {
+    return {
+      isQuestionModalVisible: false,
+      edit: false
     }
   },
   methods: {
     toggle: function () {
       event.stopPropagation()
+      this.edit = false
       this.$emit('toggle', this.task.id, !this.task.completed)
     },
     open () {
@@ -50,7 +52,7 @@ export default {
   },
   computed: {
     taskStatusText: function () {
-      return this.task.completedAt
+      return this.task.completed
         ? 'Completed ' + this.$moment.unix(this.task.completedAt).fromNow()
         : 'Created ' + this.$moment.unix(this.task.createdAt).fromNow()
     },

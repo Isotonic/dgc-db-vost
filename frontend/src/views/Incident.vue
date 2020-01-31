@@ -13,6 +13,23 @@
                 </span>
                 <span v-if="incident" class="text">{{ incident.open ? 'Mark As Complete' : 'Mark As Incomplete' }}</span>
             </button>
+            <button v-if="incident && !incident.public && hasPermission('mark_as_public')" class="btn btn-icon-split mr-2 btn-success" @click="changePublic(true)">
+                <span class="btn-icon">
+                    <i class="fas fa-eye"></i>
+                </span>
+                <span class="text">Show To Public</span>
+            </button>
+            <b-dropdown v-if="incident && incident.public && hasPermission('mark_as_public')" id="FlagDropdown" toggle-class="btn-icon-split btn-info dropdown-toggle text-white mr-2">
+              <template slot="button-content">
+                  <span class="btn-icon">
+                    <i class="fas fa-eye"></i>
+                  </span>
+                  <span class="text">Public View</span>
+              </template>
+              <b-dropdown-item :to="{ name: 'public incident', params: { incidentName: this.incidentName.replace(' ', '-'), incidentId: this.incidentId }}">View public page</b-dropdown-item>
+              <b-dropdown-item>Edit public page</b-dropdown-item>
+              <b-dropdown-item @click="changePublic(false)">Hide from public</b-dropdown-item>
+            </b-dropdown>
             <b-dropdown id="FlagDropdown" toggle-class="btn-icon-split btn-warning dropdown-toggle text-white">
               <template slot="button-content">
                   <span class="btn-icon">
@@ -23,7 +40,7 @@
               <b-dropdown-item>User</b-dropdown-item>
               <b-dropdown-item @click="isFlagToSupervisorModalVisible = true">Supervisor</b-dropdown-item>
             </b-dropdown>
-            <flag-to-supervisor-modal v-show="isFlagToSupervisorModalVisible" :visible="isFlagToSupervisorModalVisible" @close="isFlagToSupervisorModalVisible = false" />
+            <flag-to-supervisor-modal v-if="isFlagToSupervisorModalVisible" v-show="isFlagToSupervisorModalVisible" :visible="isFlagToSupervisorModalVisible" @close="isFlagToSupervisorModalVisible = false" />
           </div>
         </div>
         <div class="row">
@@ -32,7 +49,7 @@
               <vcl-list />
             </div>
             <div v-else class="card border-left-primary shadow h-100 py-2">
-              <b-dropdown id="ChangeAllocationDropdown" v-if="hasPermission('change_allocation')" size="xs" right menu-class="mt-3 width-110" variant="link" toggle-tag="a" @show="openedAllocationDropdown" @hide="closedAllocationDropdown">
+              <b-dropdown id="ChangeAllocationDropdown" v-if="hasPermission('change_allocation')" size="xs" right menu-class="mt-3 width-110" variant="link" toggle-tag="a" @shown="openedAllocationDropdown" @hidden="closedAllocationDropdown">
                 <template slot="button-content">
                   <a class="fas fa-cog incident-cog float-right" aria-haspopup="true" v-tooltip="'Change Priority'"></a>
                 </template>
@@ -176,9 +193,9 @@
                 <vcl-bullet-list :rows="3" />
               </div>
               <ul v-else class="list-group">
-                <task v-for="task in orderBy(incident.tasks, 'createdAt')" :key="task.id" :task="task" v-on:openModal="openTaskModal(task)" v-on:toggle="taskToggle"></task>
+                <task v-for="task in orderBy(incident.tasks, 'createdAt')" :key="task.id" :task="task" @openModal="openTaskModal(task)" @toggle="taskToggle"></task>
               </ul>
-              <task-modal v-if="task" v-show="isTaskModalVisible" :visible="isTaskModalVisible" @close="isTaskModalVisible = false" :task="task" />
+              <task-modal v-if="isTaskModalVisible" v-show="isTaskModalVisible" :visible="isTaskModalVisible" :deploymentId="this.deploymentId" @close="isTaskModalVisible = false" :task="task" />
               <div v-if="incident && !incident.tasks.length" class="card-body">
                 <p class="card-text text-center">No tasks currently.</p>
               </div>
@@ -188,10 +205,6 @@
             <div class="card shadow mb-4">
               <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 font-weight-bold text-primary">Map</h6>
-                <div v-if="incident && hasPermission('mark_as_public')" class="custom-switch" data-toggle="tooltip" title="Toggle public visibility">
-                  <input type="checkbox" class="custom-control-input" id="PublicToggle" autocomplete="off" :checked="incident.public" @click="togglePublic">
-                  <label class="custom-control-label" for="PublicToggle"></label>
-                </div>
               </div>
               <div class="card-body">
                 <div v-if="!incident">
@@ -217,11 +230,14 @@
                 </div>
                 <comment-box v-if="incident" v-show="commentBoxVisible" @submitComment="submitComment" ref="commentBox" />
               </div>
-              <comment-question-modal v-if="incident" v-show="isCommentQuestionModalVisible" :visible="isCommentQuestionModalVisible" :commentHtml="commentHtml" @btnAction="addComment" @close="isCommentQuestionModalVisible = false">
+              <question-modal v-if="isCommentQuestionModalVisible" v-show="isCommentQuestionModalVisible" :visible="isCommentQuestionModalVisible" @btnAction="addComment" @close="isCommentQuestionModalVisible = false">
                 <template v-slot:question>
                   <span class="font-weight-bold">Would you like to make this update viewable by the public{{ incident.public ? '?' : ' when the incident is marked public?'}}</span>
                 </template>
-              </comment-question-modal>
+                <template v-slot:body>
+                  <div class="editor__content comment-public-text mt-3" v-html="commentHtml" />
+                </template>
+              </question-modal>
             </div>
             <div class="card shadow mb-4">
               <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
@@ -243,7 +259,6 @@
 </template>
 
 <script>
-import Vue from 'vue'
 import L from 'leaflet'
 import Vue2Filters from 'vue2-filters'
 import Multiselect from 'vue-multiselect'
@@ -260,7 +275,7 @@ import CommentBox from '@/components/CommentBox'
 import FlagToSupervisorModal from '@/components/modals/FlagToSupervisor'
 import TaskModal from '@/components/modals/Task'
 import FileUploaderModal from '@/components/modals/FileUploader'
-import CommentQuestionModal from '@/components/modals/CommentQuestion'
+import QuestionModal from '@/components/modals/Question'
 
 // Fix for markers not loading.
 delete L.Icon.Default.prototype._getIconUrl
@@ -283,7 +298,7 @@ export default {
     FlagToSupervisorModal,
     TaskModal,
     FileUploaderModal,
-    CommentQuestionModal,
+    QuestionModal,
     LMap,
     LTileLayer,
     LMarker,
@@ -317,7 +332,8 @@ export default {
       isTaskModalVisible: false,
       isFileUploaderModalVisible: false,
       isCommentQuestionModalVisible: false,
-      commentBoxVisible: true
+      commentBoxVisible: true,
+      isHandlingAllocation: false
     }
   },
   methods: {
@@ -331,9 +347,9 @@ export default {
         this.ApiPut(`incidents/${this.incidentId}/priority`, { priority: priority })
       }
     },
-    togglePublic: function () {
+    changePublic: function (publicBoolean) {
       if (this.hasPermission('mark_as_public')) {
-        this.ApiPut(`incidents/${this.incidentId}/public`, { public: !this.incident.public })
+        this.ApiPut(`incidents/${this.incidentId}/public`, { public: publicBoolean })
       }
     },
     taskToggle: function (taskId, toggle) {
@@ -349,59 +365,37 @@ export default {
       this.isCommentQuestionModalVisible = false
       this.$refs.commentBox.resetContent()
     },
-    ApiPut: function (url, data) {
-      Vue.prototype.$api
-        .put(url, data)
-        .then(r => r.data)
-        .then(data => {
-          Vue.noty.success(data)
-        })
-        .catch(error => {
-          console.log(error.response.data.message)
-          Vue.noty.error(error.response.data.message)
-        })
-    },
-    ApiPost: function (url, data) {
-      Vue.prototype.$api
-        .post(url, data)
-        .then(r => r.data)
-        .then(data => {
-          Vue.noty.success(data)
-        })
-        .catch(error => {
-          console.log(error.response.data.message)
-          Vue.noty.error(error.response.data.message)
-        })
-    },
     openTaskModal: function (task) {
       this.task = task
       this.isTaskModalVisible = true
     },
     openedAllocationDropdown () {
       this.setAllocatedSelecter()
-      if (this.selectOptions.length) {
+      if (this.selectOptions.length || this.isSelectLoading) {
         return
       }
-      this.isSelectLoading = true
-      Vue.prototype.$api
-        .get('groups')
-        .then(r => r.data)
-        .then(data => {
-          this.selectOptions = data
-          const noGroupUsers = this.getDeploymentUsers.filter(user => !user.group)
-          if (noGroupUsers) { // TODO Test
-            this.selectOptions.push({ name: 'No Group', users: [noGroupUsers] })
-          }
-        })
-        .catch(error => {
-          console.log(error.response.data.message)
-          Vue.noty.error(error.response.data.message)
-        })
-      this.isSelectLoading = false
+      if (this.usersIsLoaded) {
+        this.selectOptions = this.getUsersGrouped
+      } else {
+        this.isSelectLoading = true
+        this.fetchUsers(this.deploymentId)
+          .then(() => {
+            this.selectOptions = this.getUsersGrouped
+            this.isSelectLoading = false
+          })
+          .catch(() => { this.isSelectLoading = false })
+      }
     },
     closedAllocationDropdown () {
+      if (this.isHandlingAllocation) {
+        return
+      }
+      this.isHandlingAllocation = true // Fix for Bootstrap-vue firing twice.
       if (this.didAllocatedChange) {
         this.ApiPut(`incidents/${this.incidentId}/allocation`, { users: this.allocatedSelected.map(user => user.id) })
+          .then(() => { this.isHandlingAllocation = false })
+      } else {
+        this.isHandlingAllocation = false
       }
     },
     formatSelect: function ({ firstname, surname }) {
@@ -415,6 +409,9 @@ export default {
     },
     ...mapActions('user', {
       checkUserLoaded: 'checkLoaded'
+    }),
+    ...mapActions('users', {
+      fetchUsers: 'fetchUsers'
     }),
     ...mapActions('deployments', {
       checkDeploymentsLoaded: 'checkLoaded'
@@ -463,6 +460,10 @@ export default {
     },
     ...mapGetters('user', {
       hasPermission: 'hasPermission'
+    }),
+    ...mapGetters('users', {
+      usersIsLoaded: 'isLoaded',
+      getUsersGrouped: 'getUsersGrouped'
     }),
     ...mapGetters('deployments', {
       getDeployment: 'getDeployment',

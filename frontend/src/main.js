@@ -3,6 +3,7 @@ import App from './App.vue'
 import store from './store'
 import router from './router'
 import authInterceptor from './utils/authInterceptor'
+import { ApiMixin } from './utils/mixins'
 import Axios from 'axios'
 import VTooltip from 'v-tooltip'
 import vueMoment from 'vue-moment'
@@ -38,6 +39,8 @@ Vue.filter('formatSize', function (size) {
   }
   return size.toString() + ' B'
 })
+
+Vue.mixin(ApiMixin)
 
 Vue.prototype.$http.defaults.baseURL = '/api/'
 

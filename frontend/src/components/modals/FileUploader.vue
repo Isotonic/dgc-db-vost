@@ -193,14 +193,14 @@
 </style>
 
 <script>
-import Modal from '@/components/utils/Modal'
+import { ModalMixin } from '@/utils/mixins'
 
 import ImageCompressor from '@xkeshi/image-compressor'
 import FileUpload from 'vue-upload-component'
 export default {
   name: 'FileUploader',
+  mixins: [ModalMixin],
   components: {
-    Modal,
     FileUpload
   },
   props: {
@@ -261,9 +261,6 @@ export default {
   },
 
   methods: {
-    close () {
-      this.$emit('close')
-    },
     inputFilter (newFile, oldFile, prevent) {
       if (newFile && !oldFile) {
         // Before adding a file

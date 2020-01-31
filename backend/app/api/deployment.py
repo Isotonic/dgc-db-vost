@@ -1,10 +1,10 @@
 from ..api import api
 from .utils.resource import Resource
 from .utils.namespace import Namespace
-from ..models import User, Group, Deployment
+from ..models import User, Group, Deployment, Incident
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from ..utils.create import create_deployment, create_incident
-from .utils.models import new_deployment_model, deployment_model, new_incident_model, incident_model, group_model
+from .utils.models import new_deployment_model, deployment_model, new_incident_model, incident_model, user_model, group_model
 
 ns_deployment = Namespace('Deployment', description='Used to carry out actions related to deployments.', path='/deployments', decorators=[jwt_required])
 
@@ -94,8 +94,8 @@ class IncidentsEndpoint(Resource):
         """
         current_user = User.query.filter_by(id=get_jwt_identity()).first()
         ns_deployment.has_deployment_access(current_user, deployment)
-        all_incidents = current_user.get_incidents(deployment.id)
-        return all_incidents, 200
+        #all_incidents = current_user.get_incidents(deployment.id)
+        return [Incident.query.filter_by(id=49).first()], 200
 
 
 @ns_deployment.route('/incidents/<int:id>/open')
@@ -158,7 +158,37 @@ class ClosedIncidentsEndpoint(Resource):
         return all_incidents, 200
 
 
-@ns_deployment.route('/incidents/<int:id>/groups')
+@ns_deployment.route('/<int:id>/users')
+@ns_deployment.doc(params={'id': 'Deployment ID.'})
+@ns_deployment.resolve_object('deployment', lambda kwargs: Deployment.query.get_or_error(kwargs.pop('id')))
+class DeploymentUsersEndpoint(Resource):
+    @ns_deployment.doc(security='access_token')
+    @ns_deployment.response(200, 'Success', [user_model])
+    @ns_deployment.response(401, 'Incorrect credentials')
+    @ns_deployment.response(403, 'Missing deployment access')
+    @ns_deployment.response(404, 'Deployment doesn\'t exist')
+    @api.marshal_with(user_model)
+    def get(self, deployment):
+        """
+                Returns all users with access to the deployment.
+        """
+        current_user = User.query.filter_by(id=get_jwt_identity()).first()
+        ns_deployment.has_deployment_access(current_user, deployment)
+        if not deployment.groups and not deployment.users:
+            all_users = User.query.all()
+            return all_users, 200
+        users = []
+        for x in deployment.groups:
+            for y in x.users:
+                if x not in users:
+                    users.append(y)
+        for x in deployment.users:
+            if x not in users:
+                users.append(x)
+        return users, 200
+
+
+@ns_deployment.route('/<int:id>/groups')
 @ns_deployment.doc(params={'id': 'Deployment ID.'})
 @ns_deployment.resolve_object('deployment', lambda kwargs: Deployment.query.get_or_error(kwargs.pop('id')))
 class DeploymentGroupsEndpoint(Resource):

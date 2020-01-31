@@ -100,6 +100,7 @@ const actions = {
     commit('deleteRefreshToken')
     dispatch('deployments/destroy', null, { root: true })
     dispatch('incidents/destroy', null, { root: true })
+    dispatch('groups/destroy', null, { root: true })
   }
 }
 

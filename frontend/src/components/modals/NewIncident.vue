@@ -99,35 +99,13 @@
 </template>
 
 <script>
-import Modal from '@/components/utils/Modal'
+import { ModalMixin } from '@/utils/mixins'
 
 export default {
   name: 'NewIncidentModal',
-  components: {
-    Modal
-  },
+  mixins: [ModalMixin],
   props: {
-    title: String,
-    visible: Boolean
-  },
-  methods: {
-    close () {
-      this.$emit('close')
-    }
-  },
-  watch: {
-    visible: function () {
-      if (this.visible) {
-        document.body.classList.add('modal-open')
-        return
-      }
-      document.body.classList.remove('modal-open')
-    }
-  },
-  created: function () {
-    if (this.visible) {
-      document.body.classList.add('modal-open')
-    }
+    title: String
   }
 }
 </script>
