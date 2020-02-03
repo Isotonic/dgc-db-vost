@@ -94,8 +94,8 @@ class IncidentsEndpoint(Resource):
         """
         current_user = User.query.filter_by(id=get_jwt_identity()).first()
         ns_deployment.has_deployment_access(current_user, deployment)
-        #all_incidents = current_user.get_incidents(deployment.id)
-        return [Incident.query.filter_by(id=49).first()], 200
+        all_incidents = current_user.get_incidents(deployment.id)
+        return all_incidents, 200
 
 
 @ns_deployment.route('/incidents/<int:id>/open')
