@@ -1,7 +1,7 @@
 from ..api import api
 from .utils.resource import Resource
 from .utils.namespace import Namespace
-from ..models import User, Group, Deployment, Incident
+from ..models import User, Group, Deployment
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from ..utils.create import create_deployment, create_incident
 from .utils.models import new_deployment_model, deployment_model, new_incident_model, incident_model, user_model, group_model
@@ -27,6 +27,7 @@ class DeploymentsEndpoint(Resource):
     @ns_deployment.expect(new_deployment_model, validate=True)
     @ns_deployment.doc(security='access_token')
     @ns_deployment.response(200, 'Success', deployment_model)
+    @ns_deployment.response(400, 'Name is empty')
     @ns_deployment.response(401, 'Incorrect credentials')
     @ns_deployment.response(403, 'Missing Supervisor permission')
     @api.marshal_with(deployment_model)
@@ -38,6 +39,8 @@ class DeploymentsEndpoint(Resource):
         current_user = User.query.filter_by(id=get_jwt_identity()).first()
         ns_deployment.has_permission(current_user, 'supervisor')
         created_deployment = create_deployment(payload['name'], payload['description'], payload['groups'], payload['users'], current_user)
+        if created_deployment == False:
+            ns_deployment.abort(400, 'Name is empty')
         return created_deployment, 200
 
 
@@ -63,6 +66,7 @@ class DeploymentEndpoint(Resource):
     @ns_deployment.expect(new_incident_model, validate=True)
     @ns_deployment.doc(security='access_token')
     @ns_deployment.response(200, 'Success', incident_model)
+    @ns_deployment.response(400, 'Name is empty')
     @ns_deployment.response(401, 'Incorrect credentials')
     @ns_deployment.response(403, 'Missing deployment access')
     @ns_deployment.response(404, 'Deployment doesn\'t exist')
@@ -75,6 +79,8 @@ class DeploymentEndpoint(Resource):
         current_user = User.query.filter_by(id=get_jwt_identity()).first()
 
         created_incident = create_incident(payload['name'], payload['description'], payload['location'], payload['reported_via'], payload['reference'], deployment, current_user)
+        if created_incident == False:
+            ns_deployment.abort(400, 'Name is empty')
         return created_incident, 200
 
 

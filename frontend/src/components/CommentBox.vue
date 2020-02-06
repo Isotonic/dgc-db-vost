@@ -66,7 +66,7 @@
     </editor-menu-bubble>
     <editor-content :class="['editor__content', submittedEmpty ? 'comment-box-empty' : '']" :editor="editor" />
     <i v-if="editing" class="fas fa-times float-right comment-cancel-icon" @click="cancelEdit" v-tooltip="'Cancel'"></i>
-    <i :class="['fas', 'float-right', 'comment-icon', submittedEmpty ? 'comment-empty' : '', editing ? 'fa-check' : 'fa-paper-plane']" @click="submitComment" v-tooltip="editing ? 'Update' : 'Post'"></i>
+    <i :class="['fas', 'float-right', 'comment-icon', submittedEmpty ? 'comment-empty' : '', editing ? ['fa-check', 'hover'] : 'fa-paper-plane']" @click="submitComment" v-tooltip="editing ? 'Update' : 'Post'"></i>
   </div>
 </template>
 
@@ -107,6 +107,10 @@ export default {
     },
     existingContent: {
       default: ''
+    },
+    placeholder: {
+      type: String,
+      default: 'Add an update...'
     }
   },
   data () {
@@ -129,7 +133,7 @@ export default {
           new Underline(),
           new History(),
           new Placeholder({
-            emptyNodeText: 'Add an update...'
+            emptyNodeText: this.placeholder
           })
         ],
         content: this.existingContent,

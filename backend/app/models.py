@@ -411,7 +411,7 @@ class TaskComment(db.Model):
     user = db.relationship('User', backref='task_comments', lazy='selectin')
     text = db.Column(db.String())
     sent_at = db.Column(db.DateTime, default=datetime.utcnow)
-    edited_at = db.Column(db.DateTime, default=datetime.utcnow)
+    edited_at = db.Column(db.DateTime)
 
     def __repr__(self):
         return f'{self.text}'

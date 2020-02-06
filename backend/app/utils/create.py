@@ -9,6 +9,8 @@ from app.models import User, Group, Deployment, Incident, IncidentTask, Incident
 
 
 def create_user(firstname, surname, email, groupid, created_by):
+    if firstname == '' or surname == '' or email == '':
+        return False
     user = User(firstname=firstname, surname=surname, email=email, group_id=groupid)
     db.session.add(user)
     db.session.commit()
@@ -22,6 +24,8 @@ def create_user(firstname, surname, email, groupid, created_by):
 
 
 def create_group(name, permission_list, created_by):
+    if name == '':
+        return False
     group = Group(name=name)
     group.set_permissions(permission_list)
     db.session.add(group)
@@ -34,6 +38,8 @@ def create_group(name, permission_list, created_by):
 
 
 def create_deployment(name, description, group_ids, user_ids, created_by):
+    if name == '':
+        return False
     groups = Group.query.filter(Group.id.in_(group_ids)).all()
     users = User.query.filter(User.id.in_(user_ids)).all()
     deployment = Deployment(name=name, description=description, groups=groups, users=users)
@@ -48,6 +54,8 @@ def create_deployment(name, description, group_ids, user_ids, created_by):
 
 
 def create_incident(name, description, incident_type, location, longitude, latitude, reported_via, reference, deployment, created_by):
+    if name == '':
+        return False
     incident = Incident(name=name, description=description, supervisor_approved=created_by.has_permission('supervisor'), priority='Standard', incident_type=incident_type, location=location, longitude=longitude, latitude=latitude, reported_via=reported_via,
                         reference=reference, deployment=deployment, created_by=created_by.id)
     db.session.add(incident)
@@ -59,17 +67,21 @@ def create_incident(name, description, incident_type, location, longitude, latit
 
 
 def create_task(name, users, description, incident, created_by):
+    if name == '':
+        return False
     task = IncidentTask(name=name, assigned_to=users, description=description, incident=incident)
     db.session.add(task)
     db.session.commit()
-    emit('create_incident_task', {'html': render_template('task.html', task=task), 'code': 200},
-         room=f'{incident.deployment_id}-{incident.id}')
+    #emit('create_incident_task', {'html': render_template('task.html', task=task), 'code': 200},
+    #     room=f'{incident.deployment_id}-{incident.id}')
     incident_action(user=created_by, action_type=IncidentLog.action_values['create_task'],
                    incident=incident, task=task, target_users=users)
     return task
 
 
 def create_subtask(name, users, task, created_by):
+    if name == '':
+        return False
     subtask = IncidentSubTask(name=name, assigned_to=users, task=task)
     db.session.add(task)
     db.session.commit()
@@ -84,11 +96,13 @@ def create_subtask(name, users, task, created_by):
 
 
 def create_task_comment(text, task, added_by):
+    if task == '':
+        return False
     comment = TaskComment(text=text, user=added_by, task=task)
     db.session.add(comment)
     db.session.commit()
-    emit('create_task_comment', {'html': render_template('comment.html', comment=comment), 'code': 200},
-         room=f'{task.incident.id}-{task.id}')
+    #emit('create_task_comment', {'html': render_template('comment.html', comment=comment), 'code': 200},
+    #     room=f'{task.incident.id}-{task.id}')
     task_action(user=added_by, action_type=TaskLog.action_values['add_comment'],
                    task=task)
     incident_action(user=added_by, action_type=IncidentLog.action_values['add_subtask_comment'], incident=task.incident, task=task)
@@ -96,6 +110,8 @@ def create_task_comment(text, task, added_by):
 
 
 def create_comment(text, public, incident, added_by):
+    if text == '':
+        return False
     comment = IncidentComment(text=text, public=public, user_id=added_by.id, incident=incident)
     db.session.add(comment)
     db.session.commit()

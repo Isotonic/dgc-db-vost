@@ -29,6 +29,11 @@ new_comment_model = api.model('New Comment',
                               {'text': fields.String(required=True, description='Comment text.'),
                                'public': fields.Boolean(required=True, description='If the comment will be viewable by the public once the incident is marked public.')})
 
+new_task_model = api.model('New Task',
+                           {'name': fields.String(required=True, description='Task name'),
+                            'description': fields.String(description='Optional description of the task'),
+                            'users': fields.List(fields.Integer, description='Optional list of user IDs assigned to the task.')})
+
 new_incident_model = api.model('Create Incident',
                                       {'name': fields.String(required=True),
                                        'description': fields.String(required=True),
@@ -40,7 +45,7 @@ new_incident_model = api.model('Create Incident',
 
 point_geometry_model = api.model('Point Geometry', {
     'type': fields.String(default='Point'),
-    'coordinates': fields.List(fields.Integer, attribute=lambda x: x.get_coordinates(), description='Latitude and longitude.', type='Array')
+    'coordinates': fields.List(fields.Float, attribute=lambda x: x.get_coordinates(), description='Latitude and longitude.', type='Array')
 })
 
 point_properties_model = api.model('Point Properties', {
@@ -116,6 +121,13 @@ subtask_model = api.model('Subtask',
                              'completedAt': fields.Integer(attribute=lambda x: int(x.created_at.timestamp()), description='UTC timestamp of the subtask\'s completion, will be null if it isn\'t completed.'),
                              'assignedTo': fields.List(fields.Nested(user_model_without_group), attribute='assigned_to')})
 
+task_comment_model = api.model('Task Comment',
+                            {'id': fields.Integer(description='ID of the comment.'),
+                             'user': fields.Nested(user_model_without_group, description='The user that sent the comment.'),
+                             'text': fields.String(description='Comment text, can be a stringified ProseMirror JSON object.'),
+                             'sentAt': fields.Integer(attribute=lambda x: int(x.sent_at.timestamp()), description='UTC timestamp of when the update was sent.'),
+                             'editedAt': fields.Integer(attribute=lambda x: int(x.edited_at.timestamp()) if x.edited_at else None, description='UTC timestamp of when the update was last edited at, can be null.')})
+
 task_model = api.model('Task',
                         {'id': fields.Integer(),
                          'name': fields.String(),
@@ -125,7 +137,7 @@ task_model = api.model('Task',
                          'completedAt': fields.Integer(attribute=lambda x: int(x.created_at.timestamp()), description='UTC timestamp of the task\'s completion, will be null if it isn\'t completed.'),
                          'assignedTo': fields.List(fields.Nested(user_model_without_group), attribute='assigned_to'),
                          'subtasks': fields.List(fields.Nested(subtask_model)),
-                         'comments': fields.List(fields.Nested(comment_model)),
+                         'comments': fields.List(fields.Nested(task_comment_model)),
                          'logs': fields.List(fields.Nested(activity_model))}) ##TODO Change to actions
 
 incident_model = api.model('Incident',

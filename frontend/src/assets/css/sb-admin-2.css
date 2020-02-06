@@ -1341,10 +1341,6 @@ pre code {
   }
 }
 
-.text-default {
-  color: #32325d !important;
-}
-
 .table {
   width: 100%;
   margin-bottom: 1rem;
@@ -2867,6 +2863,13 @@ fieldset:disabled a.btn {
 
 .btn-sm, .btn-group-sm > .btn {
   padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  border-radius: 0.2rem;
+}
+
+.btn-m, .btn-group-m > .btn {
+  padding: 0.25rem 1.5rem;
   font-size: 0.875rem;
   line-height: 1.5;
   border-radius: 0.2rem;
@@ -5663,7 +5666,7 @@ a.close.disabled {
 
 @media (min-width: 576px) {
   .modal-bigger {
-    max-width: 700px !important;
+    max-width: 800px !important;
   }
   .modal-dialog {
     max-width: 500px;
@@ -9826,6 +9829,10 @@ a:focus {
 
 .text-s {
   font-size: .85rem;
+}
+
+.text-m {
+  font-size: 1rem;
 }
 
 .text-lg {

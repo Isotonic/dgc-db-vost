@@ -12,20 +12,19 @@
       <div class="update-body">
         <i v-if="comment.public" class="fas fa-eye mr-1" v-tooltip="publicIncident ? 'Viewable by the public' : 'Viewable by the public when incident is marked public'"></i>
         {{ comment.sentAt | moment("from", "now") }}
-        <b-dropdown variant="link" size="xs" toggle-tag="div">
+        <b-dropdown variant="link" size="xs" toggle-tag="div" offset="-70">
           <template slot="button-content">
               <i class="fas fa-ellipsis-v text-white ml-1"></i>
           </template>
-          <b-dropdown-item v-if="isUsersComment" @click="editable">Edit update</b-dropdown-item>
-          <b-dropdown-item @click="isCommentQuestionModalVisible = true">Delete update</b-dropdown-item>
-          <b-dropdown-item @click="togglePublic">{{ comment.public ? 'Hide update from public' : 'Show update to public'}}</b-dropdown-item>
+          <b-dropdown-item v-if="isUsersComment" @click="editable">Edit comment</b-dropdown-item>
+          <b-dropdown-item @click="isCommentQuestionModalVisible = true">Delete comment</b-dropdown-item>
         </b-dropdown>
       </div>
     </div>
     <span v-if="comment.editedAt" class="text-xs font-weight-bold half-opacity float-right mt-1 mb-2">Edited {{ comment.editedAt | moment("from", "now") }}</span>
     <question-modal v-if="isCommentQuestionModalVisible" v-show="isCommentQuestionModalVisible" :visible="isCommentQuestionModalVisible" @btnAction="deleteComment" @close="isCommentQuestionModalVisible = false">
       <template v-slot:question>
-        <span class="font-weight-bold">Are you sure you wish to delete this update?</span>
+        <span class="font-weight-bold">Are you sure you wish to delete this comment?</span>
       </template>
       <template v-slot:body>
         <div class="editor__content comment-public-text mt-3" v-html="editor.getHTML()" />
@@ -59,7 +58,7 @@ import {
 } from 'tiptap-extensions'
 
 export default {
-  name: 'Comment',
+  name: 'TaskComment',
   components: {
     CommentBox,
     QuestionModal,

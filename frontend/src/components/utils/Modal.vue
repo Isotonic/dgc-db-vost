@@ -13,7 +13,7 @@
                     <span :aria-hidden="!visible" @click="close">×</span>
                   </button>
                 </div>
-                <div class="card-body">
+                <div :class="['card-body', bgLight ? 'bg-light': '']">
                   <slot></slot>
                 </div>
               </div>
@@ -32,6 +32,10 @@ export default {
     title: String,
     visible: Boolean,
     bigger: {
+      type: Boolean,
+      default: false
+    },
+    bgLight: {
       type: Boolean,
       default: false
     }

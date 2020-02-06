@@ -25,6 +25,7 @@ class UsersEndpoint(Resource):
     @ns_user.expect(create_user_modal, validate=True)
     @ns_user.doc(security='access_token')
     @ns_user.response(200, 'Success', user_model)
+    @ns_user.response(400, 'Name is empty')
     @ns_user.response(401, 'Incorrect credentials')
     @ns_user.response(403, 'Missing Supervisor permission')
     @api.marshal_with(user_model)
@@ -47,6 +48,8 @@ class UsersEndpoint(Resource):
                 ns_user.abort(401, 'Group doesn\'t exist')
 
         created_user = create_user(payload['firstname'], payload['surname'], payload['email'], group.id, current_user)
+        if created_user == False:
+            ns_user.abort(400, 'Name is empty')
         return created_user, 200
 
 

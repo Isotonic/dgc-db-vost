@@ -2,10 +2,10 @@ from ..api import api
 from ..models import User, Incident
 from .utils.resource import Resource
 from .utils.namespace import Namespace
-from ..utils.create import create_comment
+from ..utils.create import create_comment, create_task
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from ..utils.change import change_incident_status, change_incident_allocation, change_incident_priority, change_incident_public
-from .utils.models import id_model, incident_model, status_model, user_model, priority_model, public_model, comment_model, new_comment_model
+from .utils.models import id_model, incident_model, status_model, user_model, priority_model, public_model, comment_model, new_comment_model, task_model, new_task_model
 
 ns_incident = Namespace('Incident', description='Used to carry out actions related to incidents.', path='/incidents', decorators=[jwt_required])
 
@@ -33,7 +33,6 @@ class IncidentEndpoint(Resource):
 @ns_incident.resolve_object('incident', lambda kwargs: Incident.query.get_or_error(kwargs.pop('id')))
 class StatusEndpoint(Resource):
     @ns_incident.doc(security='access_token')
-    @ns_incident.expect(status_model, validate=True)
     @ns_incident.response(200, 'Success', status_model)
     @ns_incident.response(401, 'Incorrect credentials')
     @ns_incident.response(403, 'Missing incident access')
@@ -75,7 +74,6 @@ class StatusEndpoint(Resource):
 @ns_incident.resolve_object('incident', lambda kwargs: Incident.query.get_or_error(kwargs.pop('id')))
 class AllocationEndpoint(Resource):
     @ns_incident.doc(security='access_token')
-    @ns_incident.expect(id_model, validate=True)
     @ns_incident.response(200, 'Success', [user_model])
     @ns_incident.response(401, 'Incorrect credentials')
     @ns_incident.response(403, 'Missing incident access')
@@ -118,7 +116,6 @@ class AllocationEndpoint(Resource):
 @ns_incident.resolve_object('incident', lambda kwargs: Incident.query.get_or_error(kwargs.pop('id')))
 class PriorityEndpoint(Resource):
     @ns_incident.doc(security='access_token')
-    @ns_incident.expect(priority_model, validate=True)
     @ns_incident.response(200, 'Success', priority_model)
     @ns_incident.response(401, 'Incorrect credentials')
     @ns_incident.response(403, 'Missing incident access')
@@ -163,7 +160,6 @@ class PriorityEndpoint(Resource):
 @ns_incident.resolve_object('incident', lambda kwargs: Incident.query.get_or_error(kwargs.pop('id')))
 class Public(Resource):
     @ns_incident.doc(security='access_token')
-    @ns_incident.expect(public_model, validate=True)
     @ns_incident.response(200, 'Success', public_model)
     @ns_incident.response(401, 'Incorrect credentials')
     @ns_incident.response(403, 'Missing incident access')
@@ -204,9 +200,8 @@ class Public(Resource):
 @ns_incident.route('/<int:id>/comments')
 @ns_incident.doc(params={'id': 'Incident ID.'})
 @ns_incident.resolve_object('incident', lambda kwargs: Incident.query.get_or_error(kwargs.pop('id')))
-class Public(Resource):
+class Comments(Resource):
     @ns_incident.doc(security='access_token')
-    @ns_incident.expect(comment_model, validate=True)
     @ns_incident.response(200, 'Success', comment_model)
     @ns_incident.response(401, 'Incorrect credentials')
     @ns_incident.response(403, 'Missing incident access')
@@ -225,6 +220,7 @@ class Public(Resource):
     @ns_incident.expect(new_comment_model, validate=True)
     @ns_incident.response(200, 'Success', comment_model)
     @ns_incident.response(400, 'Input payload validation failed')
+    @ns_incident.response(400, 'Text is empty')
     @ns_incident.response(401, 'Incorrect credentials')
     @ns_incident.response(403, 'Missing incident access')
     @ns_incident.response(404, 'Incident doesn\'t exist')
@@ -236,4 +232,53 @@ class Public(Resource):
         current_user = User.query.filter_by(id=get_jwt_identity()).first()
         ns_incident.has_incident_access(current_user, incident)
         comment = create_comment(api.payload['text'], api.payload['public'], incident, current_user)
+        if comment is False:
+            ns_incident.abort(400, 'Text is empty')
         return comment, 200
+
+
+@ns_incident.route('/<int:id>/tasks')
+@ns_incident.doc(params={'id': 'Incident ID.'})
+@ns_incident.resolve_object('incident', lambda kwargs: Incident.query.get_or_error(kwargs.pop('id')))
+class Tasks(Resource):
+    @ns_incident.doc(security='access_token')
+    @ns_incident.response(200, 'Success', comment_model)
+    @ns_incident.response(401, 'Incorrect credentials')
+    @ns_incident.response(403, 'Missing incident access')
+    @ns_incident.response(404, 'Incident doesn\'t exist')
+    @api.marshal_with(task_model)
+    def get(self, incident):
+        """
+                Returns incident's tasks.
+        """
+        current_user = User.query.filter_by(id=get_jwt_identity()).first()
+        ns_incident.has_incident_access(current_user, incident)
+        return incident.tasks, 200
+
+
+    @ns_incident.doc(security='access_token')
+    @ns_incident.expect(new_task_model, validate=True)
+    @ns_incident.response(200, 'Success', task_model)
+    @ns_incident.response(400, 'Input payload validation failed')
+    @ns_incident.response(400, 'Name is empty')
+    @ns_incident.response(401, 'Incorrect credentials')
+    @ns_incident.response(403, 'Missing incident access')
+    @ns_incident.response(404, 'Incident doesn\'t exist')
+    @api.marshal_with(task_model)
+    def post(self, incident):
+        """
+                Adds a new task to the incident.
+        """
+        current_user = User.query.filter_by(id=get_jwt_identity()).first()
+        ns_incident.has_incident_access(current_user, incident)
+        users = None
+        description = None
+        if 'users' in api.payload.keys():
+            users = [m for m in User.query.filter(User.id.in_(api.payload['users'])).all() if m.has_deployment_access(incident.deployment)]
+        if 'description' in api.payload.keys():
+            description = api.payload['description']
+        task = create_task(api.payload['name'], users, description, incident, current_user)
+        if task is False:
+            ns_incident.abort(400, 'Name is empty')
+        return task, 200
+

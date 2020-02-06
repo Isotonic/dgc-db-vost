@@ -6,15 +6,19 @@
                   <input :class="['mr-2', subtask.completed ? 'text-success' : '']" type="checkbox" :checked="subtask.completed" @click="toggle">
                   <strong v-if="!edit">{{ subtask.name }} </strong>
                   <input v-else v-model="newName" type="text" required="required" class="form-control-sm was-validated mr-2">
-                  <span class="text-xs">{{ subtaskStatusText }}</span>
+                  <span class="text-xs ml-1">{{ subtaskStatusText }}</span>
               </h6>
               <span v-if="subtask.assignedTo.length && !edit" class="text-xs ml-4">Assigned to {{ assignedToText }}</span>
-              <multiselect v-if="edit" v-model="assignedSelected" :options="selectOptions" :multiple="true" group-values="users" group-label="name" :group-select="true" placeholder="Type to search" track-by="id" :custom-label="formatSelect" :closeOnSelect="false" openDirection="bottom" :limit="0" :limitText="count => `${count} users assigned.`" :blockKeys="['Delete']" selectedLabel="Assigned" :loading="isSelectLoading">
-                <template v-if="didAssignedChange" slot="clear">
-                  <div class="multiselect__clear" v-tooltip.right="'Reset changes'" @mousedown.prevent.stop="setAssignedSelecter"></div>
-                </template>
-                <span slot="noResult">Oops! No user found.</span>
-              </multiselect>
+              <div class="d-flex">
+                <multiselect v-if="edit" v-model="assignedSelected" :options="selectOptions" :multiple="true" group-values="users" group-label="name" :group-select="true" placeholder="Type to search" track-by="id" :custom-label="formatSelect" :closeOnSelect="false" openDirection="bottom" :limit="0" :limitText="count => `${count} users assigned.`" :blockKeys="['Delete']" selectedLabel="Assigned" :loading="isSelectLoading">
+                  <template v-if="didAssignedChange" slot="clear">
+                    <div class="multiselect__clear" v-tooltip.right="'Reset changes'" @mousedown.prevent.stop="setAssignedSelecter"></div>
+                  </template>
+                  <span slot="noResult">Oops! No user found.</span>
+                </multiselect>
+                <i v-if="edit" class="fas fa-check hover ml-3 text-black subtask-edit" @click="updateSubtask" v-tooltip="'Update'"></i>
+                <i v-if="edit" class="fas fa-times ml-3 text-black subtask-edit" @click="edit = false" v-tooltip="'Cancel'"></i>
+              </div>
           </div>
           <div>
             <b-dropdown v-if="!edit" variant="link" size="xs" toggle-tag="div" offset="-1050%">
@@ -24,11 +28,9 @@
               <b-dropdown-item @click="setEdit">Edit subtask</b-dropdown-item>
               <b-dropdown-item @click="isQuestionModalVisible = true">Delete subtask</b-dropdown-item>
             </b-dropdown>
-            <i v-if="edit" class="fas fa-times float-right ml-2 text-default" @click="edit = false" v-tooltip="'Cancel'"></i>
-            <i v-if="edit" class="fas fa-check float-right text-default" @click="updateSubtask" v-tooltip="'Update'"></i>
             <question-modal v-if="isQuestionModalVisible" v-show="isQuestionModalVisible" :visible="isQuestionModalVisible" @btnAction="deleteSubtask" @close="isQuestionModalVisible = false">
               <template v-slot:question>
-                <span class="font-weight-bold text-default">Are you sure you wish to delete this subtask?</span>
+                <span class="font-weight-bold text-black">Are you sure you wish to delete this subtask?</span>
               </template>
               <template v-slot:body>
               <div class="delete-subtask">
@@ -46,8 +48,8 @@
 </template>
 
 <script>
-import { mapGetters, mapActions } from 'vuex'
 import Multiselect from 'vue-multiselect'
+import { mapGetters, mapActions } from 'vuex'
 
 import QuestionModal from './modals/Question'
 

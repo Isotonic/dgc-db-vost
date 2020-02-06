@@ -9,6 +9,7 @@ import VTooltip from 'v-tooltip'
 import vueMoment from 'vue-moment'
 import Vue2Filters from 'vue2-filters'
 import VueNoty from 'vuejs-noty'
+import TextareaAutosize from 'vue-textarea-autosize'
 import { DropdownPlugin } from 'bootstrap-vue'
 
 import '@/assets/css/sb-admin-2.css'
@@ -20,6 +21,7 @@ Vue.prototype.$http = Axios
 Vue.use(VTooltip)
 Vue.use(vueMoment)
 Vue.use(Vue2Filters)
+Vue.use(TextareaAutosize)
 Vue.use(DropdownPlugin)
 
 Vue.use(VueNoty, {
@@ -42,7 +44,7 @@ Vue.filter('formatSize', function (size) {
 
 Vue.mixin(ApiMixin)
 
-Vue.prototype.$http.defaults.baseURL = '/api/'
+Vue.prototype.$http.defaults.baseURL = process.env.NODE_ENV === 'development' ? 'http://localhost:5000/api/' : '/api/'
 
 Vue.prototype.$api = Vue.prototype.$http.create({
   withCredentials: false,

@@ -87,9 +87,9 @@ def change_task_status(task, status, changed_by):
         task.completed_at = None
         action_type = 'incomplete_task'
     task.incident.last_updated = datetime.utcnow()
-    emit('change_task_status', {'id': task.id, 'completed': task.completed,
-                                'timestamp': task.completed_at.timestamp() if task.completed else task.created_at.timestamp(),
-                                'code': 200}, room=f'{task.incident.deployment_id}-{task.incident.id}')
+    #emit('change_task_status', {'id': task.id, 'completed': task.completed,
+    #                            'timestamp': task.completed_at.timestamp() if task.completed else task.created_at.timestamp(),
+    #                            'code': 200}, room=f'{task.incident.deployment_id}-{task.incident.id}')
     incident_action(user=changed_by, action_type=IncidentLog.action_values[action_type],
                     incident=task.incident, task=task)
 
@@ -108,8 +108,10 @@ def change_task_description(task, description, changed_by):
 
 
 def change_task_assigned(task, assigned_to, changed_by):
-    if Counter(assigned_to) == Counter(task.assigned_to):
+    if set(assigned_to) == set(task.assigned_to):
         return False
+    if any([m for m in assigned_to if m not in task.incident.assigned_to]):
+        change_incident_allocation(task.incident, assigned_to + task.incident.assigned_to, assigned_to)
     added = list(set(assigned_to) - set(task.assigned_to))
     removed = list(set(task.assigned_to) - set(assigned_to))
     task.assigned_to = assigned_to

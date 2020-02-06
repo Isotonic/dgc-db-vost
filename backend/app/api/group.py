@@ -27,6 +27,7 @@ class GroupsEndpoint(Resource):
     @ns_group.expect(new_group_model, validate=True)
     @ns_group.doc(security='access_token')
     @ns_group.response(200, 'Success', group_model)
+    @ns_group.response(400, 'Name is empty')
     @ns_group.response(401, 'Incorrect credentials')
     @ns_group.response(403, 'Missing Supervisor permission')
     @api.marshal_with(group_model)
@@ -44,6 +45,8 @@ class GroupsEndpoint(Resource):
             ns_group.abort(409, 'Group already exists')
 
         created_group = create_group(payload['name'], payload['permissions'], current_user)
+        if created_group == False:
+            ns_group.abort(400, 'Name is empty')
         return created_group, 200
 
 

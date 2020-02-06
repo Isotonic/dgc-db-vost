@@ -10,6 +10,14 @@ def delete_comment(comment, deleted_by):
     incident_action(user=deleted_by, action_type=IncidentLog.action_values['delete_comment'], incident=incident)
 
 
+def delete_task(task, deleted_by):
+    incident = task.incident
+    db.session.delete(task)
+    #emit('delete_subtask', {'id': subtask.id, 'code': 200},
+    #     room=f'{task.incident.deployment_id}-{task.incident.id}-{task.id}')
+    incident_action(user=deleted_by, action_type=IncidentLog.action_values['delete_task'], incident=incident)
+
+
 def delete_subtask(subtask, deleted_by):
     task = subtask.task
     db.session.delete(subtask)
