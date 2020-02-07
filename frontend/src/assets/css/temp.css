@@ -917,7 +917,7 @@ li[data-done=false] {
 }
 
 .comment-box-empty > .ProseMirror {
-  border: 1.5px solid #e74c3c !important;
+  border: 1.5px solid #f44336 !important;
 }
 
 .comment-icon {
@@ -943,17 +943,17 @@ li[data-done=false] {
 
 .fas.fa-check.hover:hover:not(.comment-empty) {
   cursor: pointer;
-  color: #1cc88a !important;
+  color: #02df90 !important;
 }
 
 .fas.fa-times:hover {
   cursor: pointer;
-  color: #e74c3c !important;
+  color: #f44336 !important;
 }
 
 .comment-empty:hover {
   cursor: pointer;
-  color: #e74c3c !important;
+  color: #f44336 !important;
 }
 
 .update-log-text > .editor__content > .ProseMirror {
@@ -1007,7 +1007,7 @@ li[data-done=false] {
 }
 
 .hover-danger:hover {
-  color: #e74c3c !important;
+  color: #f44336 !important;
   cursor: pointer;
 }
 
