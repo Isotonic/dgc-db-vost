@@ -104,7 +104,7 @@ class IncidentsEndpoint(Resource):
         return all_incidents, 200
 
 
-@ns_deployment.route('/incidents/<int:id>/open')
+@ns_deployment.route('/<int:id>/open-incidents')
 @ns_deployment.doc(params={'id': 'Deployment ID.'})
 @ns_deployment.resolve_object('deployment', lambda kwargs: Deployment.query.get_or_error(kwargs.pop('id')))
 class OpenIncidentsEndpoint(Resource):
@@ -124,7 +124,7 @@ class OpenIncidentsEndpoint(Resource):
         return all_incidents, 200
 
 
-@ns_deployment.route('/incidents/<int:id>/assigned')
+@ns_deployment.route('/<int:id>/assigned-incidents')
 @ns_deployment.doc(params={'id': 'Deployment ID.'})
 @ns_deployment.resolve_object('deployment', lambda kwargs: Deployment.query.get_or_error(kwargs.pop('id')))
 class AssignedIncidentsEndpoint(Resource):
@@ -144,7 +144,7 @@ class AssignedIncidentsEndpoint(Resource):
         return all_incidents, 200
 
 
-@ns_deployment.route('/incidents/<int:id>/closed')
+@ns_deployment.route('/<int:id>/closed-incidents')
 @ns_deployment.doc(params={'id': 'Deployment ID.'})
 @ns_deployment.resolve_object('deployment', lambda kwargs: Deployment.query.get_or_error(kwargs.pop('id')))
 class ClosedIncidentsEndpoint(Resource):

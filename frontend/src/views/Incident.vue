@@ -5,7 +5,7 @@
       <topbar />
       <div class="container-fluid">
         <div class="d-sm-flex align-items-center justify-content-between mb-4">
-          <h1 class="h3 mb-0">{{ deploymentNameApi }}</h1>
+          <h1 class="font-weight-bold mb-0">{{ deploymentNameApi }}</h1>
           <div class="d-flex mb-1 mt-2">
             <button v-if="incident" :class="['btn', 'btn-icon-split', 'mr-2', incident.open ? 'btn-success' : 'btn-info']" @click="markAsComplete">
                 <span class="btn-icon">
