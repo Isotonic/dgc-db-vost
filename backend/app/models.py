@@ -101,12 +101,14 @@ class User(db.Model, UserMixin):
         avatar.generate().save(f'./app/static/img/avatars/{self.id}_{self.firstname}_{self.surname}.png')
 
     def get_avatar(self, static=True):
-        return 'https://c5-dissertation.herokuapp.com/static/img/avatars/24_Jaffer_Naheem.png'
-        avatar_path = f'{"/static/" if static else ""}img/avatars/{self.id}_{self.firstname}_{self.surname}.png'
-        if path.exists(f'./app{avatar_path}'):
+        try:
+            avatar_path = f'{"/static/" if static else ""}img/avatars/{self.id}_{self.firstname}_{self.surname}.png'
+            if path.exists(f'./app{avatar_path}'):
+                return f'http://localhost:5000{avatar_path}'
+            self.create_avatar()
             return f'http://localhost:5000{avatar_path}'
-        self.create_avatar()
-        return f'http://localhost:5000{avatar_path}'
+        except: ##TODO FIX: Store in docker volume
+            return 'https://dgvost.herokuapp.com/static/img/avatars/3_test_test.png'
 
     def get_deployments(self):
         deployments = []
@@ -321,7 +323,7 @@ class Incident(db.Model):
         return [m for m in self.comments if m.public]
 
     def get_coordinates(self):
-        return [self.latitude, self.longitude]
+        return [self.longitude, self.latitude]
 
     def generate_geojson(self):
         if not self.longitude or not self.latitude:

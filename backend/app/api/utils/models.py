@@ -40,12 +40,13 @@ new_incident_model = api.model('Create Incident',
                                        'incident_type': fields.String(required=True),
                                        'location': fields.String(required=True),
                                        'longitude': fields.Float(required=True),
-                                       'latitude': fields.Float(required=True), 'reported_via': fields.String(),
-                                       'reference': fields.String()})  ##TODO Convert to GEOJson
+                                       'latitude': fields.Float(required=True),
+                                       'reported_via': fields.String(),
+                                       'reference': fields.String()})
 
 point_geometry_model = api.model('Point Geometry', {
     'type': fields.String(default='Point'),
-    'coordinates': fields.List(fields.Float, attribute=lambda x: x.get_coordinates(), description='Latitude and longitude.', type='Array')
+    'coordinates': fields.List(fields.Float, attribute=lambda x: x.get_coordinates(), description='Longitude and latitude.', type='Array')
 })
 
 point_properties_model = api.model('Point Properties', {

@@ -65,7 +65,7 @@ const routes = [
   {
     path: '/deployments/:deploymentName-:deploymentId(\\d+)/map',
     name: 'map',
-    component: () => import(/* webpackChunkName: "map" */ '../views/Incident.vue'),
+    component: () => import(/* webpackChunkName: "map" */ '../views/Map.vue'),
     props (route) {
       const props = { ...route.params }
       props.deploymentId = +props.deploymentId

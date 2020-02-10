@@ -9,7 +9,7 @@
               <span v-if="task.assignedTo.length" class="text-xs">Assigned to {{ assignedToText }}</span>
           </div>
           <div>
-            <input  :class="['mr-2', task.completed ? 'text-success' : '']" type="checkbox" :checked="task.completed" @click="toggle">
+            <input :class="['mr-2', task.completed ? 'text-success' : '']" type="checkbox" :checked="task.completed" @click="toggle">
           </div>
       </div>
       <ol class="map-card-actions-list list-unstyled">
@@ -69,7 +69,7 @@ export default {
           completedCounter += 1
         }
       }
-      return completedCounter + '/' + this.task.subtasks.length
+      return `${completedCounter}/${this.tasks.subtasks.length}`
     }
   }
 }

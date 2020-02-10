@@ -62,6 +62,12 @@ export default {
     if (this.$store.getters['user/loggedIn']) {
       this.$router.push({ name: 'deployments' })
     }
+  },
+  created: function () {
+    document.body.classList.add('bg-gradient-primary')
+  },
+  beforeDestroy () {
+    document.body.classList.remove('bg-gradient-primary')
   }
 }
 </script>

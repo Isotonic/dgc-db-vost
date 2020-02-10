@@ -6,7 +6,7 @@
         <topbar />
         <div class="container-fluid">
           <div class="d-sm-flex align-items-center justify-content-between mb-4">
-            <h1 v-if="this.deployment" class="h3 mb-0">{{ this.deployment.name }}</h1>
+            <h1 v-if="this.deployment" class="font-weight-bold mb-0">{{ this.deployment.name }}</h1>
             <button class="btn btn-icon-split btn-success mb-1" @click="isNewIncidentModalVisible = true">
               <span class="btn-icon">
               <i class="fas fa-plus"></i>
@@ -83,13 +83,13 @@
 
 <script>
 import Vue from 'vue'
-import router from '@/router/index.js'
+import router from '@/router/index'
 import { mapGetters, mapActions } from 'vuex'
 import { ClientTable, Event } from 'vue-tables-2'
 
 import Topbar from '@/components/Topbar'
 import Sidebar from '@/components/Sidebar'
-import assignedTo from '@/components/TableAssignedTo'
+import assignedTo from '@/components/utils/TableAssignedTo'
 import NewIncidentModal from '@/components/modals/NewIncident'
 
 Vue.use(ClientTable)
@@ -130,7 +130,7 @@ export default {
           },
           priority: function (h, row, index) {
             return <span class="badge badge-dot mr-4">
-              <i class={'bg-' + row.priority}></i> {row.priority}
+              <i class={'bg-' + row.priority} v-tooltip={row.priority + ' Priority'}></i> {row.priority}
             </span>
           },
           taskPercentage: function (h, row, index) {

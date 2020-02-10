@@ -82,6 +82,7 @@
 }
 
 .task:hover,
+.map-card:hover,
 tbody > tr:hover {
   cursor: pointer;
   background-color: #f6f8fe !important;
@@ -323,11 +324,11 @@ li.update-log > .update-log-text:before {
 }
 
 .select2-search__field {
-    width: 300% !important;
+  width: 300% !important;
 }
 
-.overflow-auto.pr-0 {
-    max-height: 70vh;
+.map-height {
+  max-height: 70vh;
 }
 
 .map-card-actions-list {
@@ -361,6 +362,11 @@ li.update-log > .update-log-text:before {
   height: 28px;
 }
 
+.leaflet-popup {
+  margin-bottom: 60px;
+}
+
+.leaflet-popup-tip-container,
 .leaflet-popup-close-button {
   display: none;
 }
@@ -1013,4 +1019,150 @@ li[data-done=false] {
 
 .form-control-plaintext:hover {
   cursor: pointer;
+}
+
+/*
+Copyright (c) 2020 by Esko Cruzeta (https://codepen.io/EskoCruz/pen/OVgZqX)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+.beacon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  height: 3em;
+  width: 3em;
+  border-radius: 50%;
+  -webkit-transform: translateX(-50%);
+  -o-transform: translateX(-50%);
+  -moz-transform: translateX(-50%);
+  -ms-transform: translateX(-50%);
+  transform: translateX(-50%);
+  z-index: -1
+}
+
+.beacon:before,
+.beacon:after {
+  position: absolute;
+  content: "";
+  height: 3em;
+  width: 3em;
+  bottom: 3px;
+  left: 4px;
+  background-color: transparent;
+  border-radius: 50%;
+  -webkit-animation: active 2s infinite linear;
+  -moz-animation: active 2s infinite linear;
+  animation: active 2s infinite linear;
+}
+
+.beacon-Standard.beacon::before,
+.beacon-Standard.beacon::after {
+  box-shadow: 0 0 0 3px #f9ce2f;
+}
+
+.beacon-Prompt.beacon::before,
+.beacon-Prompt.beacon::after {
+  box-shadow: 0 0 0 3px #ff8300;
+}
+
+.beacon-Immediate.beacon::before,
+.beacon-Immediate.beacon::after {
+  box-shadow: 0 0 0 3px #f44336;
+}
+
+.beacon:after {
+  -moz-animation-delay: 1s;
+  -webkit-animation-delay: 1s;
+  animation-delay: 1s;
+}
+
+@-webkit-keyframes active {
+  0% {
+    -webkit-transform: scale(.1);
+    opacity: 1;
+  }
+  100% {
+    -webkit-transform: scale(2.5);
+    opacity: 0;
+  }
+}
+
+@keyframes active {
+  0% {
+    transform: scale(.1);
+    transform: box-shadow(0px 0px 0px 1px #ed1f34);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(2.5);
+    opacity: 0;
+  }
+}
+
+div .marker {
+  transform: perspective(40px) rotateX(20deg) rotateZ(-45deg);
+  transform-origin: 50% 50%;
+  border-radius: 50% 50% 50% 0;
+  padding: 0 3px 3px 0;
+  width: 40px;
+  height: 40px;
+  position: absolute;
+  bottom: 800%;
+  left: -150%;
+  margin: -2.2em 0 0 -1.3em;
+  -webkit-box-shadow: -1px 1px 1px rgba(0, 0, 0, .5);
+  -moz-box-shadow: -1px 1px 1px rgba(0, 0, 0, .5);
+  box-shadow: -1px 1px 1px rgba(0, 0, 0, .5);
+  border-bottom: 2px solid #fff;
+  border-top: 3px solid #fff;
+  border-right: 3px solid #fff;
+  border-left: 2px solid #fff;
+}
+
+.marker > i {
+  transform: perspective(40px) rotateZ(45deg);
+  position: relative;
+  top: 7px;
+  left: 1.25px;
+}
+
+.bl-1 {
+  border-left: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.b-radius-0 {
+  border-radius: 0;
+}
+
+.font-size-75.fa-circle {
+  font-size: 60%;
+  position: relative;
+}
+
+.font-size-75.fa-circle::before {
+  position: relative;
+  bottom: 1.5px;
+}
+
+.nav-link:hover {
+  font-weight: 700;
+}
+
+.leaflet-popup-content > .card {
+  border: none;
+}
+
+.d-flex > .custom-switch {
+  position: relative;
+  top: 4px;
+}
+
+.beacon-leaflet {
+  z-index: -1 !important;
 }

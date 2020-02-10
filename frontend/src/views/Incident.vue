@@ -5,7 +5,7 @@
       <topbar />
       <div class="container-fluid">
         <div class="d-sm-flex align-items-center justify-content-between mb-4">
-          <h1 class="font-weight-bold mb-0">{{ deploymentNameApi }}</h1>
+          <h1 class="font-weight-bold mb-0">{{ deploymentNameApi }} - {{ incidentId }}</h1>
           <div class="d-flex mb-1 mt-2">
             <button v-if="incident" :class="['btn', 'btn-icon-split', 'mr-2', incident.open ? 'btn-success' : 'btn-info']" @click="markAsComplete">
                 <span class="btn-icon">
@@ -142,7 +142,7 @@
             <div v-if="!incident" class="card border-left-primary shadow h-100 py-2">
               <vcl-list />
             </div>
-            <div v-else class="card border-left-info shadow h-100 py-2">
+            <div v-else-if="incident.lastUpdatedAt !== incident.createdAt" class="card border-left-info shadow h-100 py-2">
               <div class="card-body">
                 <div class="row no-gutters align-items-center">
                   <div class="col mr-2">
@@ -174,7 +174,7 @@
               </div>
               <div v-else class="card-body">
                 <h3 class="font-weight-bold">{{ incident.name }}</h3>
-                <p class="card-text"><b>Created:</b> {{ incident.createdAt | moment("Do MMMM YYYY, h:mma") }}</p>
+                <p class="card-text"><b>Created:</b> {{ incident.createdAt | moment("Do MMMM YYYY, h:mm A") }}</p>
                 <p class="card-text"><b>Location:</b> {{ incident.location.properties.address }}</p>
                 <p class="card-text"><b>Description:</b> {{ incident.description }}</p>
                 <p class="card-text"><b>Reported Via:</b> {{ incident.reportedVia ? incident.reportedVia : 'N/A' }}</p>
@@ -210,9 +210,9 @@
                 <div v-if="!incident">
                   <vcl-facebook />
                 </div>
-                <l-map v-else :zoom="mapSettings.zoom" :center="incident.location.geometry.coordinates" class="map-container-incident">
-                  <l-tile-layer :url="mapSettings.url" :attribution="mapSettings.attribution"></l-tile-layer>
-                  <l-marker :lat-lng="incident.location.geometry.coordinates"></l-marker>
+                <l-map v-else-if="incident.location.geometry.coordinates" :zoom="mapSettings.zoom" :center="mapCoords" class="map-container-incident" ref="map">
+                  <l-tile-layer :url="mapSettings.url" :attribution="mapSettings.attribution" />
+                  <l-marker @click="flyToCoords" :lat-lng="mapCoords" :icon="fontAwesomeIcon" />
                 </l-map>
               </div>
             </div>
@@ -259,9 +259,9 @@
 </template>
 
 <script>
-import L from 'leaflet'
 import Vue2Filters from 'vue2-filters'
 import Multiselect from 'vue-multiselect'
+import { divIcon, latLng } from 'leaflet'
 import { mapGetters, mapActions } from 'vuex'
 import { LMap, LTileLayer, LMarker } from 'vue2-leaflet'
 import { VclList, VclFacebook, VclBulletList } from 'vue-content-loading'
@@ -276,14 +276,6 @@ import FlagToSupervisorModal from '@/components/modals/FlagToSupervisor'
 import TaskModal from '@/components/modals/Task'
 import FileUploaderModal from '@/components/modals/FileUploader'
 import QuestionModal from '@/components/modals/Question'
-
-// Fix for markers not loading.
-delete L.Icon.Default.prototype._getIconUrl
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
-  iconUrl: require('leaflet/dist/images/marker-icon.png'),
-  shadowUrl: require('leaflet/dist/images/marker-shadow.png')
-})
 
 export default {
   name: 'incident',
@@ -317,9 +309,9 @@ export default {
     return {
       allocatedSelected: [],
       mapSettings: {
-        zoom: 15,
         url: 'https://maps.wikimedia.org/osm-intl/{z}/{x}/{y}.png',
-        attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors | <a href="https://foundation.wikimedia.org/wiki/Maps_Terms_of_Use">Wikimedia Maps</a>'
+        attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors | <a href="https://foundation.wikimedia.org/wiki/Maps_Terms_of_Use">Wikimedia Maps</a>',
+        zoom: 15
       },
       task: null,
       commentHtml: null,
@@ -407,6 +399,16 @@ export default {
     showCommentBox: function (show) {
       this.commentBoxVisible = show
     },
+    flyToCoords: function () {
+      const map = this.$refs.map
+      if (map) {
+        const flyToLatLng = latLng(this.mapCoords)
+        map.mapObject.flyTo(flyToLatLng, 12, {
+          animate: true,
+          duration: 0.5
+        })
+      }
+    },
     ...mapActions('user', {
       checkUserLoaded: 'checkLoaded'
     }),
@@ -457,6 +459,16 @@ export default {
     didAllocatedChange: function () {
       return this.allocatedSelected.length !== this.incident.assignedTo.length ||
       !this.allocatedSelected.every(e => this.incident.assignedTo.includes(e))
+    },
+    mapCoords: function () {
+      const reversedCoords = [...this.incident.location.geometry.coordinates].reverse()
+      return reversedCoords
+    },
+    fontAwesomeIcon: function (feature) {
+      return divIcon({
+        html: `<div class="marker bg-${this.incident.priority}"><i class="fas fa-${this.incident.icon} fa-fw text-white fa-2x"></i></div>`,
+        iconSize: [2, 2]
+      })
     },
     ...mapGetters('user', {
       hasPermission: 'hasPermission'
