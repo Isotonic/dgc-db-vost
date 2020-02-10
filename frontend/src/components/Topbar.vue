@@ -8,24 +8,17 @@
     </button>
     <div v-if="!nosidebar">
       <div class="ml-md-2 my-2 my-md-0 navbar-search input-group">
-        <input v-model="queryDebounced" type="text" class="form-control bg-light small" placeholder="Search for an incident..." aria-label="Search for an incident">
+        <input v-model="queryDebounced" type="text" :class="['form-control', 'bg-light', 'small', queryDebounced.length ? 'navbar-search-results' : '']" placeholder="Search for an incident..." aria-label="Search for an incident" @focus="hideResults = false" @blur="hideResults = true">
         <div class="input-group-append">
-          <button class="btn btn-primary" type="button">
-            <i class="fas fa-search fa-sm"></i>
-          </button>
+          <div class="btn bg-primary">
+            <i class="fas fa-search fa-sm text-white" />
+          </div>
         </div>
       </div>
-      <div v-if="queryDebounced.length" class="card-body" style="position:absolute;top:55px;left:20px;background-color:white;z-index:99;overflow-y:auto;max-height:20em">
-        <ul v-for="result in queryResults" :key="result.id">
-          <li :class="['list-group-item', 'list-group-flush', 'task', result.open ? '' : 'text-muted']">
-            <div class="row align-items-center no-gutters">
-                <div class="col mr-2">
-                    <h6 class="mb-0">
-                        <strong>{{ result.name }} </strong>
-                    </h6>
-                </div>
-            </div>
-          </li>
+      <div v-if="queryDebounced.length && !hideResults" class="card-body search-results px-0 py-0">
+        <ul class="mb-4 pl-0">
+          <incident-card v-for="incident in queryResults" :key="incident.id" :incident="incident" :query="queryDebounced" @goTo="goTo" />
+          <li v-if="!queryResults.length" class="text-center list-unstyled mt-3"><span class="font-weight-bold">No results found</span></li>
         </ul>
       </div>
     </div>
@@ -53,7 +46,7 @@
           <b-dropdown-item><i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>Profile</b-dropdown-item>
           <b-dropdown-item><i class="fas fa-cogs fa-sm fa-fw mr-2 text-gray-400"></i>Settings</b-dropdown-item>
           <div class="dropdown-divider"></div>
-          <router-link :to="'logout'" class="dropdown-item"><i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>Logout</router-link>
+          <b-dropdown-item @click="logout"><i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>Logout</b-dropdown-item>
       </b-dropdown>
     </ul>
   </nav>
@@ -62,11 +55,19 @@
 <script>
 import _ from 'lodash'
 import fz from 'fuzzaldrin-plus'
+import router from '@/router/index'
 import { mapGetters } from 'vuex'
+
+import IncidentCard from '@/components/IncidentCard'
 
 export default {
   name: 'Topbar',
+  components: {
+    IncidentCard
+  },
   props: {
+    deploymentId: Number,
+    deploymentName: String,
     nosidebar: {
       type: Boolean,
       default: false
@@ -74,11 +75,15 @@ export default {
   },
   data () {
     return {
-      query: ''
+      query: '',
+      hideResults: false
     }
   },
   methods: {
-    logout () {
+    goTo: function (incident) {
+      router.push({ name: 'incident', params: { deploymentName: this.deploymentName.replace(' ', '-'), deploymentId: this.deploymentId, incidentName: incident.name.replace(' ', '-'), incidentId: incident.id } })
+    },
+    logout: function () {
       this.$store.dispatch('user/logout')
     }
   },
@@ -95,7 +100,8 @@ export default {
       },
       set: _.debounce(function (newValue) {
         this.query = newValue
-      }, 200)
+        this.hideResults = false
+      }, 100)
     },
     queryResults () {
       if (!this.query) {

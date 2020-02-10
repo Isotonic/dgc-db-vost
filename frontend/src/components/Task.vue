@@ -12,15 +12,15 @@
             <input :class="['mr-2', task.completed ? 'text-success' : '']" type="checkbox" :checked="task.completed" @click="toggle">
           </div>
       </div>
-      <ol class="map-card-actions-list list-unstyled">
-          <li class="map-card-actions">
+      <ol class="incident-card-actions-list list-unstyled">
+          <li class="incident-card-actions">
             <div v-if="task.subtasks.length" v-tooltip="'Subtasks'">
               <i class="fas fa-tasks"></i>
-              <span class="map-card-actions-text">{{ subtaskText }}</span>
+              <span class="incident-card-actions-text">{{ subtaskText }}</span>
             </div>
             <div v-if="task.comments.length">
               <i class="far fa-comment" v-tooltip="'Comments'"></i>
-              <span class="map-card-actions-text" v-tooltip="'Comments'">{{ task.comments.length }}</span>
+              <span class="incident-card-actions-text" v-tooltip="'Comments'">{{ task.comments.length }}</span>
             </div>
           </li>
       </ol>
@@ -69,7 +69,7 @@ export default {
           completedCounter += 1
         }
       }
-      return `${completedCounter}/${this.tasks.subtasks.length}`
+      return `${completedCounter}/${this.task.subtasks.length}`
     }
   }
 }

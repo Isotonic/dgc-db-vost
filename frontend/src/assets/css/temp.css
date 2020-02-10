@@ -82,7 +82,7 @@
 }
 
 .task:hover,
-.map-card:hover,
+.incident-card:hover,
 tbody > tr:hover {
   cursor: pointer;
   background-color: #f6f8fe !important;
@@ -331,29 +331,29 @@ li.update-log > .update-log-text:before {
   max-height: 70vh;
 }
 
-.map-card-actions-list {
+.incident-card-actions-list {
   display: flex;
   align-items: center;
 }
 
-.map-card-actions i {
+.incident-card-actions i {
   color: #858796;
   margin-right: .5rem;
 }
 
-.map-card-actions div {
+.incident-card-actions div {
   margin-right: 8px;
   display: inline-block;
 }
 
-.map-card-actions-text {
+.incident-card-actions-text {
   color: #858796;
   font-size: .8rem;
   margin-left: -.1rem;
   margin-right: .5rem;
 }
 
-.map-card-assigned-to {
+.incident-card-assigned-to {
   display: flex;
   flex: 1;
   justify-content: flex-end;
@@ -1165,4 +1165,42 @@ div .marker {
 
 .beacon-leaflet {
   z-index: -1 !important;
+}
+
+.sidebar-brand > img {
+  width: -webkit-fill-available;
+}
+
+.VueTables > .row > div {
+  display: flex;
+}
+
+.VueTables__limit {
+  position: absolute;
+  right: 15px;
+}
+
+.navbar-search-results {
+  z-index: 9999;
+  border-bottom-left-radius: 0;
+}
+
+.search-results > ul {
+  width: 360px;
+}
+
+@media (max-width: 768px) {
+  .search-results {
+    position: absolute;
+    left: 72px;
+    top: 53px;
+    background-color: white;
+    z-index: 10000;
+    overflow-y: auto;
+    max-height: 20em;
+    border-radius: 0px 0px 6px 6px;
+    border-left: 1px solid #eff0f5;
+    border-right: 1px solid #eff0f5;
+    border-bottom: 1px solid #eff0f5;
+  }
 }

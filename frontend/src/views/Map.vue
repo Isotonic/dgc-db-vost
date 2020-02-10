@@ -3,7 +3,7 @@
     <div id="wrapper">
     <sidebar :deploymentId="this.deploymentId" :deploymentName="deploymentNameApi"/>
       <div id="content-wrapper" class="d-flex flex-column">
-        <topbar />
+        <topbar :deploymentId="deploymentId" :deploymentName="deploymentNameApi" />
         <div class="container-fluid">
           <div class="d-sm-flex align-items-center justify-content-between mb-4">
             <h1 v-if="this.deployment" class="font-weight-bold mb-0">{{ this.deployment.name }}</h1>
@@ -14,15 +14,15 @@
                 <div class="card-header d-flex flex-row align-items-center justify-content-between">
                   <h6 class="m-0 font-weight-bold text-primary">Map</h6>
                   <div class="d-flex">
-                    <div class="custom-switch mr-1" v-tooltip="'Toggle heatmap'">
-                      <input type="checkbox" class="custom-control-input" id="HeatmapToggle" autocomplete="off" :checked="heatmap" @click="heatmap = !heatmap">
-                      <label class="custom-control-label" for="HeatmapToggle"></label>
-                    </div>
                     <select v-model="showing" class="custom-select custom-select-sm text-primary font-weight-bold">
                       <option value="all">All Incidents</option>
                       <option value="assigned">Assigned Incidents</option>
                       <option value="open">Open Incidents</option>
                       <option value="closed">Closed Incidents</option>
+                    </select>
+                    <select v-model="heatmap" class="custom-select custom-select-sm text-primary font-weight-bold ml-2">
+                      <option :value="true">Heatmap On</option>
+                      <option :value="false">Heatmap Off</option>
                     </select>
                     <select v-model="sortedBy" class="custom-select custom-select-sm text-primary font-weight-bold ml-2">
                       <option :value="['name', 1]">Name (Asc)</option>
@@ -45,13 +45,13 @@
                     <ul class="mb-4 pl-0">
                       <div class="input-group">
                         <div class="input-group-append bl-1">
-                          <button class="btn btn-primary" type="button">
-                            <i class="fas fa-search fa-sm"></i>
-                          </button>
+                          <div class="btn bg-primary">
+                            <i class="fas fa-search fa-sm text-white" />
+                          </div>
                         </div>
                         <input v-model="queryDebounced" type="text" class="form-control bg-light b-radius-0 small" placeholder="Search for an incident..." aria-label="Search for an incident">
                       </div>
-                      <map-card v-for="incident in orderBy(queryResults, sortedBy[0], sortedBy[1])" :key="incident.id" :incident="incident" :query="queryDebounced" @goTo="goTo" />
+                      <incident-card v-for="incident in orderBy(queryResults, sortedBy[0], sortedBy[1])" :key="incident.id" :incident="incident" :query="queryDebounced" @goTo="goTo" />
                       <div v-if="!queryResults.length" class="text-center font-weight-bold mt-3">
                       <span v-if="!queryDebounced.length">No incidents</span>
                       <span v-else-if="queryDebounced.length">No incidents found</span>
@@ -89,7 +89,7 @@ import { LMap, LTileLayer, LGeoJson, LMarker } from 'vue2-leaflet'
 import router from '@/router/index'
 import Topbar from '@/components/Topbar'
 import Sidebar from '@/components/Sidebar'
-import MapCard from '@/components/MapCard'
+import IncidentCard from '@/components/IncidentCard'
 import MapPopup from '@/components/utils/MapPopup'
 
 function fontAwesomeIcon (feature) {
@@ -142,7 +142,7 @@ export default {
   components: {
     Topbar,
     Sidebar,
-    MapCard,
+    IncidentCard,
     LeafletHeatmap,
     LMap,
     LTileLayer,
@@ -231,7 +231,7 @@ export default {
       },
       set: _.debounce(function (newValue) {
         this.query = newValue
-      }, 200)
+      }, 100)
     },
     geoToArray: function () {
       let latLngArray = []

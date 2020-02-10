@@ -2,7 +2,7 @@
   <div id="wrapper">
     <sidebar :deploymentId="deploymentId" :deploymentName="deploymentNameApi"/>
     <div id="content-wrapper" class="d-flex flex-column">
-      <topbar />
+      <topbar :deploymentId="deploymentId" :deploymentName="deploymentNameApi" />
       <div class="container-fluid">
         <div class="d-sm-flex align-items-center justify-content-between mb-4">
           <h1 class="font-weight-bold mb-0">{{ deploymentNameApi }} - {{ incidentId }}</h1>

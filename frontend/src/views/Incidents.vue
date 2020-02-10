@@ -3,7 +3,7 @@
     <div id="wrapper">
     <sidebar :deploymentId="this.deploymentId" :deploymentName="deploymentNameApi"/>
       <div id="content-wrapper" class="d-flex flex-column">
-        <topbar />
+        <topbar :deploymentId="deploymentId" :deploymentName="deploymentNameApi" />
         <div class="container-fluid">
           <div class="d-sm-flex align-items-center justify-content-between mb-4">
             <h1 v-if="this.deployment" class="font-weight-bold mb-0">{{ this.deployment.name }}</h1>
@@ -60,8 +60,14 @@
             </div>
           </div>
           <div class="card shadow mb-4">
-            <div class="card-header py-3">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
               <h6 class="m-0 font-weight-bold text-primary">Incidents</h6>
+              <select v-model="showing" class="custom-select custom-select-sm text-primary font-weight-bold">
+                <option value="all">All Incidents</option>
+                <option value="assigned">Assigned Incidents</option>
+                <option value="open">Open Incidents</option>
+                <option value="closed">Closed Incidents</option>
+              </select>
             </div>
             <div class="card-body">
               <div class="table-responsive">
