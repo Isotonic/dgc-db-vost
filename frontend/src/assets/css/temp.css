@@ -1204,3 +1204,11 @@ div .marker {
     border-bottom: 1px solid #eff0f5;
   }
 }
+
+.VuePagination {
+  display: block;
+}
+
+.VuePagination__pagination {
+  justify-content: center;
+}

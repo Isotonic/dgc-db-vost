@@ -30,8 +30,8 @@
                       </div>
                     </div>
                   </div>
-                  <p class="mt-3 mb-0 text-muted">
-                    <span :class="['mr-2', incidentStatText]"><i :class="['fa', incidentStatIcon]"></i> {{ incidentStat.incidents }}</span>
+                  <p class="mt-2 mb-0 text-muted">
+                    <span :class="['mr-2', totalIncidentsStat.class]"><i :class="['fa', 'fa-sm', totalIncidentsStat.icon]"></i>{{ totalIncidentsStat.stat }}</span>
                     <span class="text-nowrap">since last hour</span>
                   </p>
                 </div>
@@ -43,7 +43,7 @@
                   <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
                       <div class="text-s font-weight-bold text-warning text-uppercase mb-1">Response Time</div>
-                      <div class="h5 mb-0 font-weight-bold text-gray-800">WIP</div>
+                      <div class="h5 mb-0 font-weight-bold text-gray-800">{{ responseTimeStat }}</div>
                     </div>
                     <div class="col-auto">
                       <div class="icon icon-shape bg-warning text-white rounded-circle shadow">
@@ -51,8 +51,8 @@
                       </div>
                     </div>
                   </div>
-                  <p class="mt-3 mb-0 text-muted">
-                    <span class="text-warning mr-2"><i class="fa"></i> 0%</span>
+                  <p class="mt-2 mb-0 text-muted">
+                    <span :class="['mr-2', responseTimeBottomStat.class]"><i :class="['fa', 'fa-sm', responseTimeBottomStat.icon]"></i>{{ responseTimeBottomStat.stat }}%</span>
                     <span class="text-nowrap">since last hour</span>
                   </p>
                 </div>
@@ -113,7 +113,6 @@ export default {
   },
   data () {
     return {
-      incidentStat: { incidents: 12 },
       showing: 'open',
       columns: ['pinned', 'name', 'location', 'priority', 'assignedTo', 'taskPercentage', 'lastUpdated'],
       options: {
@@ -231,6 +230,13 @@ export default {
     }
   },
   methods: {
+    calcResponseTime: function (closedIncidents) {
+      let closedTime = 0
+      for (let incident of closedIncidents) {
+        closedTime += incident.closedAt - incident.createdAt
+      }
+      return closedTime / closedIncidents.length
+    },
     ...mapActions('user', {
       checkUserLoaded: 'checkLoaded'
     }),
@@ -262,17 +268,51 @@ export default {
         return this.getIncidents
       }
     },
-    incidentStatText: function () {
-      return {
-        'text-success': this.incidentStat.incidents < 0,
-        'text-primary': this.incidentStat.incidents === 0,
-        'text-danger': this.incidentStat.incidents > 0
+    totalIncidentsStat: function () {
+      const hourAgo = (Date.now() / 1000) - 3600
+      const twoHoursAgo = hourAgo - 3600
+      const hourAgoIncidents = this.getIncidents.filter(incident => incident.createdAt >= hourAgo)
+      const twoHoursAgoIncidents = this.getIncidents.filter(incident => incident.createdAt >= twoHoursAgo && incident.createdAt < hourAgo)
+      if (hourAgoIncidents > twoHoursAgoIncidents) {
+        return { stat: hourAgoIncidents - twoHoursAgoIncidents, class: 'text-danger', icon: 'fa-plus' }
+      } else if (twoHoursAgoIncidents > hourAgoIncidents) {
+        return { stat: twoHoursAgoIncidents > hourAgoIncidents, class: 'text-success', icon: 'fa-down' }
+      } else {
+        return { stat: 0, class: 'text-primary', icon: '' }
       }
     },
-    incidentStatIcon: function () {
-      return {
-        'fa-plus': this.incidentStat.incidents < 0,
-        'fa-down': this.incidentStat.incidents > 0
+    responseTimeStat: function () {
+      const closedIncidents = this.getIncidents.filter(incident => !incident.open)
+      if (!closedIncidents.length) {
+        return 0
+      }
+      const responseTime = this.calcResponseTime(closedIncidents)
+      if (responseTime >= 86400) {
+        return `${Math.floor(responseTime / 86400)}d ${this.$moment.unix(responseTime).format('hh[h] mm[m] ss[s]')}`
+      } else if (responseTime >= 3600) {
+        return this.$moment.unix(responseTime).format('hh[h] mm[m] ss[s]')
+      } else if (responseTime >= 60) {
+        return this.$moment.unix(responseTime).format('mm[m] ss[s]')
+      } else {
+        return this.$moment.unix(responseTime).format('mm[m] ss[s]')
+      }
+    },
+    responseTimeBottomStat: function () {
+      const hourAgo = (Date.now() / 1000) - 3600
+      const nowIncidents = this.getIncidents.filter(incident => !incident.open)
+      const hourAgoIncidents = nowIncidents.filter(incident => incident.closedAt < hourAgo)
+      if (!nowIncidents.length || !hourAgoIncidents.length) {
+        return { stat: 0, class: 'text-warning', icon: '' }
+      }
+      const nowTime = this.calcResponseTime(nowIncidents)
+      const hourAgoTime = this.calcResponseTime(hourAgoIncidents)
+
+      if (nowTime > hourAgoTime) {
+        return { stat: Math.round((nowTime / hourAgoTime) * 100), class: 'text-danger', icon: 'fa-plus' }
+      } else if (hourAgoTime > nowTime) {
+        return { stat: Math.round((hourAgoTime / nowTime) * 100), class: 'text-success', icon: 'fa-down' }
+      } else {
+        return { stat: 0, class: 'text-warning', icon: '' }
       }
     },
     ...mapGetters('deployments', {

@@ -9,11 +9,11 @@ def change_incident_status(incident, status, changed_by):
         return False
     incident.open_status = status
     if status:
-        incident.closed_at = datetime.utcnow()
-        action_type = 'marked_complete'
-    else:
         incident.closed_at = None
         action_type = 'marked_incomplete'
+    else:
+        incident.closed_at = datetime.utcnow()
+        action_type = 'marked_complete'
 #    emit('change_incident_status', {'status': status, 'code': 200}, room=f'{incident.deployment_id}-{incident.id}')
     incident_action(user=changed_by, action_type=IncidentLog.action_values[action_type], incident=incident)
 
