@@ -64,7 +64,7 @@
         </template>
       </div>
     </editor-menu-bubble>
-    <editor-content :class="['editor__content', submittedEmpty ? 'comment-box-empty' : '']" :editor="editor" />
+    <editor-content :class="['editor__content', 'edit-comment', submittedEmpty ? 'comment-box-empty' : '']" :editor="editor" />
     <i v-if="editing" class="fas fa-times float-right comment-cancel-icon" @click="cancelEdit" v-tooltip="'Cancel'"></i>
     <i :class="['fas', 'float-right', 'comment-icon', submittedEmpty ? 'comment-empty' : '', editing ? ['fa-check', 'hover'] : 'fa-paper-plane']" @click="submitComment" v-tooltip="editing ? 'Update' : 'Post'"></i>
   </div>

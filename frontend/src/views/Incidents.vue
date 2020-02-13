@@ -1,84 +1,104 @@
 <template>
-  <div>
-    <div id="wrapper">
-    <sidebar :deploymentId="this.deploymentId" :deploymentName="deploymentNameApi"/>
-      <div id="content-wrapper" class="d-flex flex-column">
-        <topbar :deploymentId="deploymentId" :deploymentName="deploymentNameApi" />
-        <div class="container-fluid">
-          <div class="d-sm-flex align-items-center justify-content-between mb-4">
-            <h1 v-if="this.deployment" class="font-weight-bold mb-0">{{ this.deployment.name }}</h1>
-            <button class="btn btn-icon-split btn-success mb-1" @click="isNewIncidentModalVisible = true">
-              <span class="btn-icon">
-              <i class="fas fa-plus"></i>
-              </span>
-              <span class="text">New Incident</span>
-            </button>
-            <new-incident-modal v-show="isNewIncidentModalVisible" :visible="isNewIncidentModalVisible" @close="isNewIncidentModalVisible = false" />
-          </div>
-          <div class="row">
-            <div class="col-xl-3 col-md-6 mb-4">
-              <div class="card border-left-primary shadow">
-                <div class="card-body">
-                  <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                      <div class="text-s font-weight-bold text-primary text-uppercase mb-1">Total Incidents</div>
-                      <div class="h5 mb-0 font-weight-bold text-gray-800">{{ incidents.length }}</div>
-                    </div>
-                    <div class="col-auto">
-                      <div class="icon icon-shape bg-primary text-white rounded-circle shadow">
-                        <i class="fas fa-1fourx fa-clone"></i>
-                      </div>
+  <div id="wrapper">
+  <sidebar :deploymentId="this.deploymentId" :deploymentName="deploymentNameApi"/>
+    <div id="content-wrapper" class="d-flex flex-column">
+      <topbar :deploymentId="deploymentId" :deploymentName="deploymentNameApi" />
+      <div class="container-fluid">
+        <div class="d-sm-flex align-items-center justify-content-between mb-4">
+          <h1 v-if="this.deployment" class="font-weight-bold mb-0">{{ this.deployment.name }}</h1>
+          <button class="btn btn-icon-split btn-success mb-1" @click="isNewIncidentModalVisible = true">
+            <span class="btn-icon">
+            <i class="fas fa-plus"></i>
+            </span>
+            <span class="text">New Incident</span>
+          </button>
+          <new-incident-modal v-show="isNewIncidentModalVisible" :visible="isNewIncidentModalVisible" @close="isNewIncidentModalVisible = false" />
+        </div>
+        <div class="row">
+          <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow">
+              <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                  <div class="col mr-2">
+                    <div class="text-s font-weight-bold text-primary text-uppercase mb-1">Total Incidents</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ getShowingIncidents.length }}</div>
+                  </div>
+                  <div class="col-auto">
+                    <div class="icon icon-shape bg-primary text-white rounded-circle shadow">
+                      <i class="fas fa-1fourx fa-clone"></i>
                     </div>
                   </div>
-                  <p class="mt-2 mb-0 text-muted">
-                    <span :class="['mr-2', totalIncidentsStat.class]"><i :class="['fa', 'fa-sm', totalIncidentsStat.icon]"></i>{{ totalIncidentsStat.stat }}</span>
-                    <span class="text-nowrap">since last hour</span>
-                  </p>
                 </div>
-              </div>
-            </div>
-            <div class="col-xl-3 col-md-6 mb-4">
-              <div class="card border-left-warning shadow">
-                <div class="card-body">
-                  <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                      <div class="text-s font-weight-bold text-warning text-uppercase mb-1">Response Time</div>
-                      <div class="h5 mb-0 font-weight-bold text-gray-800">{{ responseTimeStat }}</div>
-                    </div>
-                    <div class="col-auto">
-                      <div class="icon icon-shape bg-warning text-white rounded-circle shadow">
-                        <i class="fas fa-1fourx fa-hourglass-end"></i>
-                      </div>
-                    </div>
-                  </div>
-                  <p class="mt-2 mb-0 text-muted">
-                    <span :class="['mr-2', responseTimeBottomStat.class]"><i :class="['fa', 'fa-sm', responseTimeBottomStat.icon]"></i>{{ responseTimeBottomStat.stat }}%</span>
-                    <span class="text-nowrap">since last hour</span>
-                  </p>
-                </div>
+                <p class="mt-2 mb-0 text-muted">
+                  <span :class="['mr-2', totalIncidentsStat.class]"><i :class="['fa', 'fa-sm', totalIncidentsStat.icon]"></i>{{ totalIncidentsStat.stat }}</span>
+                  <span class="text-nowrap">since last hour</span>
+                </p>
               </div>
             </div>
           </div>
-          <div class="card shadow mb-4">
-            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-              <h6 class="m-0 font-weight-bold text-primary">Incidents</h6>
-              <select v-model="showing" class="custom-select custom-select-sm text-primary font-weight-bold">
+          <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow">
+              <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                  <div class="col mr-2">
+                    <div class="text-s font-weight-bold text-warning text-uppercase mb-1">Avg. Response Time</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ responseTimeStat }}</div>
+                  </div>
+                  <div class="col-auto">
+                    <div class="icon icon-shape bg-warning text-white rounded-circle shadow">
+                      <i class="fas fa-1fourx fa-hourglass-end"></i>
+                    </div>
+                  </div>
+                </div>
+                <p class="mt-2 mb-0 text-muted">
+                  <span :class="['mr-2', responseTimeBottomStat.class]"><i :class="['fa', 'fa-sm', responseTimeBottomStat.icon]"></i>{{ responseTimeBottomStat.stat }}%</span>
+                  <span class="text-nowrap">since last hour</span>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card shadow mb-4">
+          <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+            <h6 class="m-0 font-weight-bold text-primary">Incidents</h6>
+            <div>
+              <select v-if="hasPermission('view_all_incidents')" v-model="showingIncidents" class="custom-select custom-select-sm text-primary font-weight-bold">
                 <option value="all">All Incidents</option>
                 <option value="assigned">Assigned Incidents</option>
-                <option value="open">Open Incidents</option>
-                <option value="closed">Closed Incidents</option>
+              </select>
+              <select v-model="showingStatus" class="custom-select custom-select-sm text-primary font-weight-bold ml-2">
+                <option value="open">Open Only</option>
+                <option value="closed">Closed Only</option>
+                <option value="both">Open and Closed</option>
               </select>
             </div>
-            <div class="card-body">
-              <div class="table-responsive">
-                <div>
-                  <v-client-table :data="incidents" :columns="columns" :options="options">
-                    <div slot="child_row" slot-scope="props">
-                      {{ props.row.name }}
-                    </div>
-                  </v-client-table>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <v-client-table :data="incidents" :columns="columns" :options="options">
+                <div slot="child_row" slot-scope="props">
+                  <span class="font-weight-bold">Description:</span> {{ props.row.description }}
                 </div>
-              </div>
+                <div v-if="showingStatus !== 'both'" slot="name" slot-scope="{row}">
+                  <span>{{ row.name }}</span>
+                </div>
+                <div v-else slot="name" slot-scope="{row}">
+                  <span class="badge badge-dot">
+                    <i :class="[row.open ? 'bg-success' : 'bg-info']" v-tooltip="row.open ? 'Open' : 'Closed'"></i>
+                  </span>
+                  {{row.name}}
+                </div>
+                <div slot="assignedTo" slot-scope="{row}">
+                  <div v-if="row.assignedTo.length" class="avatar-group">
+                    <a v-for="user in row.assignedTo" :key="user.id" href="#" class="avatar avatar-sm" v-tooltip="`${user.firstname} ${user.surname}`">
+                      <img alt="Avatar" :src="user.avatarUrl" class="rounded-circle avatar-sm">
+                    </a>
+                  </div>
+                  <div v-else>
+                    Unassigned
+                  </div>
+                </div>
+              </v-client-table>
             </div>
           </div>
         </div>
@@ -88,17 +108,13 @@
 </template>
 
 <script>
-import Vue from 'vue'
 import router from '@/router/index'
+import { Event } from 'vue-tables-2'
 import { mapGetters, mapActions } from 'vuex'
-import { ClientTable, Event } from 'vue-tables-2'
 
 import Topbar from '@/components/Topbar'
 import Sidebar from '@/components/Sidebar'
-import assignedTo from '@/components/utils/TableAssignedTo'
 import NewIncidentModal from '@/components/modals/NewIncident'
-
-Vue.use(ClientTable)
 
 export default {
   name: 'incidents',
@@ -113,7 +129,8 @@ export default {
   },
   data () {
     return {
-      showing: 'open',
+      showingIncidents: 'assigned',
+      showingStatus: 'open',
       columns: ['pinned', 'name', 'location', 'priority', 'assignedTo', 'taskPercentage', 'lastUpdated'],
       options: {
         headings: {
@@ -126,7 +143,6 @@ export default {
           lastUpdated: 'Last Updated'
         },
         templates: {
-          assignedTo,
           pinned: function (h, row, index) {
             return <i class={row.pinned ? 'fas fa-bookmark' : 'far fa-bookmark'}></i>
           },
@@ -207,10 +223,17 @@ export default {
             }
           }
         },
+        filterAlgorithm: {
+          assignedTo (row, query) {
+            return (row.assignedTo.map(user => `${user.firstname} ${user.surname}`).join(' ')).toLowerCase().includes(query)
+          }
+        },
         orderBy: {
           column: 'pinned',
           ascending: false
         },
+        summary: 'Table of incidents in deployment',
+        destroyEventBus: true,
         resizeableColumns: true,
         sortIcon: { base: 'float-right fas', up: 'fa-sort-up', down: 'fa-sort-down', is: 'fa-sort' },
         highlightMatches: true,
@@ -258,12 +281,18 @@ export default {
       return this.deploymentName
     },
     incidents: function () {
-      if (this.showing === 'open') {
-        return this.getOpenIncidents
-      } else if (this.showing === 'assigned') {
+      const incidents = this.getShowingIncidents
+      if (this.showingStatus === 'open') {
+        return incidents.filter(incident => incident.open)
+      } else if (this.showingStatus === 'closed') {
+        return incidents.filter(incident => !incident.open)
+      } else {
+        return incidents
+      }
+    },
+    getShowingIncidents: function () {
+      if (this.showingIncidents === 'assigned') {
         return this.getAssignedIncidents
-      } else if (this.showing === 'closed') {
-        return this.getClosedIncidents
       } else {
         return this.getIncidents
       }
@@ -271,8 +300,8 @@ export default {
     totalIncidentsStat: function () {
       const hourAgo = (Date.now() / 1000) - 3600
       const twoHoursAgo = hourAgo - 3600
-      const hourAgoIncidents = this.getIncidents.filter(incident => incident.createdAt >= hourAgo)
-      const twoHoursAgoIncidents = this.getIncidents.filter(incident => incident.createdAt >= twoHoursAgo && incident.createdAt < hourAgo)
+      const hourAgoIncidents = this.getShowingIncidents.filter(incident => incident.createdAt >= hourAgo)
+      const twoHoursAgoIncidents = this.getShowingIncidents.filter(incident => incident.createdAt >= twoHoursAgo && incident.createdAt < hourAgo)
       if (hourAgoIncidents > twoHoursAgoIncidents) {
         return { stat: hourAgoIncidents - twoHoursAgoIncidents, class: 'text-danger', icon: 'fa-plus' }
       } else if (twoHoursAgoIncidents > hourAgoIncidents) {
@@ -282,7 +311,7 @@ export default {
       }
     },
     responseTimeStat: function () {
-      const closedIncidents = this.getIncidents.filter(incident => !incident.open)
+      const closedIncidents = this.getShowingIncidents.filter(incident => !incident.open)
       if (!closedIncidents.length) {
         return 0
       }
@@ -299,7 +328,7 @@ export default {
     },
     responseTimeBottomStat: function () {
       const hourAgo = (Date.now() / 1000) - 3600
-      const nowIncidents = this.getIncidents.filter(incident => !incident.open)
+      const nowIncidents = this.getShowingIncidents.filter(incident => !incident.open)
       const hourAgoIncidents = nowIncidents.filter(incident => incident.closedAt < hourAgo)
       if (!nowIncidents.length || !hourAgoIncidents.length) {
         return { stat: 0, class: 'text-warning', icon: '' }
@@ -315,15 +344,16 @@ export default {
         return { stat: 0, class: 'text-warning', icon: '' }
       }
     },
+    ...mapGetters('user', {
+      hasPermission: 'hasPermission'
+    }),
     ...mapGetters('deployments', {
       getDeployment: 'getDeployment'
     }),
     ...mapGetters('incidents', {
       getDeploymentId: 'getDeploymentId',
       getIncidents: 'getIncidents',
-      getOpenIncidents: 'getOpenIncidents',
-      getAssignedIncidents: 'getAssignedIncidents',
-      getClosedIncidents: 'getClosedIncidents'
+      getAssignedIncidents: 'getAssignedIncidents'
     })
   },
   watch: {
@@ -332,7 +362,7 @@ export default {
       handler () {
         if (this.deployment && this.deploymentName !== this.deployment.name) {
           this.deploymentName = this.deployment.name
-          history.pushState(null, '', `/deployments/${this.deployment.name.replace(' ', '-')}-${this.deploymentId}/incidents`)
+          history.pushState(null, '', `/deployments/${this.deployment.name.replace(/ /g, '-')}-${this.deploymentId}/incidents`)
         }
       }
     }
@@ -345,7 +375,7 @@ export default {
   mounted () {
     let self = this
     Event.$on('vue-tables.row-click', function (data) {
-      router.push({ name: 'incident', params: { deploymentName: self.deployment.name.replace(' ', '-'), deploymentId: self.deployment.id, incidentName: data.row.name.replace(' ', '-'), incidentId: data.row.id } })
+      router.push({ name: 'incident', params: { deploymentName: self.deploymentNameApi.replace(/ /g, '-'), deploymentId: self.deploymentId, incidentName: data.row.name.replace(/ /g, '-'), incidentId: data.row.id } })
     })
   }
 }

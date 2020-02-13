@@ -39,7 +39,7 @@ const getters = {
 
 const actions = {
   checkLoaded ({ state, commit }) {
-    if (!state.user) {
+    if (!state.user && localStorage.getItem('accessToken') !== null) {
       Vue.prototype.$api
         .get('users/me')
         .then(r => r.data)

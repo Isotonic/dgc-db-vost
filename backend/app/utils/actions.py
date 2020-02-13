@@ -1,7 +1,12 @@
 from app import db
 from flask_socketio import emit
 from flask import render_template
-from app.models import IncidentLog, TaskLog
+from app.models import AuditLog, IncidentLog, TaskLog
+
+def audit_action(user, action_type, reason=None):
+    action = IncidentLog(user=user, action_type=action_type, reason=reason)
+    db.session.add(action)
+    db.session.commit()
 
 def incident_action(user, action_type, incident, comment=None, task=None, subtask=None, target_users=None, extra=None):
     if not target_users:

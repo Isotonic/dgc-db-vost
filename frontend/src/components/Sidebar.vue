@@ -15,7 +15,7 @@
       {{ deploymentName }}
     </div>
     <li class="nav-item">
-      <router-link :to="{ name: 'incidents', params: {deploymentName: deploymentName.replace(' ', '-'), deploymentId: deploymentId} }" class="nav-link">
+      <router-link :to="{ name: 'incidents', params: {deploymentName: deploymentName.replace(/ /g, '-'), deploymentId: deploymentId} }" class="nav-link">
         <i class="fas fa-fw fa-clone"></i>
         <span>Incidents</span>
       </router-link>
@@ -27,19 +27,19 @@
       </router-link>
     </li>
     <li class="nav-item">
-      <router-link :to="{ name: 'map', params: {deploymentName: deploymentName.replace(' ', '-'), deploymentId: deploymentId} }" class="nav-link">
+      <router-link :to="{ name: 'map', params: {deploymentName: deploymentName.replace(/ /g, '-'), deploymentId: deploymentId} }" class="nav-link">
         <i class="fas fa-fw fa-map-marker-alt"></i>
         <span>Map</span>
       </router-link>
     </li>
     <li class="nav-item">
-      <router-link :to="{ name: 'liveFeed', params: {deploymentName: deploymentName.replace(' ', '-'), deploymentId: deploymentId} }" class="nav-link">
+      <router-link :to="{ name: 'liveFeed', params: {deploymentName: deploymentName.replace(/ /g, '-'), deploymentId: deploymentId} }" class="nav-link">
         <i class="fas fa-fw fa-rss"></i>
         <span>Live Feed</span>
       </router-link>
     </li>
     <li class="nav-item">
-      <router-link :to="{ name: 'decisionMakingLog', params: {deploymentName: deploymentName.replace(' ', '-'), deploymentId: deploymentId} }" class="nav-link">
+      <router-link :to="{ name: 'decisionMakingLog', params: {deploymentName: deploymentName.replace(/ /g, '-'), deploymentId: deploymentId} }" class="nav-link">
         <i class="fas fa-fw fa-pen"></i>
         <span>Decision-Making Log</span>
       </router-link>
@@ -50,7 +50,7 @@
         Supervisor
       </div>
       <li class="nav-item">
-        <router-link :to="{ name: 'actionsRequired', params: {deploymentName: deploymentName.replace(' ', '-'), deploymentId: deploymentId} }" class="nav-link">
+        <router-link :to="{ name: 'actionsRequired', params: {deploymentName: deploymentName.replace(/ /g, '-'), deploymentId: deploymentId} }" class="nav-link">
           <i class="fas fa-fw fa-flag"></i>
           <span>Actions Required </span>
         </router-link>

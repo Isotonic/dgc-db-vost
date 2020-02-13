@@ -13,7 +13,7 @@
       </div>
       <div class="card-body text-center">
         <p class="font-weight-bold text-left">{{ deployment.description }}</p>
-        <router-link :to="{ name: 'incidents', params: { deploymentName: deployment.name.replace(' ', '-'), deploymentId: deployment.id }}" :class="['btn', deployment.open ? 'btn-success' : 'btn-info']">View Deployment</router-link>
+        <router-link :to="{ name: 'incidents', params: { deploymentName: deployment.name.replace(/ /g, '-'), deploymentId: deployment.id }}" :class="['btn', deployment.open ? 'btn-success' : 'btn-info']">View Deployment</router-link>
       </div>
     </div>
   </div>

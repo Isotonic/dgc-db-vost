@@ -1,71 +1,72 @@
 <template>
-  <div>
-    <div id="wrapper">
-    <sidebar :deploymentId="this.deploymentId" :deploymentName="deploymentNameApi"/>
-      <div id="content-wrapper" class="d-flex flex-column">
-        <topbar :deploymentId="deploymentId" :deploymentName="deploymentNameApi" />
-        <div class="container-fluid">
-          <div class="d-sm-flex align-items-center justify-content-between mb-4">
-            <h1 v-if="this.deployment" class="font-weight-bold mb-0">{{ this.deployment.name }}</h1>
-          </div>
-          <div class="row">
-            <div class="col-xl-12">
-              <div v-if="incidents.length" class="card">
-                <div class="card-header d-flex flex-row align-items-center justify-content-between">
-                  <h6 class="m-0 font-weight-bold text-primary">Map</h6>
-                  <div class="d-flex">
-                    <select v-model="showing" class="custom-select custom-select-sm text-primary font-weight-bold">
-                      <option value="all">All Incidents</option>
-                      <option value="assigned">Assigned Incidents</option>
-                      <option value="open">Open Incidents</option>
-                      <option value="closed">Closed Incidents</option>
-                    </select>
-                    <select v-model="heatmap" class="custom-select custom-select-sm text-primary font-weight-bold ml-2">
-                      <option :value="true">Heatmap On</option>
-                      <option :value="false">Heatmap Off</option>
-                    </select>
-                    <select v-model="sortedBy" class="custom-select custom-select-sm text-primary font-weight-bold ml-2">
-                      <option :value="['name', 1]">Name (Asc)</option>
-                      <option :value="['name', -1]">Name (Desc)</option>
-                      <option :value="['priority', 1]">Priority (Asc)</option>
-                      <option :value="['priority', -1]">Priority (Desc)</option>
-                      <option :value="['tasks', 1]">Tasks (Asc)</option>
-                      <option :value="['tasks', -1]">Tasks (Desc)</option>
-                      <option :value="['comments', 1]">Comments (Asc)</option>/option>
-                      <option :value="['comments', -1]">Comments (Desc)</option>/option>
-                      <option :value="['createdAt', 1]">Created At (Asc)</option>/option>
-                      <option :value="['createdAt', -1]">Created At (Desc)</option>/option>
-                      <option :value="['lastUpdatedAt', 1]">Last Updated (Asc)</option>
-                      <option :value="['lastUpdatedAt', -1]">Last Updated (Desc)</option>
-                    </select>
-                  </div>
+  <div id="wrapper">
+    <sidebar :deploymentId="this.deploymentId" :deploymentName="deploymentNameApi" />
+    <div id="content-wrapper" class="d-flex flex-column">
+      <topbar :deploymentId="deploymentId" :deploymentName="deploymentNameApi" />
+      <div class="container-fluid">
+        <div class="d-sm-flex align-items-center justify-content-between mb-4">
+          <h1 v-if="this.deployment" class="font-weight-bold mb-0">{{ this.deployment.name }}</h1>
+        </div>
+        <div class="row">
+          <div class="col-xl-12">
+            <div v-if="incidents.length" class="card">
+              <div class="card-header d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Map</h6>
+                <div class="d-flex">
+                  <select v-if="hasPermission('view_all_incidents')" v-model="showingIncidents" class="custom-select custom-select-sm text-primary font-weight-bold">
+                    <option value="all">All Incidents</option>
+                    <option value="assigned">Assigned Incidents</option>
+                  </select>
+                  <select v-model="showingStatus" class="custom-select custom-select-sm text-primary font-weight-bold ml-2">
+                    <option value="open">Open Only</option>
+                    <option value="closed">Closed Only</option>
+                    <option value="both">Open and Closed</option>
+                  </select>
+                  <select v-model="heatmap" class="custom-select custom-select-sm text-primary font-weight-bold ml-2">
+                    <option :value="true">Heatmap On</option>
+                    <option :value="false">Heatmap Off</option>
+                  </select>
+                  <select v-model="sortedBy" class="custom-select custom-select-sm text-primary font-weight-bold ml-2">
+                    <option :value="['name', 1]">Name (Asc)</option>
+                    <option :value="['name', -1]">Name (Desc)</option>
+                    <option :value="['priority', 1]">Priority (Asc)</option>
+                    <option :value="['priority', -1]">Priority (Desc)</option>
+                    <option :value="['tasks', 1]">Tasks (Asc)</option>
+                    <option :value="['tasks', -1]">Tasks (Desc)</option>
+                    <option :value="['comments', 1]">Comments (Asc)</option>/option>
+                    <option :value="['comments', -1]">Comments (Desc)</option>/option>
+                    <option :value="['createdAt', 1]">Created At (Asc)</option>/option>
+                    <option :value="['createdAt', -1]">Created At (Desc)</option>/option>
+                    <option :value="['lastUpdatedAt', 1]">Last Updated (Asc)</option>
+                    <option :value="['lastUpdatedAt', -1]">Last Updated (Desc)</option>
+                  </select>
                 </div>
-                <div class="row map-height">
-                  <div class="col-sm-3 overflow-auto pr-0 map-height">
-                    <ul class="mb-4 pl-0">
-                      <div class="input-group">
-                        <div class="input-group-append bl-1">
-                          <div class="btn bg-primary">
-                            <i class="fas fa-search fa-sm text-white" />
-                          </div>
+              </div>
+              <div class="row map-height">
+                <div class="col-sm-3 overflow-auto pr-0 map-height">
+                  <ul class="mb-4 pl-0">
+                    <div class="input-group">
+                      <div class="input-group-append bl-1">
+                        <div class="btn bg-primary">
+                          <i class="fas fa-search fa-sm text-white" />
                         </div>
-                        <input v-model="queryDebounced" type="text" class="form-control bg-light b-radius-0 small" placeholder="Search for an incident..." aria-label="Search for an incident">
                       </div>
-                      <incident-card v-for="incident in orderBy(queryResults, sortedBy[0], sortedBy[1])" :key="incident.id" :incident="incident" :query="queryDebounced" @goTo="goTo" />
-                      <div v-if="!queryResults.length" class="text-center font-weight-bold mt-3">
-                      <span v-if="!queryDebounced.length">No incidents</span>
-                      <span v-else-if="queryDebounced.length">No incidents found</span>
-                      </div>
-                    </ul>
-                  </div>
-                  <div class="col-xl-9 col-lg-9 pl-0">
-                    <l-map :zoom="mapSettings.zoom" class="map-container" @click="showBeacon = false" ref="map">
-                      <l-tile-layer :url="mapSettings.url" :attribution="mapSettings.attribution"></l-tile-layer>
-                      <leaflet-heatmap v-if="heatmap" :lat-lng="geoToArray" :radius="25" :blur="15" :max="0.01" />
-                      <l-geo-json v-else-if="!heatmap" @ready="geoMapCenter" :geojson="geoJson" :options="geoOptions" ref="geoJsonLayer" />
-                      <l-marker v-if="showBeacon" :lat-lng="beacon.coords" :icon="beaconIcon" />
-                    </l-map>
-                  </div>
+                      <input v-model="queryDebounced" type="text" class="form-control bg-light b-radius-0 small" placeholder="Search for an incident..." aria-label="Search for an incident">
+                    </div>
+                    <incident-card v-for="incident in orderBy(queryResults, sortedBy[0], sortedBy[1])" :key="incident.id" :incident="incident" :query="queryDebounced" @goTo="goTo" />
+                    <div v-if="!queryResults.length" class="text-center font-weight-bold mt-3">
+                    <span v-if="!queryDebounced.length">No incidents</span>
+                    <span v-else-if="queryDebounced.length">No incidents found</span>
+                    </div>
+                  </ul>
+                </div>
+                <div class="col-xl-9 col-lg-9 pl-0">
+                  <l-map :zoom="mapSettings.zoom" class="map-container" @click="showBeacon = false" ref="map">
+                    <l-tile-layer :url="mapSettings.url" :attribution="mapSettings.attribution"></l-tile-layer>
+                    <leaflet-heatmap v-if="heatmap" :lat-lng="geoToArray" :radius="25" :blur="15" :max="0.01" />
+                    <l-geo-json v-else-if="!heatmap" @ready="geoMapCenter" :geojson="geoJson" :options="geoOptions" ref="geoJsonLayer" />
+                    <l-marker v-if="showBeacon" :lat-lng="beacon.coords" :icon="beaconIcon" />
+                  </l-map>
                 </div>
               </div>
             </div>
@@ -90,7 +91,7 @@ import router from '@/router/index'
 import Topbar from '@/components/Topbar'
 import Sidebar from '@/components/Sidebar'
 import IncidentCard from '@/components/IncidentCard'
-import MapPopup from '@/components/utils/MapPopup'
+import MapPopup from '@/components/MapPopup'
 
 function fontAwesomeIcon (feature) {
   return divIcon({
@@ -109,7 +110,7 @@ function onEachFeature (feature, layer) {
     const popup = new PopupCont({
       propsData: {
         properties: feature.properties,
-        url: router.resolve({ name: 'incident', params: { deploymentName: feature.properties.deploymentName.replace(' ', '-'), deploymentId: feature.properties.deploymentId, incidentName: feature.properties.name.replace(' ', '-'), incidentId: feature.properties.id } })
+        url: router.resolve({ name: 'incident', params: { deploymentName: feature.properties.deploymentName.replace(/ /g, '-'), deploymentId: feature.properties.deploymentId, incidentName: feature.properties.name.replace(/ /g, '-'), incidentId: feature.properties.id } })
       }
     })
     layer.bindPopup(popup.$mount().$el)
@@ -156,7 +157,8 @@ export default {
   data () {
     return {
       query: '',
-      showing: 'all',
+      showingStatus: 'open',
+      showingIncidents: 'assigned',
       sortedBy: ['lastUpdatedAt', -1],
       beacon: { coords: [0, 0], priority: null },
       showBeacon: false,
@@ -215,14 +217,19 @@ export default {
       return this.deploymentName
     },
     incidents: function () {
-      if (this.showing === 'open') {
-        return this.getOpenIncidents
-      } else if (this.showing === 'assigned') {
-        return this.getAssignedIncidents
-      } else if (this.showing === 'closed') {
-        return this.getClosedIncidents
+      let incidents = []
+      if (this.showingIncidents === 'assigned') {
+        incidents = this.getAssignedIncidents
       } else {
-        return this.getIncidents
+        incidents = this.getIncidents
+      }
+
+      if (this.showingStatus === 'open') {
+        return incidents.filter(incident => incident.open)
+      } else if (this.showingStatus === 'closed') {
+        return incidents.filter(incident => !incident.open)
+      } else {
+        return incidents
       }
     },
     queryDebounced: {
@@ -307,15 +314,16 @@ export default {
         .filter(option => scores[option.id] > 1)
         .sort((a, b) => scores[b.id] - scores[a.id])
     },
+    ...mapGetters('user', {
+      hasPermission: 'hasPermission'
+    }),
     ...mapGetters('deployments', {
       getDeployment: 'getDeployment'
     }),
     ...mapGetters('incidents', {
       getDeploymentId: 'getDeploymentId',
       getIncidents: 'getIncidents',
-      getOpenIncidents: 'getOpenIncidents',
-      getAssignedIncidents: 'getAssignedIncidents',
-      getClosedIncidents: 'getClosedIncidents'
+      getAssignedIncidents: 'getAssignedIncidents'
     })
   },
   watch: {
@@ -324,7 +332,7 @@ export default {
       handler () {
         if (this.deployment && this.deploymentName !== this.deployment.name) {
           this.deploymentName = this.deployment.name
-          history.pushState(null, '', `/deployments/${this.deployment.name.replace(' ', '-')}-${this.deploymentId}/incidents`)
+          history.pushState(null, '', `/deployments/${this.deployment.name.replace(/ /g, '-')}-${this.deploymentId}/incidents`)
         }
       }
     },

@@ -27,12 +27,8 @@
 export default {
   name: 'MapPopup',
   props: {
-    properties: {
-      type: Object
-    },
-    url: {
-      type: Object
-    }
+    properties: Object,
+    url: Object
   },
   computed: {
     updated: function () {

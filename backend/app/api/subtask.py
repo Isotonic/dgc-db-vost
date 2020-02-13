@@ -67,7 +67,6 @@ class SubtaskEndpoint(Resource):
 @ns_subtask.resolve_object('subtask', lambda kwargs: IncidentSubTask.query.get_or_error(kwargs.pop('id')))
 class StatusEndpoint(Resource):
     @ns_subtask.doc(security='access_token')
-    @ns_subtask.expect(completion_model, validate=True)
     @ns_subtask.response(200, 'Success', completion_model)
     @ns_subtask.response(401, 'Incorrect credentials')
     @ns_subtask.response(403, 'Missing incident access')

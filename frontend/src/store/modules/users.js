@@ -16,7 +16,7 @@ const getters = {
     let groups = {}
     let groupsArray = []
     for (let user of state.users) {
-      const userGroup = Object.keys(user.group).length !== 0 ? user.group.name : 'No Group'
+      const userGroup = user.group ? user.group.name : 'No Group'
       if (userGroup in groups) {
         groups[userGroup].push(user)
       } else {

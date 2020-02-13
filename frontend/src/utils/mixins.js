@@ -69,7 +69,6 @@ export const ModalMixin = {
   },
   watch: {
     visible: function () {
-      console.log(this.visible)
       if (this.visible) {
         document.body.classList.add('modal-open')
         return

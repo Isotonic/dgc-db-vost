@@ -77,12 +77,6 @@ class User(db.Model, UserMixin):
     password_last_updated = db.Column(db.DateTime, default=datetime.utcnow)
     group_id = db.Column(db.Integer, db.ForeignKey('group.id'))
     group = db.relationship('Group', backref='users')
-    deployments = db.relationship('Deployment', secondary=deployment_user_junction)
-    incidents = db.relationship('Incident', secondary=incident_user_junction)
-    pinned = db.relationship('Incident', secondary=incident_pinned_junction)
-    tasks = db.relationship('IncidentTask', secondary=incidenttask_user_junction)
-    subtasks = db.relationship('IncidentSubTask', secondary=incidentsubtask_user_junction)
-    incident_log_target = db.relationship('IncidentLog', secondary=incidentlog_target_users_junction)
     audit_actions = db.relationship('AuditLog', backref='user', lazy=True)
     incident_comments = db.relationship('IncidentComment', backref='user')
     media_uploads = db.relationship('IncidentMedia', backref='uploaded_by')
@@ -175,14 +169,14 @@ def load_user(user_id):
 
 
 class Group(db.Model):
-    permission_values = {'view_all_incidents': 0x1, 'change_status': 0x2, 'change_allocation': 0x4,
-                         'mark_as_public': 0x8,
-                         'new_reports': 0x16, 'create_deployment': 0x32, 'decision_making_log': 0x64,
-                         'supervisor': 0x128, 'change_priority': 0x256}  ##TODO RE-DORDER ONCE DONE
+    permission_values = {'view_all_incidents': 1, 'change_status': 2, 'change_allocation': 4,
+                         'mark_as_public': 8,
+                         'new_reports': 16, 'create_deployment': 32, 'decision_making_log': 64,
+                         'supervisor': 128, 'change_priority': 256}  ##TODO RE-DORDER ONCE DONE AND REMOVE NEW_REPORTS
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64), index=True, unique=True)
-    deployments = db.relationship('Deployment', secondary=deployment_group_junction)
+    deployments = db.relationship('Deployment', secondary=deployment_group_junction, backref='groups')
     permissions = db.Column(db.Integer)
 
     def set_permissions(self, permission_list):
@@ -222,8 +216,7 @@ class Deployment(db.Model):
     areas = db.Column(db.ARRAY(db.String(64)))
     open_status = db.Column(db.Boolean(), default=True)
     incidents = db.relationship('Incident', backref='deployment')
-    groups = db.relationship('Group', secondary=deployment_group_junction)
-    users = db.relationship('User', secondary=deployment_user_junction)
+    users = db.relationship('User', secondary=deployment_user_junction, backref='deployments')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def name_check(self, deployment_name):
@@ -296,8 +289,8 @@ class Incident(db.Model):
     priority = db.Column(db.String(10))
     longitude = db.Column(db.Float())
     latitude = db.Column(db.Float())
-    assigned_to = db.relationship('User', secondary=incident_user_junction, lazy='selectin')
-    users_pinned = db.relationship('User', secondary=incident_pinned_junction, lazy='selectin')
+    assigned_to = db.relationship('User', secondary=incident_user_junction, lazy='selectin', backref='incidents')
+    users_pinned = db.relationship('User', secondary=incident_pinned_junction, lazy='selectin', backref='pinned')
     tasks = db.relationship('IncidentTask', backref='incident', lazy='selectin')
     comments = db.relationship('IncidentComment', backref='incident', lazy='selectin')
     medias = db.relationship('IncidentMedia', backref='incident', lazy='selectin')
@@ -361,7 +354,7 @@ class IncidentTask(db.Model):
     completed = db.Column(db.Boolean(), default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     completed_at = db.Column(db.DateTime)
-    assigned_to = db.relationship('User', secondary=incidenttask_user_junction, lazy='selectin')
+    assigned_to = db.relationship('User', secondary=incidenttask_user_junction, lazy='selectin', backref='tasks')
 
     def get_assigned(self):
         return list_of_names(self.assigned_to)
@@ -396,7 +389,7 @@ class IncidentSubTask(db.Model):
     completed = db.Column(db.Boolean(), default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     completed_at = db.Column(db.DateTime)
-    assigned_to = db.relationship('User', secondary=incidentsubtask_user_junction, lazy='selectin')
+    assigned_to = db.relationship('User', secondary=incidentsubtask_user_junction, lazy='selectin', backref='subtasks')
 
     def get_assigned(self):
         return list_of_names(self.assigned_to)
@@ -465,9 +458,8 @@ class EmailLink(db.Model):  ##TODO Cascade
 
 
 class AuditLog(db.Model):
-    action_values = {'create_user': 1, 'verify_user': 2, 'edit_user': 3, 'delete_user': 4, 'create_group': 5,
-                     'edit_group': 6, 'delete_group': 7, 'create_deployment': 8, 'edit_deployment': 9,
-                     'delete_deployment': 10}
+    action_values = {'create_user': 1, 'verify_user': 2, 'edit_user_group': 3, 'edit_user_status': 4, 'create_group': 5,
+                     'edit_group': 6, 'delete_group': 7, 'create_deployment': 8, 'edit_deployment': 9}
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
@@ -504,7 +496,7 @@ class IncidentLog(db.Model):
     task = db.relationship('IncidentTask', backref='logs', lazy='selectin') ##TODO Change to actions
     subtask_id = db.Column(db.Integer, db.ForeignKey('incident_sub_task.id'))
     subtask = db.relationship('IncidentSubTask', backref='logs', lazy='selectin') ##TODO Change to actions
-    target_users = db.relationship('User', secondary=incidentlog_target_users_junction, lazy='selectin')
+    target_users = db.relationship('User', secondary=incidentlog_target_users_junction, lazy='selectin', backref='incident_log_target')
     action_type = db.Column(db.Integer())
     reason = db.Column(db.String(256))
     extra = db.Column(db.String(64))
@@ -537,7 +529,7 @@ class TaskLog(db.Model):
     task = db.relationship('IncidentTask', backref='task_logs', lazy='selectin')
     subtask_id = db.Column(db.Integer, db.ForeignKey('incident_sub_task.id'))
     subtask = db.relationship('IncidentSubTask', backref='task_logs', lazy='selectin')
-    target_users = db.relationship('User', secondary=tasklog_target_users_junction)
+    target_users = db.relationship('User', secondary=tasklog_target_users_junction, backref='task_log_target')
     action_type = db.Column(db.Integer())
     reason = db.Column(db.String(256))
     extra = db.Column(db.String(64))

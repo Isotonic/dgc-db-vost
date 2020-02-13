@@ -48,7 +48,6 @@ class TaskEndpoint(Resource):
 @ns_task.resolve_object('task', lambda kwargs: IncidentTask.query.get_or_error(kwargs.pop('id')))
 class StatusEndpoint(Resource):
     @ns_task.doc(security='access_token')
-    @ns_task.expect(completion_model, validate=True)
     @ns_task.response(200, 'Success', completion_model)
     @ns_task.response(401, 'Incorrect credentials')
     @ns_task.response(403, 'Missing incident access')
@@ -69,7 +68,6 @@ class StatusEndpoint(Resource):
     @ns_task.response(400, 'Task already has this status')
     @ns_task.response(401, 'Incorrect credentials')
     @ns_task.response(403, 'Missing incident access')
-    @ns_task.response(403, 'Missing permission')
     @ns_task.response(404, 'Task doesn\'t exist')
     @api.marshal_with(completion_model)
     def put(self, task):
@@ -88,7 +86,6 @@ class StatusEndpoint(Resource):
 @ns_task.resolve_object('task', lambda kwargs: IncidentTask.query.get_or_error(kwargs.pop('id')))
 class DescriptionEndpoint(Resource):
     @ns_task.doc(security='access_token')
-    @ns_task.expect(text_model, validate=True)
     @ns_task.response(200, 'Success', text_model)
     @ns_task.response(401, 'Incorrect credentials')
     @ns_task.response(403, 'Missing incident access')
@@ -129,7 +126,6 @@ class DescriptionEndpoint(Resource):
 @ns_task.resolve_object('task', lambda kwargs: IncidentTask.query.get_or_error(kwargs.pop('id')))
 class AssignedEndpoint(Resource):
     @ns_task.doc(security='access_token')
-    @ns_task.expect(id_model, validate=True)
     @ns_task.response(200, 'Success', [user_model])
     @ns_task.response(401, 'Incorrect credentials')
     @ns_task.response(403, 'Missing incident access')
@@ -145,17 +141,16 @@ class AssignedEndpoint(Resource):
 
 
     @ns_task.doc(security='access_token')
-    @ns_task.expect(id_model, validate=True)
+    @ns_task.expect([id_model], validate=True)
     @ns_task.response(200, 'Success', [user_model])
     @ns_task.response(400, 'Subtask already has this priority')
     @ns_task.response(401, 'Incorrect credentials')
     @ns_task.response(403, 'Missing incident access')
-    @ns_task.response(403, 'Missing permission')
     @ns_task.response(404, 'Subtask doesn\'t exist')
     @api.marshal_with(user_model)
     def put(self, task):
         """
-                Changes task's assigned users.
+                Changes task's assigned users. Supply a list of user IDs, can be empty.
         """
         current_user = User.query.filter_by(id=get_jwt_identity()).first()
         ns_task.has_incident_access(current_user, task.incident)
@@ -170,7 +165,6 @@ class AssignedEndpoint(Resource):
 @ns_task.resolve_object('task', lambda kwargs: IncidentTask.query.get_or_error(kwargs.pop('id')))
 class CommentsEndpoint(Resource):
     @ns_task.doc(security='access_token')
-    @ns_task.expect(id_model, validate=True)
     @ns_task.response(200, 'Success', [task_comment_model])
     @ns_task.response(401, 'Incorrect credentials')
     @ns_task.response(403, 'Missing incident access')
@@ -192,7 +186,6 @@ class CommentsEndpoint(Resource):
     @ns_task.response(400, 'Text is empty')
     @ns_task.response(401, 'Incorrect credentials')
     @ns_task.response(403, 'Missing incident access')
-    @ns_task.response(403, 'Missing permission')
     @ns_task.response(404, 'Subtask doesn\'t exist')
     @api.marshal_with(task_comment_model)
     def post(self, task):

@@ -11,6 +11,7 @@ import Vue2Filters from 'vue2-filters'
 import VueNoty from 'vuejs-noty'
 import TextareaAutosize from 'vue-textarea-autosize'
 import { DropdownPlugin } from 'bootstrap-vue'
+import { ClientTable } from 'vue-tables-2'
 
 import '@/assets/css/sb-admin-2.css'
 import '@/assets/css/temp.css'
@@ -23,6 +24,7 @@ Vue.use(vueMoment)
 Vue.use(Vue2Filters)
 Vue.use(TextareaAutosize)
 Vue.use(DropdownPlugin)
+Vue.use(ClientTable)
 
 Vue.use(VueNoty, {
   timeout: 2000,

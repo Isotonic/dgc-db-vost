@@ -1,7 +1,22 @@
 from datetime import datetime
 from flask_socketio import emit
-from app.models import IncidentLog, TaskLog
-from .actions import incident_action, task_action
+from app.models import Group, AuditLog, IncidentLog, TaskLog
+from .actions import audit_action, incident_action, task_action
+
+
+def edit_group(group, name, permissions, changed_by):
+    if group.name == name and set(permissions) == set(group.get_permissions()):
+        return False
+    group.name = name
+    group.set_permissions(permissions)
+    audit_action(changed_by, AuditLog.action_values['edit_group'])
+
+
+def change_user_group(user, group, changed_by):
+    if user.group == group:
+        return False
+    user.group = group
+    audit_action(changed_by, AuditLog.action_values['edit_user_group'])
 
 
 def change_incident_status(incident, status, changed_by):

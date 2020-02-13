@@ -1,0 +1,272 @@
+<template>
+  <div id="wrapper">
+    <div id="content-wrapper" class="d-flex flex-column">
+      <topbar :nosidebar="true" />
+      <div class="container-fluid">
+        <div class="d-sm-flex align-items-center justify-content-between mb-4">
+          <h1 class="font-weight-bold mb-0">Admin Settings</h1>
+          <button @click="openNewModal" class="btn btn-icon-split btn-success mb-1 mt-2">
+            <span class="btn-icon">
+              <i class="fas fa-plus"></i>
+            </span>
+            <span class="text">{{ showingUsers ? 'New User' : 'New Group'}}</span>
+          </button>
+        </div>
+        <group-modal v-if="isNewGroupModalVisible" v-show="isNewGroupModalVisible" :visible="isNewGroupModalVisible" @close="isNewGroupModalVisible = false" />
+        <div class="row">
+          <div class="col-xl-12 col-lg-10">
+            <div class="card shadow mb-4">
+              <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Incidents</h6>
+                <select v-model="showingUsers" class="custom-select custom-select-sm text-primary font-weight-bold">
+                  <option :value="true">Users</option>
+                  <option :value="false">Groups</option>
+                </select>
+              </div>
+              <div class="card-body">
+                <div class="table-responsive">
+                  <v-client-table v-if="showingUsers" :data="users" :columns="usersColumns" :options="usersOptions">
+                    <div slot="group" slot-scope="{row}">
+                      <span>
+                        <select :value="row.group ? row.group.id : null" @change="changeUserGroup(row.id, $event.target.value)" class="custom-select custom-select-sm text-primary font-weight-bold">
+                          <option :value="null">None</option>
+                          <option disabled>──────────</option>
+                          <option v-for="group in orderBy(groups, 'id')" :key="group.id" :value="group.id">{{ group.name }}</option>
+                        </select>
+                      </span>
+                    </div>
+                  </v-client-table>
+                  <v-client-table v-if="!showingUsers" :data="groups" :columns="groupsColumns" :options="groupsOptions">
+                    <div slot="members" slot-scope="{row}">
+                      <span>
+                        {{ membersInGroup(row) }}
+                      </span>
+                    </div>
+                    <div slot="settings" slot-scope="{row}">
+                      <i class="fas fa-cogs text-primary pl-2" @click="editGroup(row)"></i>
+                      <i class="fas fa-trash-alt text-danger pl-3" @click="confirmDeleteGroup(row)"></i>
+                    </div>
+                  </v-client-table>
+                  <group-modal v-if="isEditGroupModalVisible" v-show="isEditGroupModalVisible" :visible="isEditGroupModalVisible" :edit="true" :group="editGroupObj" @close="isEditGroupModalVisible = false" />
+                  <question-modal v-if="isDeleteGroupModalVisible" v-show="isDeleteGroupModalVisible" :visible="isDeleteGroupModalVisible" :title="'Delete Group'" @btnAction="deleteGroup" @close="isDeleteGroupModalVisible = false">
+                    <template v-slot:question>
+                      <div class="text-center">
+                        <span class="font-weight-bold">Are you sure you wish to delete <code>{{ deleteGroupObj.name }}</code>?</span>
+                      </div>
+                    </template>
+                  </question-modal>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import Vue from 'vue'
+import Vue2Filters from 'vue2-filters'
+import { mapActions } from 'vuex'
+
+import Topbar from '@/components/Topbar'
+import QuestionModal from '@/components/modals/Question'
+import GroupModal from '@/components/modals/Group'
+
+function capitalLetters (str) {
+  str = str.split(' ')
+  for (let i = 0, x = str.length; i < x; i++) {
+    str[i] = str[i][0].toUpperCase() + str[i].substr(1)
+  }
+  return str.join(' ')
+}
+
+function makeString (arr) {
+  if (arr.length === 1) return arr[0]
+  const firsts = arr.slice(0, arr.length - 1)
+  const last = arr[arr.length - 1]
+  return firsts.join(', ') + ' and ' + last
+}
+
+export default {
+  name: 'Admin',
+  mixins: [Vue2Filters.mixin],
+  components: {
+    Topbar,
+    QuestionModal,
+    GroupModal
+  },
+  data () {
+    return {
+      showingUsers: true,
+      users: [],
+      groups: [],
+      deleteGroupObj: null,
+      editGroupObj: null,
+      isDeleteGroupModalVisible: false,
+      isEditGroupModalVisible: false,
+      isNewUserModalVisible: false,
+      isNewGroupModalVisible: false,
+      usersColumns: ['name', 'email', 'group', 'status', 'createdAt'],
+      usersOptions: {
+        headings: {
+          name: 'Name',
+          email: 'Email',
+          group: 'Group',
+          status: 'Status',
+          createdAt: 'Created At'
+        },
+        templates: {
+          name: function (h, row, index) {
+            return `${row.firstname} ${row.surname}`
+          },
+          createdAt: function (h, row, index) {
+            return this.$moment.unix(row.createdAt).fromNow()
+          }
+        },
+        customSorting: {
+          name: function (ascending) {
+            return function (a, b) {
+              let lastA = `${a.firstname} ${a.surname}`
+              let lastB = `${b.firstname} ${b.surname}`
+
+              if (lastA === lastB) {
+                lastA = a.createdAt
+                lastB = b.createdAt
+              }
+              if (ascending) {
+                return lastA >= lastB ? 1 : -1
+              }
+              return lastA <= lastB ? 1 : -1
+            }
+          }
+        },
+        filterAlgorithm: {
+          name (row, query) {
+            return (`${row.firstname} ${row.surname}`).toLowerCase().includes(query)
+          }
+        },
+        orderBy: {
+          column: 'name',
+          ascending: true
+        },
+        summary: 'Table of users',
+        resizeableColumns: true,
+        sortIcon: { base: 'float-right fas', up: 'fa-sort-up', down: 'fa-sort-down', is: 'fa-sort' },
+        highlightMatches: true
+      },
+      groupsColumns: ['name', 'permissions', 'members', 'settings'],
+      groupsOptions: {
+        headings: {
+          name: 'Name',
+          permissions: 'Permissions',
+          members: 'Members',
+          settings: 'Settings'
+        },
+        templates: {
+          permissions: function (h, row, index) {
+            if (!row.permissions.length) {
+              return 'None'
+            }
+            return makeString(row.permissions.map(permission => capitalLetters(permission.replace(/_/g, ' '))))
+          }
+        },
+        filterAlgorithm: {
+          permissions (row, query) {
+            if (!row.permissions.length) {
+              return 'none'.includes(query)
+            }
+            return makeString(row.permissions.map(permission => capitalLetters(permission.replace(/_/g, ' ')))).toLowerCase().includes(query)
+          }
+        },
+        customSorting: {
+          permissions: function (ascending) {
+            return function (a, b) {
+              let lastA = a.permissions.length
+              let lastB = b.permissions.length
+
+              if (lastA === lastB) {
+                lastA = a.createdAt
+                lastB = b.createdAt
+              }
+              if (ascending) {
+                return lastA >= lastB ? 1 : -1
+              }
+              return lastA <= lastB ? 1 : -1
+            }
+          }
+        },
+        orderBy: {
+          column: 'name',
+          ascending: true
+        },
+        summary: 'Table of groups',
+        resizeableColumns: true,
+        sortable: ['name', 'permissions', 'members'],
+        sortIcon: { base: 'float-right fas', up: 'fa-sort-up', down: 'fa-sort-down', is: 'fa-sort' },
+        highlightMatches: true
+      }
+    }
+  },
+  methods: {
+    membersInGroup (group) {
+      return this.users.filter(user => user.group && user.group.id === group.id).length
+    },
+    openNewModal () {
+      if (this.showingUsers) {
+        this.isNewUserModalVisible = true
+      } else {
+        this.isNewGroupModalVisible = true
+      }
+    },
+    changeUserGroup (userId, value) {
+      this.ApiPut(`users/${userId}/group`, value ? { id: parseInt(value) } : {})
+    },
+    editGroup (group) {
+      this.editGroupObj = group
+      this.isEditGroupModalVisible = true
+    },
+    confirmDeleteGroup (group) {
+      this.deleteGroupObj = group
+      this.isDeleteGroupModalVisible = true
+    },
+    deleteGroup (modalAnswer) {
+      this.isDeleteGroupModalVisible = false
+      if (modalAnswer) {
+        this.ApiDelete(`/groups/${this.deleteGroupObj.id}`)
+      }
+    },
+    getUsers () {
+      Vue.prototype.$api
+        .get(`/users`)
+        .then(r => r.data)
+        .then(users => {
+          this.users = users
+        })
+        .catch((error) => {
+          console.log(error)
+        })
+    },
+    getGroups () {
+      Vue.prototype.$api
+        .get(`/groups`)
+        .then(r => r.data)
+        .then(groups => {
+          this.groups = groups
+        })
+        .catch((error) => {
+          console.log(error)
+        })
+    },
+    ...mapActions('user', {
+      checkUserLoaded: 'checkLoaded'
+    })
+  },
+  async created () {
+    this.checkUserLoaded()
+    this.getGroups()
+    this.getUsers()
+  }
+}
+</script>

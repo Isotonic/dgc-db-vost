@@ -43,8 +43,8 @@
                 <img class="img-profile rounded-circle" :src="avatarUrl">
               </a>
           </template>
-          <b-dropdown-item><i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>Profile</b-dropdown-item>
           <b-dropdown-item><i class="fas fa-cogs fa-sm fa-fw mr-2 text-gray-400"></i>Settings</b-dropdown-item>
+          <b-dropdown-item v-if="hasPermission('Supervisor')" @click="adminSettings"><i class="fas fa-users-cog fa-sm fa-fw mr-2 text-gray-400"></i>Admin</b-dropdown-item>
           <div class="dropdown-divider"></div>
           <b-dropdown-item @click="logout"><i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>Logout</b-dropdown-item>
       </b-dropdown>
@@ -81,7 +81,10 @@ export default {
   },
   methods: {
     goTo: function (incident) {
-      router.push({ name: 'incident', params: { deploymentName: this.deploymentName.replace(' ', '-'), deploymentId: this.deploymentId, incidentName: incident.name.replace(' ', '-'), incidentId: incident.id } })
+      router.push({ name: 'incident', params: { deploymentName: this.deploymentName.replace(/ /g, '-'), deploymentId: this.deploymentId, incidentName: incident.name.replace(' ', '-'), incidentId: incident.id } })
+    },
+    adminSettings: function () {
+      router.push({ name: 'admin' })
     },
     logout: function () {
       this.$store.dispatch('user/logout')
@@ -126,8 +129,11 @@ export default {
         .filter(option => scores[option.id] > 1)
         .sort((a, b) => scores[b.id] - scores[a.id])
     },
-    ...mapGetters({
-      allIncidents: 'incidents/getIncidents'
+    ...mapGetters('user', {
+      hasPermission: 'hasPermission'
+    }),
+    ...mapGetters('incidents', {
+      allIncidents: 'getIncidents'
     })
   }
 }

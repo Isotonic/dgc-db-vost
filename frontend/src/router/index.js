@@ -49,7 +49,7 @@ const routes = [
       return props
     },
     meta: {
-      title: route => route.params.incidentName.replace('-', ' '),
+      title: route => route.params.incidentName.replace(/-/g, ' '),
       requiresAuth: true
     }
   },
@@ -119,6 +119,16 @@ const routes = [
     }
   },
   {
+    path: '/admin',
+    name: 'admin',
+    component: () => import(/* webpackChunkName: "admin" */ '../views/Admin.vue'),
+    props: true,
+    meta: {
+      title: _ => 'Admin Settings',
+      requiresAuth: true
+    }
+  },
+  {
     path: '/incidents/:incidentName-:incidentId(\\d+)',
     name: 'public incident',
     component: () => import(/* webpackChunkName: "public incident" */ '../views/PublicIncident.vue'),
@@ -129,7 +139,7 @@ const routes = [
       return props
     },
     meta: {
-      title: route => route.params.incidentName.replace('-', ' '),
+      title: route => route.params.incidentName.replace(/-/g, ' '),
       requiresAuth: false
     }
   },
@@ -155,7 +165,7 @@ const router = new VueRouter({
 router.beforeEach((to, from, next) => {
   document.title = to.meta && to.meta.title ? to.meta.title(to) : 'DGVOST'
   if (to.matched.some(record => record.meta.requiresAuth)) {
-    if (localStorage.getItem('accessToken') == null) {
+    if (localStorage.getItem('accessToken') === null) {
       next({
         path: '/login',
         query: { redirect: to.fullPath }

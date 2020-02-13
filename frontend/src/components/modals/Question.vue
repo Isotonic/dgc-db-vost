@@ -1,5 +1,5 @@
 <template>
-  <modal :title="'Public Update'" @close="close">
+  <modal :title="title" @close="close">
     <slot name="question"></slot>
     <slot name="body"></slot>
     <div class="text-center">
@@ -15,8 +15,12 @@ import { ModalMixin } from '@/utils/mixins'
 export default {
   name: 'QuestionModal',
   mixins: [ModalMixin],
+  props: {
+    title: String
+  },
   methods: {
     btnAction (actionBoolean) {
+      document.body.classList.remove('modal-open')
       this.$emit('btnAction', actionBoolean)
     }
   }

@@ -1,7 +1,11 @@
 from app import db
 from flask_socketio import emit
-from app.models import IncidentLog, TaskLog
-from .actions import incident_action, task_action
+from app.models import AuditLog, IncidentLog, TaskLog
+from .actions import audit_action, incident_action, task_action
+
+def delete_group(group, deleted_by):
+    db.session.delete(group)
+    audit_action(user=deleted_by, action_type=AuditLog.action_values['delete_group'])
 
 
 def delete_comment(comment, deleted_by):

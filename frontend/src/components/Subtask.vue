@@ -28,9 +28,11 @@
               <b-dropdown-item @click="setEdit">Edit subtask</b-dropdown-item>
               <b-dropdown-item @click="isQuestionModalVisible = true">Delete subtask</b-dropdown-item>
             </b-dropdown>
-            <question-modal v-if="isQuestionModalVisible" v-show="isQuestionModalVisible" :visible="isQuestionModalVisible" @btnAction="deleteSubtask" @close="isQuestionModalVisible = false">
+            <question-modal v-if="isQuestionModalVisible" v-show="isQuestionModalVisible" :visible="isQuestionModalVisible" :title="'Delete Subtask'" @btnAction="deleteSubtask" @close="isQuestionModalVisible = false">
               <template v-slot:question>
-                <span class="font-weight-bold text-black">Are you sure you wish to delete this subtask?</span>
+                <div class="text-center">
+                  <span class="font-weight-bold text-black">Are you sure you wish to delete this subtask?</span>
+                </div>
               </template>
               <template v-slot:body>
               <div class="delete-subtask">

@@ -17,15 +17,9 @@ const getters = {
   getIncidents: (state) => {
     return state.incidents
   },
-  getOpenIncidents: (state) => {
-    return state.incidents.filter(incident => incident.open)
-  },
   getAssignedIncidents: (state, getters, rootState, rootGetters) => {
     const user = rootGetters['user/getUser']
     return state.incidents.filter(incident => incident.assignedTo.some(assignedTo => assignedTo.id === user.id))
-  },
-  getClosedIncidents: (state) => {
-    return state.incidents.filter(incident => !incident.open)
   }
 }
 

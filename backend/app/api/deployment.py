@@ -29,17 +29,17 @@ class DeploymentsEndpoint(Resource):
     @ns_deployment.response(200, 'Success', deployment_model)
     @ns_deployment.response(400, 'Name is empty')
     @ns_deployment.response(401, 'Incorrect credentials')
-    @ns_deployment.response(403, 'Missing Supervisor permission')
+    @ns_deployment.response(403, 'Missing supervisor permission')
     @api.marshal_with(deployment_model)
     def post(self):
         """
-                Creates a new deployment, requires the Supervisor permission. Supplying a list of groups and users is optional and is left blank if everyone is to have access.
+                Creates a new deployment, requires the supervisor permission. Supplying a list of groups and users is optional and is left blank if everyone is to have access.
         """
         payload = api.payload
         current_user = User.query.filter_by(id=get_jwt_identity()).first()
         ns_deployment.has_permission(current_user, 'supervisor')
         created_deployment = create_deployment(payload['name'], payload['description'], payload['groups'], payload['users'], current_user)
-        if created_deployment == False:
+        if created_deployment is False:
             ns_deployment.abort(400, 'Name is empty')
         return created_deployment, 200
 
@@ -79,7 +79,7 @@ class DeploymentEndpoint(Resource):
         current_user = User.query.filter_by(id=get_jwt_identity()).first()
 
         created_incident = create_incident(payload['name'], payload['description'], payload['location'], payload['reported_via'], payload['reference'], deployment, current_user)
-        if created_incident == False:
+        if created_incident is False:
             ns_deployment.abort(400, 'Name is empty')
         return created_incident, 200
 

@@ -26,7 +26,7 @@
                   </span>
                   <span class="text">Public View</span>
               </template>
-              <b-dropdown-item :to="{ name: 'public incident', params: { incidentName: this.incidentName.replace(' ', '-'), incidentId: this.incidentId }}">View public page</b-dropdown-item>
+              <b-dropdown-item :to="{ name: 'public incident', params: { incidentName: this.incidentName.replace(/ /g, '-'), incidentId: this.incidentId }}">View public page</b-dropdown-item>
               <b-dropdown-item>Edit public page</b-dropdown-item>
               <b-dropdown-item @click="changePublic(false)">Hide from public</b-dropdown-item>
             </b-dropdown>
@@ -230,9 +230,11 @@
                 </div>
                 <comment-box v-if="incident" v-show="commentBoxVisible" @submitComment="submitComment" ref="commentBox" />
               </div>
-              <question-modal v-if="isCommentQuestionModalVisible" v-show="isCommentQuestionModalVisible" :visible="isCommentQuestionModalVisible" @btnAction="addComment" @close="isCommentQuestionModalVisible = false">
+              <question-modal v-if="isCommentQuestionModalVisible" v-show="isCommentQuestionModalVisible" :visible="isCommentQuestionModalVisible" :title="'Public Update'" @btnAction="addComment" @close="isCommentQuestionModalVisible = false">
                 <template v-slot:question>
-                  <span class="font-weight-bold">Would you like to make this update viewable by the public{{ incident.public ? '?' : ' when the incident is marked public?'}}</span>
+                  <div class="text-center">
+                    <span class="font-weight-bold">Would you like to make this update viewable by the public{{ incident.public ? '?' : ' when the incident is marked public?'}}</span>
+                  </div>
                 </template>
                 <template v-slot:body>
                   <div class="editor__content comment-public-text mt-3" v-html="commentHtml" />
@@ -490,7 +492,7 @@ export default {
       deep: true,
       handler () {
         if (this.deployment && this.deploymentName !== this.deployment.name) {
-          history.pushState(null, '', `/deployments/${this.deployment.name.replace(' ', '-')}-${this.deploymentId}/incidents`)
+          history.pushState(null, '', `/deployments/${this.deployment.name.replace(/ /g, '-')}-${this.deploymentId}/incidents`)
         }
       }
     },
@@ -498,7 +500,7 @@ export default {
       deep: true,
       handler () {
         if (this.incident && this.incidentName !== this.incident.name) {
-          history.pushState(null, '', `/deployments/${this.deployment.name.replace(' ', '-')}-${this.deploymentId}/incidents`)
+          history.pushState(null, '', `/deployments/${this.deployment.name.replace(/ /g, '-')}-${this.deploymentId}/incidents`)
         }
       }
     }

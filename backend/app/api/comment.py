@@ -62,6 +62,7 @@ class CommentEndpoint(Resource):
         current_user = User.query.filter_by(id=get_jwt_identity()).first()
         ns_comment.has_incident_access(current_user, comment.incident)
         delete_comment(comment, current_user)
+        return 'Success', 200
 
 
 @ns_comment.route('/<int:id>/public')
@@ -69,7 +70,6 @@ class CommentEndpoint(Resource):
 @ns_comment.resolve_object('comment', lambda kwargs: IncidentComment.query.get_or_error(kwargs.pop('id')))
 class PublicEndpoint(Resource):
     @ns_comment.doc(security='access_token')
-    @ns_comment.expect(public_model, validate=True)
     @ns_comment.response(200, 'Success', public_model)
     @ns_comment.response(401, 'Incorrect credentials')
     @ns_comment.response(403, 'Missing incident access')

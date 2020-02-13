@@ -23,9 +23,11 @@
       </div>
     </div>
     <span v-if="comment.editedAt" class="text-xs font-weight-bold half-opacity float-right mt-1 mb-2">Edited {{ comment.editedAt | moment("from", "now") }}</span>
-    <question-modal v-if="isCommentQuestionModalVisible" v-show="isCommentQuestionModalVisible" :visible="isCommentQuestionModalVisible" @btnAction="deleteComment" @close="isCommentQuestionModalVisible = false">
+    <question-modal v-if="isCommentQuestionModalVisible" v-show="isCommentQuestionModalVisible" :visible="isCommentQuestionModalVisible" :title="'Delete Update'" @btnAction="deleteComment" @close="isCommentQuestionModalVisible = false">
       <template v-slot:question>
-        <span class="font-weight-bold">Are you sure you wish to delete this update?</span>
+        <div class="text-center">
+          <span class="font-weight-bold">Are you sure you wish to delete this update?</span>
+        </div>
       </template>
       <template v-slot:body>
         <div class="editor__content comment-public-text mt-3" v-html="editor.getHTML()" />

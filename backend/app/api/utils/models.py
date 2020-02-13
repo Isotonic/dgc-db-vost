@@ -15,7 +15,15 @@ create_user_modal = api.model('New User',
                                       description='Optional ID of the group for the user to be added to.')})
 
 new_group_model = api.model('New Group',
-                                   {'name': fields.String(required=True), 'permissions': fields.List(fields.String)})
+                                   {'name': fields.String(description='Name of the group', required=True),
+                                    'supervisor': fields.Boolean(description='Admin access with full control, inherits all other permissions.', required=True),
+                                    'create_deployment': fields.Boolean(description='Create new deployments and edit existing ones.', required=True),
+                                    'decision_making_log': fields.Boolean(description='Add new entries to the decision-making log.' ,required=True),
+                                    'view_all_incidents': fields.Boolean(description='View incidents even if not assigned.', required=True),
+                                    'change_priority': fields.Boolean(description='Change an incident\'s priority.', required=True),
+                                    'change_status': fields.Boolean(description='Change an incident\'s open status.', required=True),
+                                    'change_allocation': fields.Boolean(description='Change an incident\'s allocation.', required=True),
+                                    'mark_as_public': fields.Boolean(description='Change if an incident if viewable by the public or not.', required=True)})
 
 
 new_deployment_model = api.model('New Deployment',  ##TODO Add areas
@@ -81,7 +89,17 @@ user_model = api.model('User',
                          'firstname': fields.String(description='Firstname of the user.'),
                          'surname': fields.String(description='Surname of the user.'),
                          'avatarUrl': fields.String(attribute=lambda x: x.get_avatar(), description='URL for the user\'s avatar.'),
-                         'group': fields.Nested(group_model_without_users, skip_none=True, description='Group the user belongs to, can be empty too.')})
+                         'group': fields.Nested(group_model_without_users, allow_null=True, description='Group the user belongs to, can be empty too.')})
+
+full_user_model = api.model('User Full Details',
+                        {'id': fields.Integer(description='ID of the user.'),
+                         'firstname': fields.String(description='Firstname of the user.'),
+                         'surname': fields.String(description='Surname of the user.'),
+                         'email': fields.String(description='Email of the user.'),
+                         'createdAt': fields.Integer(attribute=lambda x: int(x.created_at.timestamp()), description='UTC timestamp of the user\'s creation.'),
+                         'status': fields.String(attribute=None, description='Status of the user.'),
+                         'avatarUrl': fields.String(attribute=lambda x: x.get_avatar(), description='URL for the user\'s avatar.'),
+                         'group': fields.Nested(group_model_without_users, allow_null=True, description='Group the user belongs to, can be empty too.')})
 
 
 deployment_model = api.model('Deployment',
@@ -191,3 +209,7 @@ comment_edited_model = api.model('Commented Edited', {'text': fields.String(desc
 subtask_edited_model = api.model('Subtask Edited',
                             {'name': fields.String(required=True),
                              'assignedTo': fields.List(fields.Integer(), description='Optional IDs of the assigned users.')})
+
+permission_model = api.model('Permission Model',
+                             {'name': fields.String(required=True),
+                              'value': fields.Integer(attribute=lambda x: x.get_value(), required=True)})

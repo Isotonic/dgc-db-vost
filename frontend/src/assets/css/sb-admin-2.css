@@ -3307,7 +3307,7 @@ button.dropdown-toggle::after {
   flex: 1 1 auto;
   width: 1%;
   margin-bottom: 0;
-  border-color: #eff0f5 !important;
+  border: none;
 }
 
 .input-group > .form-control + .form-control,
@@ -4174,9 +4174,9 @@ button.dropdown-toggle::after {
     overflow-y: auto;
     max-height: 25em;
     border-radius: 0px 0px 6px 6px;
-    border-left: 1px solid #eff0f5;
-    border-right: 1px solid #eff0f5;
-    border-bottom: 1px solid #eff0f5;
+    border-left: 1px solid rgba(0, 0, 0, 0.125);
+    border-right: 1px solid rgba(0, 0, 0, 0.125);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
   }
 }
 

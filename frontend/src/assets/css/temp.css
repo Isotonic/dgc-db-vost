@@ -922,19 +922,23 @@ li[data-done=false] {
   margin-bottom: 0px;
 }
 
+.edit-comment {
+  width: 98%;
+}
+
 .comment-box-empty > .ProseMirror {
   border: 1.5px solid #f44336 !important;
 }
 
 .comment-icon {
   top: -30px;
-  left: 30px;
+  left: 25px;
   position: relative;
 }
 
 .comment-cancel-icon {
   top: -30px;
-  left: 45px;
+  left: 36px;
   position: relative;
 }
 
@@ -1199,9 +1203,9 @@ div .marker {
     overflow-y: auto;
     max-height: 20em;
     border-radius: 0px 0px 6px 6px;
-    border-left: 1px solid #eff0f5;
-    border-right: 1px solid #eff0f5;
-    border-bottom: 1px solid #eff0f5;
+    border-left: 1px solid rgba(0, 0, 0, 0.125);
+    border-right: 1px solid rgba(0, 0, 0, 0.125);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
   }
 }
 
@@ -1211,4 +1215,22 @@ div .marker {
 
 .VuePagination__pagination {
   justify-content: center;
+}
+
+.search-results > .mb-4 > .incident-card {
+  border-left: none;
+  border-right: none;
+  border-bottom: none;
+}
+
+.search-results > .mb-4 > .incident-card:first-child {
+  border-top: none;
+}
+
+.VueTables__search__input {
+  margin-left: 2px;
+}
+
+.hover:hover {
+  cursor: pointer;
 }

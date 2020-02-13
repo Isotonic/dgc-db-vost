@@ -38,12 +38,8 @@ export default {
     TextHighlight
   },
   props: {
-    incident: {
-      type: Object
-    },
-    query: {
-      type: String
-    }
+    incident: Object,
+    query: String
   },
   methods: {
     goTo: function () {

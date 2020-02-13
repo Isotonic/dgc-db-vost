@@ -54,7 +54,7 @@ class StatusEndpoint(Resource):
     @ns_incident.response(400, 'Incident already has this status')
     @ns_incident.response(401, 'Incorrect credentials')
     @ns_incident.response(403, 'Missing incident access')
-    @ns_incident.response(403, 'Missing permission')
+    @ns_incident.response(403, 'Missing permission to change incident status')
     @ns_incident.response(404, 'Incident doesn\'t exist')
     @api.marshal_with(status_model)
     def put(self, incident):
@@ -89,18 +89,18 @@ class AllocationEndpoint(Resource):
 
 
     @ns_incident.doc(security='access_token')
-    @ns_incident.expect(id_model, validate=True)
+    @ns_incident.expect([id_model], validate=True)
     @ns_incident.response(200, 'Success', [user_model])
     @ns_incident.response(400, 'Input payload validation failed')
     @ns_incident.response(400, 'Incident already has this allocation')
     @ns_incident.response(401, 'Incorrect credentials')
     @ns_incident.response(403, 'Missing incident access')
-    @ns_incident.response(403, 'Missing permission')
+    @ns_incident.response(403, 'Missing permission to change incident allocation')
     @ns_incident.response(404, 'Incident doesn\'t exist')
     @api.marshal_with(user_model)
     def put(self, incident):
         """
-                Changes incident's allocation.
+                Changes incident's allocation. Supply a list of user IDs, can be empty.
         """
         current_user = User.query.filter_by(id=get_jwt_identity()).first()
         ns_incident.has_incident_access(current_user, incident)
@@ -138,7 +138,7 @@ class PriorityEndpoint(Resource):
     @ns_incident.response(400, 'Incident already has this priority')
     @ns_incident.response(401, 'Invalid priority')
     @ns_incident.response(403, 'Missing incident access')
-    @ns_incident.response(403, 'Missing permission')
+    @ns_incident.response(403, 'Missing permission to change incident priority')
     @ns_incident.response(404, 'Incident doesn\'t exist')
     @api.marshal_with(priority_model)
     def put(self, incident):
@@ -182,7 +182,7 @@ class Public(Resource):
     @ns_incident.response(400, 'Input payload validation failed')
     @ns_incident.response(401, 'Incorrect credentials')
     @ns_incident.response(403, 'Missing incident access')
-    @ns_incident.response(403, 'Missing permission')
+    @ns_incident.response(403, 'Missing permission to change incident viewability')
     @ns_incident.response(404, 'Incident doesn\'t exist')
     @api.marshal_with(public_model)
     def put(self, incident):
