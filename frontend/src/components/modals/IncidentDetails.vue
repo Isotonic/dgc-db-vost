@@ -1,12 +1,14 @@
 <template>
-  <modal :title="'New Incident'" @close="close">
-    <form aria-label="Add a new incident">
-      <div class="form-group mb-3">
-        <input class="form-control was-validated" name="name" placeholder="Incident Name" type="text" required>
+  <modal :title="'Edit Details'" @close="close">
+    <form @submit.prevent="handleSubmit" aria-label="Create new user">
+      <div class="form-group mb-4">
+        <input v-model="name" class="form-control" placeholder="Name" type="text" required>
       </div>
-      <textarea class="form-control" rows="3" name="description" placeholder="Description"></textarea>
-      <div class="form-group my-3">
-        <select>
+      <div class="form-group mb-4">
+        <textarea-autosize v-model="description" class="form-control" placeholder="Description" type="text" required />
+      </div>
+      <div class="form-group mb-4">
+        <select v-model="type" class="custom-select custom-select-sm text-primary font-weight-bold full-length">
           <optgroup label="Transport Disruption">
             <option value="Road Incident"><i class="fas fa-car"></i> Road Obstruction / Closure / Disruption</option>
             <option value="Rail Incident">Railway Incident / Disruption</option><i class="fas fa-subway"></i>
@@ -84,15 +86,14 @@
           </optgroup>
         </select>
       </div>
-      <div class="form-group mt-3 mb-3">
-        <input class="form-control" name="reported_via" placeholder="Reported Via" type="text" required>
+      <div class="form-group mb-4">
+        <input v-model="reportedVia" class="form-control" placeholder="Reported Via" type="text">
       </div>
-      <div class="form-group mb-3">
-        <input class="form-control" name="reference" placeholder="Reference (Optional)" type="text">
+      <div class="form-group mb-4">
+        <input v-model="reference" class="form-control" placeholder="Reference Number (If Provided)" type="text">
       </div>
-      <span id="LocationNotChosen" class="text-danger d-none">Please select the location of the incident.</span>
       <div class="text-center">
-        <button type="submit" class="btn btn-primary my-4">Submit</button>
+        <button type="submit" class="btn btn-primary mt-1">Save</button>
       </div>
     </form>
   </modal>
@@ -102,10 +103,55 @@
 import { ModalMixin } from '@/utils/mixins'
 
 export default {
-  name: 'NewIncidentModal',
+  name: 'IncidentDetailsModal',
   mixins: [ModalMixin],
   props: {
-    title: String
+    title: String,
+    visible: Boolean,
+    incident: Object
+  },
+  data () {
+    return {
+      name: this.incident.name,
+      description: this.incident.description,
+      type: this.incident.type,
+      reportedVia: this.incident.reportedVia,
+      reference: this.incident.reference
+    }
+  },
+  methods: {
+    handleSubmit (e) {
+      if (!this.name.length) {
+        return
+      } else if (this.hasntChanged) {
+        this.$emit('close')
+        document.body.classList.remove('modal-open')
+      }
+      let incidentData = { name: this.name, type: this.type }
+
+      if (this.description && this.description.length) {
+        incidentData.description = this.description
+      }
+
+      if (this.reportedVia && this.reportedVia.length) {
+        incidentData.reportedVia = this.reportedVia
+      }
+
+      if (this.reference && this.reference.length) {
+        incidentData.reference = this.reference
+      }
+
+      this.ApiPut(`incidents/${this.incident.id}`, incidentData)
+        .then(() => {
+          this.$emit('close')
+          document.body.classList.remove('modal-open')
+        })
+    }
+  },
+  computed: {
+    hasntChanged: function () {
+      return this.name === this.incident.name && this.description === this.incident.description && this.reportedVia === this.incident.reportedVia && this.reference === this.incident.reference
+    }
   }
 }
 </script>

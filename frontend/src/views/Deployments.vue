@@ -5,14 +5,14 @@
       <div class="container-fluid">
         <div class="d-sm-flex align-items-center justify-content-between mb-4">
           <h1 class="font-weight-bold mb-0">Deployments</h1>
-          <button class="btn btn-icon-split btn-success mb-1 mt-2" @click="isNewDeploymentModalVisible = true">
+          <button class="btn btn-icon-split btn-success mb-1 mt-2" @click="openNewDeploymentModal">
             <span class="btn-icon">
               <i class="fas fa-plus"></i>
             </span>
             <span class="text">New Deployment</span>
           </button>
         </div>
-        <new-deployment-modal v-show="isNewDeploymentModalVisible" :visible="isNewDeploymentModalVisible" @close="isNewDeploymentModalVisible = false" />
+        <deployment-modal v-if="isNewDeploymentModalVisible" v-show="isNewDeploymentModalVisible" :visible="isNewDeploymentModalVisible" :groupOptions="groups" :userOptions="users" @close="isNewDeploymentModalVisible = false" />
         <div class="row">
           <div class="col-xl-12 col-lg-10">
             <div class="card shadow mb-4">
@@ -28,20 +28,22 @@
           </div>
         </div>
         <div class="row">
-          <deployment-card v-for="deployment in orderBy(deployments, 'createdAt', -1)" :key="deployment.id" :deployment="deployment" />
+          <deployment-card v-for="deployment in orderBy(deployments, 'createdAt', -1)" :key="deployment.id" :deployment="deployment" @edit="openEditDeploymentModal" />
         </div>
+        <deployment-modal v-if="isEditDeploymentModalVisible" v-show="isEditDeploymentModalVisible" :visible="isEditDeploymentModalVisible" :groupOptions="groups" :userOptions="users" :edit="true" :deployment="editDeployment" @close="isEditDeploymentModalVisible = false" />
       </div>
     </div>
   </div>
 </template>
 
 <script>
+import Vue from 'vue'
 import Vue2Filters from 'vue2-filters'
 import { mapGetters, mapActions } from 'vuex'
 
 import Topbar from '@/components/Topbar'
 import DeploymentCard from '@/components/DeploymentCard'
-import NewDeploymentModal from '@/components/modals/NewDeployment'
+import DeploymentModal from '@/components/modals/Deployment'
 
 export default {
   name: 'deployments',
@@ -49,19 +51,58 @@ export default {
   components: {
     Topbar,
     DeploymentCard,
-    NewDeploymentModal
+    DeploymentModal
   },
   data () {
     return {
-      isNewDeploymentModalVisible: false
+      users: [],
+      groups: [],
+      editDeployment: null,
+      isNewDeploymentModalVisible: false,
+      isEditDeploymentModalVisible: false
     }
   },
   methods: {
-    openModal (modal) {
-      modal = true
+    openNewDeploymentModal () {
+      if (!this.users.length) {
+        this.getUsers()
+      }
+      if (!this.groups.length) {
+        this.getGroups()
+      }
+      this.isNewDeploymentModalVisible = true
     },
-    closeModal (modal) {
-      modal = false
+    openEditDeploymentModal (deployment) {
+      if (!this.users.length) {
+        this.getUsers()
+      }
+      if (!this.groups.length) {
+        this.getGroups()
+      }
+      this.editDeployment = deployment
+      this.isEditDeploymentModalVisible = true
+    },
+    getUsers () {
+      Vue.prototype.$api
+        .get(`/users`)
+        .then(r => r.data)
+        .then(users => {
+          this.users = users
+        })
+        .catch((error) => {
+          console.log(error)
+        })
+    },
+    getGroups () {
+      Vue.prototype.$api
+        .get(`/groups`)
+        .then(r => r.data)
+        .then(groups => {
+          this.groups = groups
+        })
+        .catch((error) => {
+          console.log(error)
+        })
     },
     ...mapActions('user', {
       checkUserLoaded: 'checkLoaded'

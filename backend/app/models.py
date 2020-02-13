@@ -5,8 +5,8 @@ from os import path, makedirs
 from flask_admin import Admin  ##TODO Remove
 from flask_login import UserMixin
 from datetime import datetime, timedelta
-from app import app, db, login, argon2, moment
 from flask_admin.contrib.sqla import ModelView
+from app import app, db, login, argon2, moment
 
 avatar_colours = ['#26de81', '#3867d6', '#eb3b5a', '#0fb9b1', '#f7b731', '#a55eea', '#fed330', '#45aaf2', '#fa8231',
                   '#2bcbba', '#fd9644', '#2d98da', '#8854d0', '#20bf6b', '#fc5c65', '#4b7bec']
@@ -72,11 +72,13 @@ class User(db.Model, UserMixin):
     firstname = db.Column(db.String(64))
     surname = db.Column(db.String(64))
     email = db.Column(db.String(120), index=True, unique=True)
+    status = db.Column(db.Integer(), default=0)
     password_hash = db.Column(db.String(128))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     password_last_updated = db.Column(db.DateTime, default=datetime.utcnow)
     group_id = db.Column(db.Integer, db.ForeignKey('group.id'))
     group = db.relationship('Group', backref='users')
+    email_links = db.relationship('EmailLink', backref='user', cascade='all,delete')
     audit_actions = db.relationship('AuditLog', backref='user', lazy=True)
     incident_comments = db.relationship('IncidentComment', backref='user')
     media_uploads = db.relationship('IncidentMedia', backref='uploaded_by')
@@ -132,11 +134,15 @@ class User(db.Model, UserMixin):
         return incidents
 
     def has_permission(self, permission):
+        if self.status != 1:
+            return False
         if not self.group:
             return False
         return self.group.has_permission(permission)
 
     def has_deployment_access(self, deployment):
+        if self.status != 1:
+            return False
         if not isinstance(deployment, Deployment):
             deployment = Deployment.query.filter_by(id=deployment).first()
         if not deployment:
@@ -148,6 +154,8 @@ class User(db.Model, UserMixin):
                 return True
 
     def has_incident_access(self, incident):
+        if self.status != 1:
+            return False
         if not isinstance(incident, Incident):
             incident = Incident.query.filter_by(id=incident).first()
         if not incident:
@@ -272,7 +280,9 @@ class Incident(db.Model):
     id = db.Column(db.Integer, primary_key=True, index=True)
     deployment_id = db.Column(db.Integer, db.ForeignKey('deployment.id'))
     name = db.Column(db.String(64), index=True)
+    public_name = db.Column(db.String(64))
     description = db.Column(db.String(256))
+    public_description = db.Column(db.String(256))
     reported_via = db.Column(db.String(256))
     reference = db.Column(db.String(128))  ##TODO MAYBE CHANGE TO INT
     incident_type = db.Column(db.String(32))
@@ -449,17 +459,16 @@ class SupervisorActions(db.Model):
     requested_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
-class EmailLink(db.Model):  ##TODO Cascade
+class EmailLink(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
-    user = db.relationship('User', backref='email_link')  ##Maybe unused so not needed.
     link = db.Column(db.String(128), unique=True)
     verify = db.Column(db.Boolean(), default=False)
     forgot_password = db.Column(db.Boolean(), default=False)
 
 
 class AuditLog(db.Model):
-    action_values = {'create_user': 1, 'verify_user': 2, 'edit_user_group': 3, 'edit_user_status': 4, 'create_group': 5,
-                     'edit_group': 6, 'delete_group': 7, 'create_deployment': 8, 'edit_deployment': 9}
+    action_values = {'create_user': 1, 'verify_user': 2, 'edit_user_group': 3, 'edit_user_status': 4, 'delete_user': 5, 'create_group': 6,
+                     'edit_group': 7, 'delete_group': 8, 'create_deployment': 9, 'edit_deployment': 10}
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
@@ -475,7 +484,7 @@ class IncidentLog(db.Model):
                      'marked_complete': 10, 'marked_incomplete': 11, 'changed_priority': 12,
                      'changed_task_description': 13, 'assigned_user_task': 14,
                      'removed_user_task': 15, 'marked_public': 16, 'marked_not_public': 17, 'complete_subtask': 18, 'incomplete_subtask': 19, 'create_subtask': 20, 'add_subtask_comment': 21,
-                     'marked_comment_public': 22, 'marked_comment_not_public': 23, 'update_comment': 24, 'edit_subtask': 25}  ##TODO RE-ORDER ONCE DONE
+                     'marked_comment_public': 22, 'marked_comment_not_public': 23, 'update_comment': 24, 'edit_subtask': 25, 'edit_incident': 26}  ##TODO RE-ORDER ONCE DONE
     action_strings = {1: 'created incident', 2: 'created task $task', 3: 'marked $task as complete',
                       4: 'deleted task $task',
                       5: 'added an update', 6: 'deleted an update', 7: 'marked $task as incomplete',
@@ -484,7 +493,7 @@ class IncidentLog(db.Model):
                       11: 'marked incident as incomplete', 12: 'changed priority to $extra',
                       13: 'changed $task description to "$extra"', 14: 'added $target_users to $task',
                       15: 'removed $target_users from $task', 16: 'set the incident to public', 17: 'set the incident to private', 18: 'marked $extra as complete', 19: 'marked $extra as incomplete', 20: 'created sub-task $extra', 21: 'added comment to $task',
-                      22: 'marked comment as publicly viewable', 23: 'marked comment as not publicly viewable', 24: 'edited update', 25: 'edited subtask $extra'}
+                      22: 'marked comment as publicly viewable', 23: 'marked comment as not publicly viewable', 24: 'edited update', 25: 'edited subtask $extra', 26: 'edited incident details'}
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))

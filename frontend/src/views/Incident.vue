@@ -13,7 +13,7 @@
                 </span>
                 <span v-if="incident" class="text">{{ incident.open ? 'Mark As Complete' : 'Mark As Incomplete' }}</span>
             </button>
-            <button v-if="incident && !incident.public && hasPermission('mark_as_public')" class="btn btn-icon-split mr-2 btn-success" @click="changePublic(true)">
+            <button v-if="incident && !incident.public && hasPermission('mark_as_public')" class="btn btn-icon-split mr-2 btn-success" @click="isIncidentPublicModalVisible = true">
                 <span class="btn-icon">
                     <i class="fas fa-eye"></i>
                 </span>
@@ -27,9 +27,10 @@
                   <span class="text">Public View</span>
               </template>
               <b-dropdown-item :to="{ name: 'public incident', params: { incidentName: this.incidentName.replace(/ /g, '-'), incidentId: this.incidentId }}">View public page</b-dropdown-item>
-              <b-dropdown-item>Edit public page</b-dropdown-item>
+              <b-dropdown-item @click="isIncidentPublicModalVisible = true">Edit public page</b-dropdown-item>
               <b-dropdown-item @click="changePublic(false)">Hide from public</b-dropdown-item>
             </b-dropdown>
+            <incident-public-modal v-if="isIncidentPublicModalVisible" v-show="isIncidentPublicModalVisible" :visible="isIncidentPublicModalVisible" :incident="incident" :edit="incident.public" @close="isIncidentPublicModalVisible = false" />
             <b-dropdown id="FlagDropdown" toggle-class="btn-icon-split btn-warning dropdown-toggle text-white">
               <template slot="button-content">
                   <span class="btn-icon">
@@ -165,7 +166,7 @@
             <div class="card shadow mb-4">
               <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 font-weight-bold text-primary">Incident Overview</h6>
-                <a href="#" role="button" data-toggle="modal" data-target="#editOverviewModal">
+                <a href="#" role="button" @click="isIncidentDetailsModalVisible = true">
                   <i class="fas fa-cog" v-tooltip="'Edit Incident Overview'"></i>
                 </a>
               </div>
@@ -181,14 +182,16 @@
                 <p class="card-text"><b>Logged by:</b> <a href="#">{{ incident.loggedBy.firstname }} {{ incident.loggedBy.surname }}</a></p>
                 <p class="card-text"><b>Reference Number (If Provided):</b> {{ incident.reference ? incident.reference : 'N/A' }}</p>
               </div>
+              <incident-details-modal v-if="isIncidentDetailsModalVisible" v-show="isIncidentDetailsModalVisible" :visible="isIncidentDetailsModalVisible" :incident="incident" @close="isIncidentDetailsModalVisible = false" />
             </div>
             <div class="card shadow mb-4">
               <div class="card-header py-3 d-flex align-items-center justify-content-between">
                 <h6 class="m-0 font-weight-bold text-primary">Tasks</h6>
-                <a class="text-success" href="#" role="button" data-toggle="modal" data-target="#addTaskModal">
+                <a class="text-success" href="#" role="button" @click="isNewTaskModalVisible = true">
                   <i class="fas fa-plus" v-tooltip="'Add Task'"></i>
                 </a>
               </div>
+              <new-task-modal v-if="isNewTaskModalVisible" v-show="isNewTaskModalVisible" :visible="isNewTaskModalVisible" :deploymentId="deploymentId" :incidentId="incidentId" @close="isNewTaskModalVisible = false" />
               <div v-if="!incident" class="card-body">
                 <vcl-bullet-list :rows="3" />
               </div>
@@ -223,7 +226,7 @@
               <div class="card-body bg-light">
                 <vcl-bullet-list v-if="!incident" :rows="3" />
                 <ul v-else class="list-unstyled">
-                  <comment v-for="comment in orderBy(incident.comments, 'sentAt')" :key="comment.id" :comment="comment" :publicIncident="incident.public" @showCommentBox="showCommentBox"></comment>
+                  <comment v-for="comment in orderBy(incident.comments, 'sentAt')" :key="comment.id" :comment="comment" :incident="incident" @showCommentBox="showCommentBox"></comment>
                 </ul>
                 <div v-if="incident && !incident.comments.length">
                   <p class="card-text text-center">No updates currently.</p>
@@ -275,6 +278,9 @@ import Comment from '@/components/Comment'
 import Activity from '@/components/Activity'
 import CommentBox from '@/components/CommentBox'
 import FlagToSupervisorModal from '@/components/modals/FlagToSupervisor'
+import IncidentPublicModal from '@/components/modals/IncidentPublic'
+import IncidentDetailsModal from '@/components/modals/IncidentDetails'
+import NewTaskModal from '@/components/modals/NewTask'
 import TaskModal from '@/components/modals/Task'
 import FileUploaderModal from '@/components/modals/FileUploader'
 import QuestionModal from '@/components/modals/Question'
@@ -290,8 +296,11 @@ export default {
     Activity,
     CommentBox,
     FlagToSupervisorModal,
+    NewTaskModal,
     TaskModal,
     FileUploaderModal,
+    IncidentPublicModal,
+    IncidentDetailsModal,
     QuestionModal,
     LMap,
     LTileLayer,
@@ -323,6 +332,9 @@ export default {
       showFlagDropdown: false,
       showPriorityDropdown: false,
       isFlagToSupervisorModalVisible: false,
+      isIncidentPublicModalVisible: false,
+      isIncidentDetailsModalVisible: false,
+      isNewTaskModalVisible: false,
       isTaskModalVisible: false,
       isFileUploaderModalVisible: false,
       isCommentQuestionModalVisible: false,
@@ -509,9 +521,6 @@ export default {
     this.checkUserLoaded()
     this.checkDeploymentsLoaded()
     this.checkIncidentsLoaded(this.deploymentId)
-  },
-  beforeDestroy () {
-    this.editor.destroy()
   }
 }
 </script>

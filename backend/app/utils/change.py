@@ -1,6 +1,6 @@
 from datetime import datetime
 from flask_socketio import emit
-from app.models import Group, AuditLog, IncidentLog, TaskLog
+from app.models import User, Group, AuditLog, IncidentLog, TaskLog
 from .actions import audit_action, incident_action, task_action
 
 
@@ -17,6 +17,31 @@ def change_user_group(user, group, changed_by):
         return False
     user.group = group
     audit_action(changed_by, AuditLog.action_values['edit_user_group'])
+
+
+def edit_deployment(deployment, name, description, group_ids, user_ids, changed_by):
+    if name == '' or description == '':
+        return False
+    deployment.name = name
+    deployment.description = description
+    deployment.groups = Group.query.filter(Group.id.in_(group_ids)).all()
+    deployment.users = User.query.filter(User.id.in_(user_ids)).all()
+    #emit('create_deployment', {'html': render_template('deployment_card.html', deployment=deployment), 'code': 200}, room='deployments')
+    audit_action(changed_by, action_type=AuditLog.action_values['edit_deployment'], target_id=deployment.id)
+    return deployment
+
+
+def edit_incident(incident, name, description, incident_type, reported_via, reference, changed_by):
+    if incident.name == name and incident.description == description and incident.incident_type == type and incident.reported_via == reported_via and incident.reference == reference:
+        return False
+    incident.name = name
+    incident.description = description
+    incident.incident_type = incident_type
+    incident.reported_via = reported_via
+    incident.reference = reference
+    #emit('create_deployment', {'html': render_template('deployment_card.html', deployment=deployment), 'code': 200}, room='deployments')
+    incident_action(changed_by, IncidentLog.action_values['edit_incident'], incident=incident)
+    return incident
 
 
 def change_incident_status(incident, status, changed_by):
@@ -60,10 +85,13 @@ def change_incident_priority(incident, priority, changed_by):
                     incident=incident, extra=priority)
 
 
-def change_incident_public(incident, public, changed_by):
-    if incident.public == public:
+def change_incident_public(incident, public, name, description, changed_by):
+    if (incident.public and public and incident.description == description and incident.name == name) or (not incident.public and not public):
         return False
     incident.public = public
+    if public:
+        incident.public_name = name
+        incident.public_description = description
     #emit('change_public', {'public': incident.public, 'code': 200},
     #     room=f'{incident.deployment_id}-{incident.id}')
     incident_action(user=changed_by, action_type=IncidentLog.action_values['marked_public' if public else 'marked_not_public'],

@@ -4,8 +4,8 @@ from .utils.resource import Resource
 from .utils.namespace import Namespace
 from ..utils.create import create_comment, create_task
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from ..utils.change import change_incident_status, change_incident_allocation, change_incident_priority, change_incident_public
-from .utils.models import id_model, incident_model, status_model, user_model, priority_model, public_model, comment_model, new_comment_model, task_model, new_task_model
+from ..utils.change import edit_incident, change_incident_status, change_incident_allocation, change_incident_priority, change_incident_public
+from .utils.models import id_model, incident_model, status_model, user_model, priority_model, public_model, comment_model, new_comment_model, task_model, new_task_model, edit_incident_model
 
 ns_incident = Namespace('Incident', description='Used to carry out actions related to incidents.', path='/incidents', decorators=[jwt_required])
 
@@ -25,6 +25,47 @@ class IncidentEndpoint(Resource):
         """
         current_user = User.query.filter_by(id=get_jwt_identity()).first()
         ns_incident.has_incident_access(current_user, incident)
+        return incident, 200
+
+
+    @ns_incident.expect(edit_incident_model, validate=True)
+    @ns_incident.doc(security='access_token')
+    @ns_incident.response(200, 'Success', incident_model)
+    @ns_incident.response(400, 'Name is empty')
+    @ns_incident.response(400, 'Incident already has these details')
+    @ns_incident.response(401, 'Incorrect credentials')
+    @ns_incident.response(401, 'Invalid incident type')
+    @api.marshal_with(incident_model)
+    def put(self, incident):
+        """
+                Edits incident. Supplying a description, reportedVia and referece are optional and can be omitted.
+        """
+        payload = api.payload
+        current_user = User.query.filter_by(id=get_jwt_identity()).first()
+
+        if payload['name'] == '':
+            ns_incident.abort(400, 'Name is empty')
+
+        if payload['type'] not in Incident.incident_types.keys():
+            ns_incident.abort(400, 'Invalid incident type')
+
+        if 'description' in payload.keys():
+            description = payload['description']
+        else:
+            description = None
+
+        if 'reportedVia' in payload.keys():
+            reported_via = payload['reportedVia']
+        else:
+            reported_via = None
+
+        if 'reference' in payload.keys():
+            reference = payload['reference']
+        else:
+            reference = None
+
+        if edit_incident(incident, payload['name'],description, payload['type'], reported_via, reference, current_user) is False:
+            ns_deployment.abort(400, 'Incident already has these details')
         return incident, 200
 
 
@@ -180,6 +221,7 @@ class Public(Resource):
     @ns_incident.response(400, 'Incident is already public')
     @ns_incident.response(400, 'Incident is already not public')
     @ns_incident.response(400, 'Input payload validation failed')
+    @ns_incident.response(400, 'Name is empty')
     @ns_incident.response(401, 'Incorrect credentials')
     @ns_incident.response(403, 'Missing incident access')
     @ns_incident.response(403, 'Missing permission to change incident viewability')
@@ -192,7 +234,19 @@ class Public(Resource):
         current_user = User.query.filter_by(id=get_jwt_identity()).first()
         ns_incident.has_incident_access(current_user, incident)
         ns_incident.has_permission(current_user, 'mark_as_public')
-        if change_incident_public(incident, api.payload['public'], current_user) is False:
+        if 'name' in api.payload.keys():
+            name = api.payload['name']
+            if name == '':
+                ns_incident.abort(400, 'Name is empty')
+        else:
+            name = None
+
+        if 'description' in api.payload.keys():
+            description = api.payload['description']
+        else:
+            description = None
+
+        if change_incident_public(incident, api.payload['public'], name, description, current_user) is False:
             ns_incident.abort(400, f'Incident is already {"public" if api.payload["public"] else "not public"}')
         return incident, 200
 
@@ -273,8 +327,8 @@ class Tasks(Resource):
         ns_incident.has_incident_access(current_user, incident)
         users = None
         description = None
-        if 'users' in api.payload.keys():
-            users = [m for m in User.query.filter(User.id.in_(api.payload['users'])).all() if m.has_deployment_access(incident.deployment)]
+        if 'assignedTo' in api.payload.keys():
+            users = [m for m in User.query.filter(User.id.in_(api.payload['assignedTo'])).all() if m.has_deployment_access(incident.deployment)]
         if 'description' in api.payload.keys():
             description = api.payload['description']
         task = create_task(api.payload['name'], users, description, incident, current_user)

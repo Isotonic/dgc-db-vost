@@ -1234,3 +1234,7 @@ div .marker {
 .hover:hover {
   cursor: pointer;
 }
+
+.full-length {
+  width: 100%;
+}

@@ -8,6 +8,11 @@ def delete_group(group, deleted_by):
     audit_action(user=deleted_by, action_type=AuditLog.action_values['delete_group'])
 
 
+def delete_user(user, deleted_by):
+    db.session.delete(user)
+    audit_action(user=deleted_by, action_type=AuditLog.action_values['delete_user'])
+
+
 def delete_comment(comment, deleted_by):
     incident = comment.incident
     db.session.delete(comment)

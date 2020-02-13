@@ -10,7 +10,7 @@
     <div class="update-log-text">
       <editor-content class="editor__content" :editor="editor" />
       <div class="update-body">
-        <i v-if="comment.public" class="fas fa-eye mr-1" v-tooltip="publicIncident ? 'Viewable by the public' : 'Viewable by the public when incident is marked public'"></i>
+        <i v-if="comment.public" class="fas fa-eye mr-1" v-tooltip="incident.public ? 'Viewable by the public' : 'Viewable by the public when incident is marked public'"></i>
         {{ comment.sentAt | moment("from", "now") }}
         <b-dropdown variant="link" size="xs" toggle-tag="div">
           <template slot="button-content">
@@ -18,6 +18,11 @@
           </template>
           <b-dropdown-item v-if="isUsersComment" @click="editable">Edit update</b-dropdown-item>
           <b-dropdown-item @click="isCommentQuestionModalVisible = true">Delete update</b-dropdown-item>
+          <social-sharing url="" :title="`[System Generated] ${publicName}\n${toText}\n${publicUrl}`" inline-template>
+            <network network="twitter">
+              <b-dropdown-item>Tweet update</b-dropdown-item>
+            </network>
+          </social-sharing>
           <b-dropdown-item @click="togglePublic">{{ comment.public ? 'Hide update from public' : 'Show update to public'}}</b-dropdown-item>
         </b-dropdown>
       </div>
@@ -37,6 +42,7 @@
 </template>
 
 <script>
+import router from '@/router/index'
 import CommentBox from './CommentBox'
 import QuestionModal from './modals/Question'
 
@@ -60,6 +66,8 @@ import {
   Underline
 } from 'tiptap-extensions'
 
+const htmlToText = require('html-to-text')
+
 export default {
   name: 'Comment',
   components: {
@@ -69,7 +77,7 @@ export default {
   },
   props: {
     comment: Object,
-    publicIncident: Boolean
+    incident: Object
   },
   data () {
     return {
@@ -137,12 +145,21 @@ export default {
         return this.comment.text
       }
     },
+    toText: function () {
+      return htmlToText.fromString(this.editor.getHTML(), { wordwrap: 0, uppercaseHeadings: true, noLinkBrackets: true })
+    },
     isUsersComment: function () {
       const user = this.$store.getters['user/getUser']
       if (user && user.id === this.comment.user.id) {
         return true
       }
       return false
+    },
+    publicName: function () {
+      return this.incident.publicName ? this.incident.publicName : this.incident.name
+    },
+    publicUrl: function () {
+      return window.location.origin + '/' + router.resolve({ name: 'public incident', params: { incidentName: this.incident.name.replace(/ /g, '-'), incidentId: this.incident.id } }).href
     }
   },
   created () {

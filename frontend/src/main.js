@@ -10,6 +10,7 @@ import vueMoment from 'vue-moment'
 import Vue2Filters from 'vue2-filters'
 import VueNoty from 'vuejs-noty'
 import TextareaAutosize from 'vue-textarea-autosize'
+import SocialSharing from 'vue-social-sharing'
 import { DropdownPlugin } from 'bootstrap-vue'
 import { ClientTable } from 'vue-tables-2'
 
@@ -25,6 +26,7 @@ Vue.use(Vue2Filters)
 Vue.use(TextareaAutosize)
 Vue.use(DropdownPlugin)
 Vue.use(ClientTable)
+Vue.use(SocialSharing)
 
 Vue.use(VueNoty, {
   timeout: 2000,

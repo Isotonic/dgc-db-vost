@@ -10,9 +10,8 @@ tokens_model = api.model('Token', {'access_token': fields.String(required=True),
                                           'refresh_token': fields.String(required=True)})
 
 create_user_modal = api.model('New User',
-                                  {'firstname': fields.String(required=True), 'surname': fields.String(required=True),
-                                   'email': fields.String(required=True), 'group_id': fields.Integer(
-                                      description='Optional ID of the group for the user to be added to.')})
+                                  {'email': fields.String(required=True),
+                                   'group': fields.Integer(description='Optional ID of the group for the user to be added to, can be omitted.')})
 
 new_group_model = api.model('New Group',
                                    {'name': fields.String(description='Name of the group', required=True),
@@ -28,10 +27,8 @@ new_group_model = api.model('New Group',
 
 new_deployment_model = api.model('New Deployment',  ##TODO Add areas
                                         {'name': fields.String(required=True), 'description': fields.String(),
-                                         'group_ids': fields.List(fields.Integer,
-                                                                  description='Leave blank for everyone to have access.'),
-                                         'user_ids': fields.List(fields.Integer,
-                                                                 description='Leave blank for everyone to have access.')})
+                                         'groups': fields.List(fields.Integer, description='Group IDs to whitelist, leave blank for everyone to have access.'),
+                                         'users': fields.List(fields.Integer, description='User IDs to whitelist, leave blank for everyone to have access.')})
 
 new_comment_model = api.model('New Comment',
                               {'text': fields.String(required=True, description='Comment text.'),
@@ -40,7 +37,7 @@ new_comment_model = api.model('New Comment',
 new_task_model = api.model('New Task',
                            {'name': fields.String(required=True, description='Task name'),
                             'description': fields.String(description='Optional description of the task'),
-                            'users': fields.List(fields.Integer, description='Optional list of user IDs assigned to the task.')})
+                            'assignedTo': fields.List(fields.Integer, description='Optional list of user IDs assigned to the task.')})
 
 new_incident_model = api.model('Create Incident',
                                       {'name': fields.String(required=True),
@@ -51,6 +48,14 @@ new_incident_model = api.model('Create Incident',
                                        'latitude': fields.Float(required=True),
                                        'reported_via': fields.String(),
                                        'reference': fields.String()})
+
+edit_incident_model = api.model('Edit Incident',
+                                      {'name': fields.String(required=True),
+                                       'description': fields.String(),
+                                       'type': fields.String(required=True),
+                                       'reportedVia': fields.String(),
+                                       'reference': fields.String()})
+
 
 point_geometry_model = api.model('Point Geometry', {
     'type': fields.String(default='Point'),
@@ -97,7 +102,7 @@ full_user_model = api.model('User Full Details',
                          'surname': fields.String(description='Surname of the user.'),
                          'email': fields.String(description='Email of the user.'),
                          'createdAt': fields.Integer(attribute=lambda x: int(x.created_at.timestamp()), description='UTC timestamp of the user\'s creation.'),
-                         'status': fields.String(attribute=None, description='Status of the user.'),
+                         'status': fields.String(description='Status of the user. 0 = Sent email, 1 = Active account, 2 = Disabled account'),
                          'avatarUrl': fields.String(attribute=lambda x: x.get_avatar(), description='URL for the user\'s avatar.'),
                          'group': fields.Nested(group_model_without_users, allow_null=True, description='Group the user belongs to, can be empty too.')})
 
@@ -162,7 +167,9 @@ task_model = api.model('Task',
 incident_model = api.model('Incident',
                             {'id': fields.Integer(description='ID of the incident.'),
                              'name': fields.String(description='Name of the incident.'),
+                             'publicName': fields.String(attribute='public_name', description='Public name of the incident, can be null.'),
                              'description': fields.String(description='Description of the incident.'),
+                             'publicDescription': fields.String(attribute='public_description', description='Description of the incident that is viewable by the public when incident is marked public, can be null.'),
                              'type': fields.String(attribute='incident_type', description='Type of incident.'),
                              'open': fields.Boolean(attribute='open_status', description='Open status of the incident.'),
                              'public': fields.Boolean(description='If the incident is viewable by the public.'),
@@ -183,8 +190,8 @@ incident_model = api.model('Incident',
 
 public_incident_model = api.model('Public Incident',
                             {'id': fields.Integer(description='ID of the incident.'),
-                             'name': fields.String(description='Name of the incident.'),
-                             'description': fields.String(description='Description of the incident.'),
+                             'name': fields.String(attribute=lambda x: x.public_name if x.public_name else x.name, description='Name of the incident.'),
+                             'description': fields.String(attribute=lambda x: x.public_description if x.public_description else x.public_description, description='Description of the incident, can be null.'),
                              'type': fields.String(attribute='incident_type', description='Type of incident.'),
                              'open': fields.Boolean(attribute='open_status', description='Open status of the incident.'),
                              'icon': fields.String(attribute=lambda x: x.get_icon(), description='FontAwesome Icon.'),
@@ -199,7 +206,9 @@ completion_model = api.model('Completion', {'completed': fields.Boolean(descript
 
 priority_model = api.model('Priority', {'priority': fields.String(description='Priority level of the incident.', required=True)})
 
-public_model = api.model('Public', {'public': fields.Boolean(description='If an incident is viewable by the public or not.', required=True)})
+public_model = api.model('Public', {'public': fields.Boolean(description='If an incident is viewable by the public or not.', required=True),
+                                    'name': fields.String(description='Optional name of the incident, can be left null to default to the existing incident name.'),
+                                    'description': fields.String(description='Optional description of the incident, can be left null to default to the existing incident description.')})
 
 text_model = api.model('Text', {'text': fields.String(description='Comment text, can be a stringified ProseMirror JSON object.', required=True)})
 

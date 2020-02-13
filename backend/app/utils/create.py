@@ -4,22 +4,20 @@ from flask_socketio import emit
 from flask import render_template
 from .supervisor import new_incident
 from .change import change_task_status
-from .actions import incident_action, task_action
+from .actions import audit_action, incident_action, task_action
 from app.models import User, Group, Deployment, Incident, IncidentTask, IncidentSubTask, TaskComment, IncidentComment, EmailLink, AuditLog, IncidentLog, TaskLog
 
 
-def create_user(firstname, surname, email, groupid, created_by):
-    if firstname == '' or surname == '' or email == '':
+def create_user(email, group, created_by):
+    if email == '':
         return False
-    user = User(firstname=firstname, surname=surname, email=email, group_id=groupid)
+    user = User(email=email, group=group)
     db.session.add(user)
     db.session.commit()
-    user.create_avatar()
     email_link = EmailLink(user_id=user.id, link=secrets.token_urlsafe(20), verify=True)
     db.session.add(email_link)
-    action = AuditLog(user=created_by, action_type=AuditLog.action_values['create_user'], target_id=user.id)
-    db.session.add(action)
-    db.session.commit()
+    audit_action(created_by, action_type=AuditLog.action_values['create_user'], target_id=user.id)
+    email_link.send_email()
     return user
 
 
@@ -30,26 +28,20 @@ def create_group(name, permission_list, created_by):
     group.set_permissions(permission_list)
     db.session.add(group)
     db.session.commit()
-    action = AuditLog(user=created_by, action_type=AuditLog.action_values['create_group'],
-                      target_id=group.id)
-    db.session.add(action)
-    db.session.commit()
+    audit_action(created_by, action_type=AuditLog.action_values['create_group'], target_id=group.id)
     return group
 
 
 def create_deployment(name, description, group_ids, user_ids, created_by):
-    if name == '':
+    if name == '' or description == '':
         return False
     groups = Group.query.filter(Group.id.in_(group_ids)).all()
     users = User.query.filter(User.id.in_(user_ids)).all()
     deployment = Deployment(name=name, description=description, groups=groups, users=users)
     db.session.add(deployment)
     db.session.commit()
-    emit('create_deployment', {'html': render_template('deployment_card.html', deployment=deployment), 'code': 200}, room='deployments')
-    action = AuditLog(user=created_by, action_type=AuditLog.action_values['create_deployment'],
-                      target_id=deployment.id)
-    db.session.add(action)
-    db.session.commit()
+    #emit('create_deployment', {'html': render_template('deployment_card.html', deployment=deployment), 'code': 200}, room='deployments')
+    audit_action(created_by, action_type=AuditLog.action_values['create_deployment'], target_id=deployment.id)
     return deployment
 
 

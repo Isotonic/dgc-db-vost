@@ -3,8 +3,8 @@ from flask_socketio import emit
 from flask import render_template
 from app.models import AuditLog, IncidentLog, TaskLog
 
-def audit_action(user, action_type, reason=None):
-    action = IncidentLog(user=user, action_type=action_type, reason=reason)
+def audit_action(user, action_type, target_id=None, reason=None):
+    action = AuditLog(user=user, action_type=action_type, target_id=target_id, reason=reason)
     db.session.add(action)
     db.session.commit()
 

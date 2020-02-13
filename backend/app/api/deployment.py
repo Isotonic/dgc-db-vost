@@ -1,6 +1,7 @@
 from ..api import api
 from .utils.resource import Resource
 from .utils.namespace import Namespace
+from ..utils.change import edit_deployment
 from ..models import User, Group, Deployment
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from ..utils.create import create_deployment, create_incident
@@ -27,21 +28,32 @@ class DeploymentsEndpoint(Resource):
     @ns_deployment.expect(new_deployment_model, validate=True)
     @ns_deployment.doc(security='access_token')
     @ns_deployment.response(200, 'Success', deployment_model)
-    @ns_deployment.response(400, 'Name is empty')
+    @ns_deployment.response(400, 'Name or description is empty')
     @ns_deployment.response(401, 'Incorrect credentials')
     @ns_deployment.response(403, 'Missing supervisor permission')
     @api.marshal_with(deployment_model)
     def post(self):
         """
-                Creates a new deployment, requires the supervisor permission. Supplying a list of groups and users is optional and is left blank if everyone is to have access.
+                Creates a new deployment, requires the supervisor permission. Supplying a list of groups and users is optional and if omitted then everyone has access.
         """
         payload = api.payload
         current_user = User.query.filter_by(id=get_jwt_identity()).first()
         ns_deployment.has_permission(current_user, 'supervisor')
-        created_deployment = create_deployment(payload['name'], payload['description'], payload['groups'], payload['users'], current_user)
-        if created_deployment is False:
-            ns_deployment.abort(400, 'Name is empty')
-        return created_deployment, 200
+
+        if 'users' in payload.keys():
+            users = payload['users']
+        else:
+            users = []
+
+        if 'groups' in payload.keys():
+            groups = payload['groups']
+        else:
+            groups = []
+
+        deployment = create_deployment(payload['name'], payload['description'], groups, users, current_user)
+        if deployment is False:
+            ns_deployment.abort(400, 'Name or description is empty')
+        return deployment, 200
 
 
 @ns_deployment.route('/<int:id>')
@@ -82,6 +94,44 @@ class DeploymentEndpoint(Resource):
         if created_incident is False:
             ns_deployment.abort(400, 'Name is empty')
         return created_incident, 200
+
+
+    @ns_deployment.expect(new_deployment_model, validate=True)
+    @ns_deployment.doc(security='access_token')
+    @ns_deployment.response(200, 'Success', deployment_model)
+    @ns_deployment.response(400, 'Name is empty')
+    @ns_deployment.response(400, 'Description is empty')
+    @ns_deployment.response(400, 'Deployment already has these settings')
+    @ns_deployment.response(401, 'Incorrect credentials')
+    @ns_deployment.response(403, 'Missing supervisor permission')
+    @api.marshal_with(deployment_model)
+    def put(self, deployment):
+        """
+                Edits deployment, requires the supervisor permission. Supplying a list of groups and users is optional and if omitted then everyone has access.
+        """
+        payload = api.payload
+        current_user = User.query.filter_by(id=get_jwt_identity()).first()
+        ns_deployment.has_permission(current_user, 'supervisor')
+
+        if payload['name'] == '':
+            ns_deployment.abort(400, 'Name is empty')
+
+        if payload['description'] == '':
+            ns_deployment.abort(400, 'Description is empty')
+
+        if 'users' in payload.keys():
+            users = payload['users']
+        else:
+            users = []
+
+        if 'groups' in payload.keys():
+            groups = payload['groups']
+        else:
+            groups = []
+
+        if edit_deployment(deployment, payload['name'], payload['description'], groups, users, current_user) is False:
+            ns_deployment.abort(400, 'Deployment already has these settings')
+        return deployment, 200
 
 
 @ns_deployment.route('/<int:id>/incidents')
@@ -181,15 +231,15 @@ class DeploymentUsersEndpoint(Resource):
         current_user = User.query.filter_by(id=get_jwt_identity()).first()
         ns_deployment.has_deployment_access(current_user, deployment)
         if not deployment.groups and not deployment.users:
-            all_users = User.query.all()
+            all_users = User.query.filter_by(status=1).all()
             return all_users, 200
         users = []
         for x in deployment.groups:
             for y in x.users:
-                if x not in users:
+                if x not in users and x.status == 1:
                     users.append(y)
         for x in deployment.users:
-            if x not in users:
+            if x not in users and x.status == 1:
                 users.append(x)
         return users, 200
 

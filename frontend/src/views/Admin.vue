@@ -12,6 +12,7 @@
             <span class="text">{{ showingUsers ? 'New User' : 'New Group'}}</span>
           </button>
         </div>
+        <new-user-modal v-if="isNewUserModalVisible" v-show="isNewUserModalVisible" :visible="isNewUserModalVisible" :groups="groups" @close="isNewUserModalVisible = false" />
         <group-modal v-if="isNewGroupModalVisible" v-show="isNewGroupModalVisible" :visible="isNewGroupModalVisible" @close="isNewGroupModalVisible = false" />
         <div class="row">
           <div class="col-xl-12 col-lg-10">
@@ -35,7 +36,26 @@
                         </select>
                       </span>
                     </div>
+                    <div slot="status" slot-scope="{row}">
+                      <span v-if="row.status == 0">
+                        <span>Sent email</span>
+                        <i class="fas fa-times ml-2" @click="confirmRevokeUser(row)" v-tooltip="'Revoke'"></i>
+                      </span>
+                      <span v-else>
+                        <select :value="row.status" @change="changeUserStatus(row.id, $event.target.value)" class="custom-select custom-select-sm text-primary font-weight-bold">
+                          <option :value="1">Active</option>
+                          <option :value="2">Disabled</option>
+                        </select>
+                      </span>
+                    </div>
                   </v-client-table>
+                  <question-modal v-if="isRevokeUserModalVisible" v-show="isRevokeUserModalVisible" :visible="isRevokeUserModalVisible" :title="'Revoke Email'" @btnAction="revokeUser" @close="isRevokeUserModalVisible = false">
+                    <template v-slot:question>
+                      <div class="text-center">
+                        <span class="font-weight-bold">Are you sure you wish to revoke the email sent to <code>{{ revokeUserObj.email }}</code>?</span>
+                      </div>
+                    </template>
+                  </question-modal>
                   <v-client-table v-if="!showingUsers" :data="groups" :columns="groupsColumns" :options="groupsOptions">
                     <div slot="members" slot-scope="{row}">
                       <span>
@@ -72,6 +92,7 @@ import { mapActions } from 'vuex'
 
 import Topbar from '@/components/Topbar'
 import QuestionModal from '@/components/modals/Question'
+import NewUserModal from '@/components/modals/NewUser'
 import GroupModal from '@/components/modals/Group'
 
 function capitalLetters (str) {
@@ -95,6 +116,7 @@ export default {
   components: {
     Topbar,
     QuestionModal,
+    NewUserModal,
     GroupModal
   },
   data () {
@@ -104,6 +126,7 @@ export default {
       groups: [],
       deleteGroupObj: null,
       editGroupObj: null,
+      isRevokeUserModalVisible: false,
       isDeleteGroupModalVisible: false,
       isEditGroupModalVisible: false,
       isNewUserModalVisible: false,
@@ -119,7 +142,7 @@ export default {
         },
         templates: {
           name: function (h, row, index) {
-            return `${row.firstname} ${row.surname}`
+            return row.firstname && row.surname ? `${row.firstname} ${row.surname}` : 'N/A'
           },
           createdAt: function (h, row, index) {
             return this.$moment.unix(row.createdAt).fromNow()
@@ -144,7 +167,7 @@ export default {
         },
         filterAlgorithm: {
           name (row, query) {
-            return (`${row.firstname} ${row.surname}`).toLowerCase().includes(query)
+            return row.firstname && row.surname ? (`${row.firstname} ${row.surname}`).toLowerCase().includes(query) : 'n/a'.includes(query)
           }
         },
         orderBy: {
@@ -226,6 +249,16 @@ export default {
     editGroup (group) {
       this.editGroupObj = group
       this.isEditGroupModalVisible = true
+    },
+    confirmRevokeUser (user) {
+      this.revokeUserObj = user
+      this.isRevokeUserModalVisible = true
+    },
+    revokeUser (modalAnswer) {
+      this.isRevokeUserModalVisible = false
+      if (modalAnswer) {
+        this.ApiDelete(`/users/${this.revokeUserObj.id}`)
+      }
     },
     confirmDeleteGroup (group) {
       this.deleteGroupObj = group

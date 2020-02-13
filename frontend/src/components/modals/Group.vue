@@ -2,7 +2,7 @@
   <modal :title="edit ? 'Edit Group' : 'New Group'" @close="close">
     <form @submit.prevent="handleSubmit" :aria-label="edit ? 'Edit group' : 'Create a new group'">
       <div class="form-group mb-4">
-        <input v-model="name" class="form-control" name="name" placeholder="Group Name" type="text" required ref="inputName">
+        <input v-model="name" class="form-control" placeholder="Group Name" type="text" required>
       </div>
       <div class="form-group mb-3">
         <span class="font-weight-bold text-primary">Permissions:</span>
@@ -68,6 +68,7 @@ export default {
         this.ApiPost('groups', this.getData)
           .then(() => {
             this.$emit('close')
+            document.body.classList.remove('modal-open')
             this.supervisor = false
             this.create_deployment = false
             this.decision_making_log = false
@@ -84,6 +85,10 @@ export default {
     editGroup () {
       if (this.checkChanged) {
         this.ApiPut(`groups/${this.group.id}`, this.getData)
+          .then(() => {
+            this.$emit('close')
+            document.body.classList.remove('modal-open')
+          })
       }
     }
   },
