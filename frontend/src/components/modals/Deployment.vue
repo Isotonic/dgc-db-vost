@@ -7,6 +7,12 @@
       <div class="form-group mb-4">
         <input v-model="description" class="form-control" placeholder="Description" type="text" required>
       </div>
+      <div v-if="edit" class="form-group mb-4">
+        <select v-model="open" class="custom-select custom-select-sm text-primary font-weight-bold full-length">
+            <option :value="true"><i class="fas fa-car"></i>Active</option>
+            <option :value="false">Deactivated</option><i class="fas fa-subway"></i>
+        </select>
+      </div>
       <span class="font-weight-bold">Optionally whitelist users and groups, leave both blank to allow everyone access.</span>
       <div class="form-group mb-3 mt-2">
         <multiselect v-model="usersSelected" :options="userOptions" :multiple="true" placeholder="Type to search users" track-by="id" :custom-label="formatSelect" :closeOnSelect="false" openDirection="bottom" :limit="0" :limitText="count => `${count} user${count > 1 ? 's' : ''} whitelisted.`" :blockKeys="['Delete']" selectLabel="" deselectLabel="" selectedLabel="" :loading="isUserSelectLoading">
@@ -16,7 +22,7 @@
           <span slot="noResult">Oops! No user found.</span>
         </multiselect>
       </div>
-      <div class="form-group mb-3">
+      <div class="form-group mb-4">
         <multiselect v-model="groupsSelected" :options="groupOptions" :multiple="true" placeholder="Type to search groups" track-by="id" label="name" :closeOnSelect="false" openDirection="bottom" :limit="0" :limitText="count => `${count} group${count > 1 ? 's' : ''} whitelisted.`" :blockKeys="['Delete']" selectLabel="" deselectLabel="" selectedLabel="" :loading="isGroupSelectLoading">
           <template v-if="didGroupsChange" slot="clear">
             <div class="multiselect__clear" v-tooltip.right="'Reset changes'" @mousedown.prevent.stop="setGroupSelecter"></div>
@@ -57,6 +63,7 @@ export default {
     return {
       name: '',
       description: '',
+      open: null,
       usersSelected: [],
       groupsSelected: []
     }
@@ -91,12 +98,19 @@ export default {
         deploymentData.groups = this.groupsSelected.map(group => group.id)
       }
       if (this.edit) {
-        this.ApiPut(`deployments/${this.deployment.id}`, deploymentData)
-          .then(() => {
-            this.$emit('close')
-            document.body.classList.remove('modal-open')
-            e.target.reset()
-          })
+        if (this.name === this.deployment.name && this.description === this.deployment.description && this.open === this.deployment.open && !this.didUsersChange && !this.didGroupsChange) {
+          this.$emit('close')
+          document.body.classList.remove('modal-open')
+        } else {
+          deploymentData.open = this.open
+          console.log(deploymentData)
+          this.ApiPut(`deployments/${this.deployment.id}`, deploymentData)
+            .then(() => {
+              this.$emit('close')
+              document.body.classList.remove('modal-open')
+              e.target.reset()
+            })
+        }
       } else {
         this.ApiPost('deployments', deploymentData)
           .then(() => {
@@ -141,6 +155,7 @@ export default {
     if (this.edit) {
       this.name = this.deployment.name
       this.description = this.deployment.description
+      this.open = this.deployment.open
       this.usersSelected = this.deployment.users
       this.groupsSelected = this.deployment.groups
     }

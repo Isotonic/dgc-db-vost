@@ -9,23 +9,12 @@
       </div>
       <div class="text-center">
         <button type="submit" class="btn btn-primary mt-1">{{ edit ? 'Save' : 'Submit' }}</button>
-        <social-sharing url="" :title="`[System Generated] ${name}\n${description}\n${getUrl}`" inline-template>
-          <network network="twitter">
-            <div class="btn btn-icon-split btn-info mt-1 ml-2">
-              <span class="btn-icon">
-                  <i class="fab fa-twitter"></i>
-              </span>
-              <span class="text">Twitter</span>
-            </div>
-          </network>
-        </social-sharing>
       </div>
     </form>
   </modal>
 </template>
 
 <script>
-import router from '@/router/index'
 import { ModalMixin } from '@/utils/mixins'
 
 export default {
@@ -61,15 +50,6 @@ export default {
   computed: {
     checkChanged: function () {
       return this.name !== this.getName || this.description !== this.getDescription
-    },
-    getName: function () {
-      return this.incident.publicName ? this.incident.publicName : this.incident.name
-    },
-    getDescription: function () {
-      return this.incident.publicDescription ? this.incident.publicDescription : this.incident.description
-    },
-    getUrl: function () {
-      return window.location.origin + '/' + router.resolve({ name: 'public incident', params: { incidentName: this.incident.name.replace(/ /g, '-'), incidentId: this.incident.id } }).href
     },
     getData: function () {
       return this.description.length ? { public: true, description: this.description } : { public: true }

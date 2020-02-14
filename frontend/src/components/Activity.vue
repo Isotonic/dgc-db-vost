@@ -4,14 +4,14 @@
       <i class="fas text-gray-300 fa-1fourx fa-plus-circle activity-icon"></i>
       <div class="media">
         <div class="media-left">
-          <a href="#">
+          <i>
             <img class="media-object rounded-circle" :src="action.user.avatarUrl" alt="Avatar">
-          </a>
+          </i>
         </div>
         <div class="media-body">
           {{ action.occurredAt | moment("from", "now") }}
         </div>
-        <span class="card-text"><a href="#">{{ action.user.firstname }} {{ action.user.surname }}</a> {{ action.text }}</span>
+        <span class="card-text"><i>{{ action.user.firstname }} {{ action.user.surname }}</i> {{ action.text }}</span>
       </div>
     </div>
   </li>

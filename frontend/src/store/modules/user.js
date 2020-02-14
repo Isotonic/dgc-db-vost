@@ -100,19 +100,26 @@ const actions = {
     commit('deleteRefreshToken')
     dispatch('deployments/destroy', null, { root: true })
     dispatch('incidents/destroy', null, { root: true })
-    dispatch('groups/destroy', null, { root: true })
+    dispatch('users/destroy', null, { root: true })
+    localStorage.removeItem('showingIncidents')
+    localStorage.removeItem('showingStatus')
+    localStorage.removeItem('showingIncidentsMap')
+    localStorage.removeItem('showingStatusMap')
+    localStorage.removeItem('heatmapMap')
+    localStorage.removeItem('sortedByTypeMap')
+    localStorage.removeItem('sortedByOrderMap')
   }
 }
 
 const mutations = {
   setAccessToken (state, value) {
-    localStorage.setItem('accessToken', value)
+    localStorage.accessToken = value
     state.accessToken = value
     Vue.prototype.$api.defaults.headers['Authorization'] = `Bearer ${value}`
     console.log(Vue.prototype.$api.defaults.headers)
   },
   setRefreshToken (state, value) {
-    localStorage.setItem('refreshToken', value)
+    localStorage.refreshToken = value
     state.refreshToken = value
   },
   deleteAccessToken (state) {

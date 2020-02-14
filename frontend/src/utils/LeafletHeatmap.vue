@@ -84,6 +84,7 @@ export default {
     this.mapObject = heatLayer(this.latLng, options)
     DomEvent.on(this.mapObject, this.$listeners)
     propsBinder(this, this.mapObject, props)
+    this.$emit('ready')
     this.ready = true
     this.parentContainer = findRealParent(this.$parent)
     this.parentContainer.addLayer(this, !this.visible)

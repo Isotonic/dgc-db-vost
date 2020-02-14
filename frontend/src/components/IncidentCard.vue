@@ -20,9 +20,9 @@
       </li>
       <ol v-if="incident.assignedTo.length" class="incident-card-assigned-to list-unstyled">
         <div class="avatar-group">
-          <a v-for="user in incident.assignedTo" :key="user.name" href="#" class="avatar avatar-sm" v-tooltip="`${user.firstname} ${user.surname}`">
+          <i v-for="user in incident.assignedTo" :key="user.name" class="avatar avatar-sm" v-tooltip="`${user.firstname} ${user.surname}`">
             <img alt="Avatar" :src="user.avatarUrl" class="rounded-circle avatar-sm">
-          </a>
+          </i>
         </div>
       </ol>
     </ol>

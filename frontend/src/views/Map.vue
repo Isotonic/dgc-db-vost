@@ -63,9 +63,9 @@
                 <div class="col-xl-9 col-lg-9 pl-0">
                   <l-map :zoom="mapSettings.zoom" class="map-container" @click="showBeacon = false" ref="map">
                     <l-tile-layer :url="mapSettings.url" :attribution="mapSettings.attribution"></l-tile-layer>
-                    <leaflet-heatmap v-if="heatmap" :lat-lng="geoToArray" :radius="25" :blur="15" :max="0.01" />
+                    <leaflet-heatmap v-if="heatmap"  @ready="geoMapCenter" :lat-lng="geoToArray" :radius="25" :blur="15" :max="0.01" :key="heatmapKey" />
                     <l-geo-json v-else-if="!heatmap" @ready="geoMapCenter" :geojson="geoJson" :options="geoOptions" ref="geoJsonLayer" />
-                    <l-marker v-if="showBeacon" :lat-lng="beacon.coords" :icon="beaconIcon" />
+                    <l-marker v-if="showBeacon && !heatmap" :lat-lng="beacon.coords" :icon="beaconIcon" />
                   </l-map>
                 </div>
               </div>
@@ -84,7 +84,7 @@ import fz from 'fuzzaldrin-plus'
 import LeafletHeatmap from '@/utils/LeafletHeatmap'
 import Vue2Filters from 'vue2-filters'
 import { mapGetters, mapActions } from 'vuex'
-import { divIcon, marker, latLng } from 'leaflet'
+import { divIcon, marker, latLng, latLngBounds } from 'leaflet'
 import { LMap, LTileLayer, LGeoJson, LMarker } from 'vue2-leaflet'
 
 import router from '@/router/index'
@@ -108,9 +108,9 @@ function onEachFeature (feature, layer) {
   if (feature.properties) {
     const PopupCont = Vue.extend(MapPopup)
     const popup = new PopupCont({
+      router,
       propsData: {
-        properties: feature.properties,
-        url: router.resolve({ name: 'incident', params: { deploymentName: feature.properties.deploymentName.replace(/ /g, '-'), deploymentId: feature.properties.deploymentId, incidentName: feature.properties.name.replace(/ /g, '-'), incidentId: feature.properties.id } })
+        properties: feature.properties
       }
     })
     layer.bindPopup(popup.$mount().$el)
@@ -163,6 +163,7 @@ export default {
       beacon: { coords: [0, 0], priority: null },
       showBeacon: false,
       heatmap: false,
+      heatmapKey: 0, // Fix to force the heatmap to re-render once the data has changed.
       hasCentered: false,
       mapSettings: {
         url: 'https://maps.wikimedia.org/osm-intl/{z}/{x}/{y}.png',
@@ -189,12 +190,37 @@ export default {
     geoMapCenter: function () {
       if (!this.hasCentered) {
         const map = this.$refs.map
-        const geoJsonLayer = this.$refs.geoJsonLayer
+        let geoJsonLayer = null
+        if (this.heatmap) {
+          let coords = []
+          for (let incident of this.queryResults) {
+            coords.push(incident.location.geometry.coordinates)
+          }
+          geoJsonLayer = this.getBounds(coords)
+        } else {
+          geoJsonLayer = this.$refs.geoJsonLayer.getBounds()
+        }
         if (map && geoJsonLayer) {
-          map.fitBounds(geoJsonLayer.getBounds())
+          map.fitBounds(geoJsonLayer)
           this.hasCentered = true
         }
       }
+    },
+    getBounds: function (coords) {
+      const boundingbox = this.calcBoundingCoords(coords)
+      return latLngBounds(latLng(boundingbox[1], boundingbox[0]), latLng(boundingbox[3], boundingbox[2]))
+    },
+    calcBoundingCoords: function (coords) {
+      let bounds = [Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY,
+        Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY]
+      return coords.reduce(function (prev, coord) {
+        return [
+          Math.min(coord[0], prev[0]),
+          Math.min(coord[1], prev[1]),
+          Math.max(coord[0], prev[2]),
+          Math.max(coord[1], prev[3])
+        ]
+      }, bounds)
     },
     ...mapActions('user', {
       checkUserLoaded: 'checkLoaded'
@@ -291,7 +317,7 @@ export default {
         className: 'beacon-leaflet'
       })
     },
-    queryResults () {
+    queryResults: function () {
       if (!this.query) {
         return this.incidents.filter(incident => !isCoordsNull(incident))
       }
@@ -336,17 +362,46 @@ export default {
         }
       }
     },
-    queryDebounced: {
-      handler (value) {
-        const map = this.$refs.map
-        const geoJsonLayer = this.$refs.geoJsonLayer
-        if (map && geoJsonLayer) {
-          map.fitBounds(geoJsonLayer.getBounds())
-        }
+    queryDebounced () {
+      const map = this.$refs.map
+      const geoJsonLayer = this.$refs.geoJsonLayer
+      if (map && geoJsonLayer) {
+        map.fitBounds(geoJsonLayer.getBounds())
       }
+    },
+    showingIncidents (value) {
+      localStorage.showingIncidentsMap = value
+      if (this.heatmap) {
+        this.heatmapKey += 1
+      }
+    },
+    showingStatus (value) {
+      localStorage.showingStatusMap = value
+      if (this.heatmap) {
+        this.heatmapKey += 1
+      }
+    },
+    heatmap (value) {
+      localStorage.heatmapMap = value
+    },
+    sortedBy (value) {
+      localStorage.sortedByTypeMap = value[0]
+      localStorage.sortedByOrderMap = value[1]
     }
   },
   async created () {
+    if (localStorage.showingIncidentsMap) {
+      this.showingIncidents = localStorage.showingIncidentsMap
+    }
+    if (localStorage.showingStatusMap) {
+      this.showingStatus = localStorage.showingStatusMap
+    }
+    if (localStorage.heatmapMap) {
+      this.heatmap = JSON.parse(localStorage.heatmapMap)
+    }
+    if (localStorage.sortedByTypeMap && localStorage.sortedByOrderMap) {
+      this.sortedBy = [localStorage.sortedByTypeMap, localStorage.sortedByOrderMap]
+    }
     this.checkUserLoaded()
     this.checkDeploymentsLoaded()
     this.checkIncidentsLoaded(this.deploymentId)

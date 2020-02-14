@@ -6,7 +6,7 @@
           <p class="mb-0 mt-1 text-muted text-xs text-nowrap">Created {{ deployment.createdAt | moment("from", "now") }}</p>
         </h6>
         <div class="dropdown no-arrow">
-          <a href="#" role="button" class="dropdown-toggle" @click="$emit('edit', deployment)">
+          <a role="button" class="dropdown-toggle" @click="$emit('edit', deployment)">
             <i class="fas fa-cog"></i>
           </a>
         </div>

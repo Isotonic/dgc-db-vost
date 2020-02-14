@@ -79,6 +79,9 @@
                 <div slot="child_row" slot-scope="props">
                   <span class="font-weight-bold">Description:</span> {{ props.row.description }}
                 </div>
+                <div slot="pinned" slot-scope="{row}">
+                  <i :class="[row.pinned ? 'fas fa-bookmark' : 'far fa-bookmark']" @click="changePin(row)"></i>
+                </div>
                 <div v-if="showingStatus !== 'both'" slot="name" slot-scope="{row}">
                   <span>{{ row.name }}</span>
                 </div>
@@ -90,9 +93,9 @@
                 </div>
                 <div slot="assignedTo" slot-scope="{row}">
                   <div v-if="row.assignedTo.length" class="avatar-group">
-                    <a v-for="user in row.assignedTo" :key="user.id" href="#" class="avatar avatar-sm" v-tooltip="`${user.firstname} ${user.surname}`">
+                    <i v-for="user in row.assignedTo" :key="user.id" class="avatar avatar-sm" v-tooltip="`${user.firstname} ${user.surname}`">
                       <img alt="Avatar" :src="user.avatarUrl" class="rounded-circle avatar-sm">
-                    </a>
+                    </i>
                   </div>
                   <div v-else>
                     Unassigned
@@ -143,9 +146,6 @@ export default {
           lastUpdated: 'Last Updated'
         },
         templates: {
-          pinned: function (h, row, index) {
-            return <i class={row.pinned ? 'fas fa-bookmark' : 'far fa-bookmark'}></i>
-          },
           location: function (h, row, index) {
             return <span class='font-smaller'>{row.location.properties.address}</span>
           },
@@ -260,6 +260,9 @@ export default {
       }
       return closedTime / closedIncidents.length
     },
+    changePin: function (incident) {
+      this.ApiPost(`incidents/${incident.id}/pinned`, { pinned: !incident.pinned })
+    },
     ...mapActions('user', {
       checkUserLoaded: 'checkLoaded'
     }),
@@ -365,9 +368,21 @@ export default {
           history.pushState(null, '', `/deployments/${this.deployment.name.replace(/ /g, '-')}-${this.deploymentId}/incidents`)
         }
       }
+    },
+    showingIncidents (value) {
+      localStorage.showingIncidents = value
+    },
+    showingStatus (value) {
+      localStorage.showingStatus = value
     }
   },
   async created () {
+    if (localStorage.showingIncidents) {
+      this.showingIncidents = localStorage.showingIncidents
+    }
+    if (localStorage.showingStatus) {
+      this.showingStatus = localStorage.showingStatus
+    }
     this.checkUserLoaded()
     this.checkDeploymentsLoaded()
     this.checkIncidentsLoaded(this.deploymentId)
@@ -375,6 +390,9 @@ export default {
   mounted () {
     let self = this
     Event.$on('vue-tables.row-click', function (data) {
+      if (data.event.target.className.includes('fa-bookmark')) {
+        return
+      }
       router.push({ name: 'incident', params: { deploymentName: self.deploymentNameApi.replace(/ /g, '-'), deploymentId: self.deploymentId, incidentName: data.row.name.replace(/ /g, '-'), incidentId: data.row.id } })
     })
   }

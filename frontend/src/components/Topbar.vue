@@ -24,7 +24,7 @@
     </div>
     <ul class="navbar-nav ml-auto">
       <li class="nav-item dropdown no-arrow mx-1">
-        <a class="nav-link dropdown-toggle" href="#" id="notificationDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        <a class="nav-link dropdown-toggle" id="notificationDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
           <i class="fas fa-bell fa-fw"></i>
             <span class="badge badge-danger badge-counter"></span>
         </a>
@@ -32,7 +32,7 @@
           <h6 class="dropdown-header">
             Notification Center
           </h6>
-          <a class="dropdown-item text-center small text-gray-500" href="#">No Notifications</a>
+          <a class="dropdown-item text-center small text-gray-500">No Notifications</a>
         </div>
       </li>
       <div class="topbar-divider d-none d-sm-block"></div>

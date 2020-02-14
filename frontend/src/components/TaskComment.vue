@@ -2,9 +2,9 @@
   <comment-box v-if="this.editor.options.editable" :editing="true" :existingContent="parseText" @cancelEdit="cancelEdit" @editComment="editComment" />
   <li v-else class="update-log">
     <div class="update-log-avatar">
-      <a href="#">
+      <i>
         <img class="media-object rounded-circle" :src="comment.user.avatarUrl" alt="Avatar">
-      </a>
+      </i>
       <div class="update-log-name text-muted">{{ comment.user.firstname }} {{ comment.user.surname }}</div>
     </div>
     <div class="update-log-text">

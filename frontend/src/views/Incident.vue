@@ -28,6 +28,11 @@
               </template>
               <b-dropdown-item :to="{ name: 'public incident', params: { incidentName: this.incidentName.replace(/ /g, '-'), incidentId: this.incidentId }}">View public page</b-dropdown-item>
               <b-dropdown-item @click="isIncidentPublicModalVisible = true">Edit public page</b-dropdown-item>
+              <social-sharing url="" :title="`[System Generated] ${getName}\n${getDescription}\n${getUrl}`" inline-template>
+                <network network="twitter">
+                  <b-dropdown-item>Tweet incident</b-dropdown-item>
+                </network>
+              </social-sharing>
               <b-dropdown-item @click="changePublic(false)">Hide from public</b-dropdown-item>
             </b-dropdown>
             <incident-public-modal v-if="isIncidentPublicModalVisible" v-show="isIncidentPublicModalVisible" :visible="isIncidentPublicModalVisible" :incident="incident" :edit="incident.public" @close="isIncidentPublicModalVisible = false" />
@@ -70,9 +75,9 @@
                   <div class="col mr-2">
                     <div class="text-s font-weight-bold text-primary text-uppercase mb-1">Assigned To</div>
                     <div class="avatar-group">
-                      <a v-for="user in incident.assignedTo" :key="user.name" href="#" class="avatar avatar-sm" v-tooltip="`${user.firstname} ${user.surname}`">
+                      <i v-for="user in incident.assignedTo" :key="user.name" class="avatar avatar-sm" v-tooltip="`${user.firstname} ${user.surname}`">
                         <img alt="Avatar" :src="user.avatarUrl" class="rounded-circle avatar-sm">
-                      </a>
+                      </i>
                     </div>
                     <div v-if="!incident.assignedTo.length" class="h5 mb-0 font-weight-bold text-gray-800">Unassigned</div>
                   </div>
@@ -166,7 +171,7 @@
             <div class="card shadow mb-4">
               <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 font-weight-bold text-primary">Incident Overview</h6>
-                <a href="#" role="button" @click="isIncidentDetailsModalVisible = true">
+                <a role="button" @click="isIncidentDetailsModalVisible = true">
                   <i class="fas fa-cog" v-tooltip="'Edit Incident Overview'"></i>
                 </a>
               </div>
@@ -179,7 +184,7 @@
                 <p class="card-text"><b>Location:</b> {{ incident.location.properties.address }}</p>
                 <p class="card-text"><b>Description:</b> {{ incident.description }}</p>
                 <p class="card-text"><b>Reported Via:</b> {{ incident.reportedVia ? incident.reportedVia : 'N/A' }}</p>
-                <p class="card-text"><b>Logged by:</b> <a href="#">{{ incident.loggedBy.firstname }} {{ incident.loggedBy.surname }}</a></p>
+                <p class="card-text"><b>Logged by:</b> <span class="text-primary">{{ incident.loggedBy.firstname }} {{ incident.loggedBy.surname }}</span></p>
                 <p class="card-text"><b>Reference Number (If Provided):</b> {{ incident.reference ? incident.reference : 'N/A' }}</p>
               </div>
               <incident-details-modal v-if="isIncidentDetailsModalVisible" v-show="isIncidentDetailsModalVisible" :visible="isIncidentDetailsModalVisible" :incident="incident" @close="isIncidentDetailsModalVisible = false" />
@@ -187,7 +192,7 @@
             <div class="card shadow mb-4">
               <div class="card-header py-3 d-flex align-items-center justify-content-between">
                 <h6 class="m-0 font-weight-bold text-primary">Tasks</h6>
-                <a class="text-success" href="#" role="button" @click="isNewTaskModalVisible = true">
+                <a class="text-success" role="button" @click="isNewTaskModalVisible = true">
                   <i class="fas fa-plus" v-tooltip="'Add Task'"></i>
                 </a>
               </div>
@@ -271,6 +276,7 @@ import { mapGetters, mapActions } from 'vuex'
 import { LMap, LTileLayer, LMarker } from 'vue2-leaflet'
 import { VclList, VclFacebook, VclBulletList } from 'vue-content-loading'
 
+import router from '@/router/index'
 import Topbar from '@/components/Topbar'
 import Sidebar from '@/components/Sidebar'
 import Task from '@/components/Task'
@@ -483,6 +489,15 @@ export default {
         html: `<div class="marker bg-${this.incident.priority}"><i class="fas fa-${this.incident.icon} fa-fw text-white fa-2x"></i></div>`,
         iconSize: [2, 2]
       })
+    },
+    getName: function () {
+      return this.incident.publicName ? this.incident.publicName : this.incident.name
+    },
+    getDescription: function () {
+      return this.incident.publicDescription ? this.incident.publicDescription : this.incident.description
+    },
+    getUrl: function () {
+      return window.location.origin + '/' + router.resolve({ name: 'public incident', params: { incidentName: this.incident.name.replace(/ /g, '-'), incidentId: this.incident.id } }).href
     },
     ...mapGetters('user', {
       hasPermission: 'hasPermission'

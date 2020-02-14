@@ -1238,3 +1238,8 @@ div .marker {
 .full-length {
   width: 100%;
 }
+
+.VueTables__child-row-toggler:hover,
+.far.fa-bookmark:hover {
+  color: black;
+}

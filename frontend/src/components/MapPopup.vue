@@ -17,7 +17,9 @@
         <p v-if="properties.tasks" class="card-text my-1"><b>Tasks:</b> {{ properties.tasks }}</p>
         <p v-if="properties.comments" class="card-text my-1"><b>Comments:</b> {{ properties.comments }}</p>
         <div class="text-center mt-3">
-          <a :class="btnClass" :href="url.href">Go To Incident</a>
+          <router-link :to="{ name: 'incident', params: { deploymentName: properties.deploymentName.replace(/ /g, '-'), deploymentId: properties.deploymentId, incidentName: properties.name.replace(/ /g, '-'), incidentId: properties.id }}">
+            <a :class="btnClass">Go To Incident</a>
+          </router-link>
         </div>
     </div>
   </div>
@@ -27,8 +29,7 @@
 export default {
   name: 'MapPopup',
   props: {
-    properties: Object,
-    url: Object
+    properties: Object
   },
   computed: {
     updated: function () {

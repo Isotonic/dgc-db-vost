@@ -25,8 +25,14 @@ new_group_model = api.model('New Group',
                                     'mark_as_public': fields.Boolean(description='Change if an incident if viewable by the public or not.', required=True)})
 
 
-new_deployment_model = api.model('New Deployment',  ##TODO Add areas
+new_deployment_model = api.model('New Deployment',
                                         {'name': fields.String(required=True), 'description': fields.String(),
+                                         'groups': fields.List(fields.Integer, description='Group IDs to whitelist, leave blank for everyone to have access.'),
+                                         'users': fields.List(fields.Integer, description='User IDs to whitelist, leave blank for everyone to have access.')})
+
+edit_deployment_model = api.model('Edit Deployment',
+                                        {'name': fields.String(required=True), 'description': fields.String(),
+                                         'open': fields.Boolean(description='Open status of the deployment.', required=True),
                                          'groups': fields.List(fields.Integer, description='Group IDs to whitelist, leave blank for everyone to have access.'),
                                          'users': fields.List(fields.Integer, description='User IDs to whitelist, leave blank for everyone to have access.')})
 
@@ -111,11 +117,10 @@ deployment_model = api.model('Deployment',
                             {'id': fields.Integer(description='ID of the deployment.'),
                              'name': fields.String(description='Name of the deployment.'),
                              'description': fields.String(description='Description of the deployment.'),
-                             'open': fields.Boolean(attribute='open_status', description='Open status of the incident.'),
+                             'open': fields.Boolean(attribute='open_status', description='Open status of the deployment.'),
                              'createdAt': fields.Integer(attribute=lambda x: int(x.created_at.timestamp()), description='UTC timestamp of the deployment\'s creation.'),
                              'groups': fields.List(fields.Nested(group_model), description='Whitelisted groups that are able to access this deployment, if both users and groups are empty then all users and groups have access to it.'),
-                             'users': fields.List(fields.Nested(user_model), description='Whitelisted users that are able to access this deployment, if both users and groups are empty then all users and groups have access to it.'),
-                             'areas': fields.List(fields.String, description='List of LAD13CDO area codes.')})
+                             'users': fields.List(fields.Nested(user_model), description='Whitelisted users that are able to access this deployment, if both users and groups are empty then all users and groups have access to it.')})
 
 activity_model = api.model('Activity',
                            {'id': fields.Integer(),
@@ -179,7 +184,7 @@ incident_model = api.model('Incident',
                              'reportedVia': fields.String(attribute='reported_via', description='Method of reporting.'),
                              'loggedBy': fields.Nested(user_model, attribute='created_by_user', description='The user the incident was created by.'),
                              'referenceNo': fields.String(attribute='reference', description='Reference number, can be null too.'),
-                             #'pinned': fields.Boolean(attribute=lambda x: x, description='GeoJSON Point of the location.'),
+                             'pinned': fields.Boolean(description='If the user has this pinned or not.'),
                              'createdAt': fields.Integer(attribute=lambda x: int(x.created_at.timestamp()), description='UTC timestamp of the incident\'s creation.'),
                              'closedAt': fields.Integer(attribute=lambda x: int(x.closed_at.timestamp()) if x.closed_at else None, description='UTC timestamp of the incident\'s closure, can be null.'),
                              'lastUpdatedAt': fields.Integer(attribute=lambda x: int(x.last_updated.timestamp()), description='UTC timestamp of the incident\'s last update.'),
@@ -199,6 +204,8 @@ public_incident_model = api.model('Public Incident',
                              'createdAt': fields.Integer(attribute=lambda x: int(x.created_at.timestamp()), description='UTC timestamp of the incident\'s creation.'),
                              'lastUpdatedAt': fields.Integer(attribute=lambda x: int(x.last_updated.timestamp()), description='UTC timestamp of the incident\'s last update.'),
                              'comments': fields.List(fields.Nested(public_comment_model), attribute=lambda x: x.public_comments())})
+
+pinned_model = api.model('Pinned', {'pinned': fields.Boolean(description='Pinned status.', required=True)})
 
 status_model = api.model('Status', {'open': fields.Boolean(attribute='open_status', description='Open status.', required=True)})
 

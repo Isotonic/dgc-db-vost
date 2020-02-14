@@ -1,13 +1,23 @@
+from app import db
 from ..api import api
+from flask_restx import marshal
 from ..models import User, Incident
 from .utils.resource import Resource
 from .utils.namespace import Namespace
 from ..utils.create import create_comment, create_task
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from ..utils.change import edit_incident, change_incident_status, change_incident_allocation, change_incident_priority, change_incident_public
-from .utils.models import id_model, incident_model, status_model, user_model, priority_model, public_model, comment_model, new_comment_model, task_model, new_task_model, edit_incident_model
+from .utils.models import id_model, incident_model, pinned_model, status_model, user_model, priority_model, public_model, comment_model, new_comment_model, task_model, new_task_model, edit_incident_model
 
 ns_incident = Namespace('Incident', description='Used to carry out actions related to incidents.', path='/incidents', decorators=[jwt_required])
+
+def format_incident(incident, user):
+    incident_marshalled = marshal(x, incident_model)
+    if user in incident.users_pinned:
+        incident_marshalled['pinned'] = True
+    else:
+        incident_marshalled['pinned'] = False
+    return incident_marshalled
 
 @ns_incident.route('/<int:id>')
 @ns_incident.doc(params={'id': 'Incident ID.'})
@@ -18,14 +28,13 @@ class IncidentEndpoint(Resource):
     @ns_incident.response(401, 'Incorrect credentials')
     @ns_incident.response(403, 'Missing incident access')
     @ns_incident.response(404, 'Incident doesn\'t exist')
-    @api.marshal_with(incident_model)
     def get(self, incident):
         """
                 Returns incident info.
         """
         current_user = User.query.filter_by(id=get_jwt_identity()).first()
         ns_incident.has_incident_access(current_user, incident)
-        return incident, 200
+        return format_incident(incident, current_user), 200
 
 
     @ns_incident.expect(edit_incident_model, validate=True)
@@ -35,7 +44,6 @@ class IncidentEndpoint(Resource):
     @ns_incident.response(400, 'Incident already has these details')
     @ns_incident.response(401, 'Incorrect credentials')
     @ns_incident.response(401, 'Invalid incident type')
-    @api.marshal_with(incident_model)
     def put(self, incident):
         """
                 Edits incident. Supplying a description, reportedVia and referece are optional and can be omitted.
@@ -66,7 +74,57 @@ class IncidentEndpoint(Resource):
 
         if edit_incident(incident, payload['name'],description, payload['type'], reported_via, reference, current_user) is False:
             ns_deployment.abort(400, 'Incident already has these details')
-        return incident, 200
+        return format_incident(incident, current_user), 200
+
+
+@ns_incident.route('/<int:id>/pinned')
+@ns_incident.doc(params={'id': 'Incident ID.'})
+@ns_incident.resolve_object('incident', lambda kwargs: Incident.query.get_or_error(kwargs.pop('id')))
+class PinnedEndpoint(Resource):
+    @ns_incident.doc(security='access_token')
+    @ns_incident.response(200, 'Success', [pinned_model])
+    @ns_incident.response(401, 'Incorrect credentials')
+    @ns_incident.response(403, 'Missing incident access')
+    @ns_incident.response(404, 'Incident doesn\'t exist')
+    @api.marshal_with(pinned_model)
+    def get(self, incident):
+        """
+                Returns incident's pinned status.
+        """
+        current_user = User.query.filter_by(id=get_jwt_identity()).first()
+        ns_incident.has_incident_access(current_user, incident)
+        if current_user.id in incident.users_pinned:
+            pinned = {'pinned': True}
+        else:
+            pinned = {'pinned': False}
+        return pinned, 200
+
+
+    @ns_incident.doc(security='access_token')
+    @ns_incident.expect(pinned_model, validate=True)
+    @ns_incident.response(200, 'Success', [pinned_model])
+    @ns_incident.response(400, 'Incident is already pinned')
+    @ns_incident.response(400, 'Incident is already unpinned')
+    @ns_incident.response(401, 'Incorrect credentials')
+    @ns_incident.response(403, 'Missing incident access')
+    @ns_incident.response(404, 'Incident doesn\'t exist')
+    @api.marshal_with(pinned_model)
+    def post(self, incident):
+        """
+                Changes an incident's pinned status.
+        """
+        current_user = User.query.filter_by(id=get_jwt_identity()).first()
+        ns_incident.has_incident_access(current_user, incident)
+        if api.payload['pinned'] and current_user in incident.users_pinned:
+            ns_incident.abort(400, 'Incident is already pinned')
+        elif not api.payload['pinned'] and current_user not in incident.users_pinned:
+            ns_incident.abort(400, 'Incident is already unpinned')
+        elif api.payload['pinned']:
+            incident.users_pinned += [current_user]
+        else:
+            incident.users_pinned.remove(current_user)
+        db.session.commit()
+        return api.payload, 200
 
 
 @ns_incident.route('/<int:id>/status')

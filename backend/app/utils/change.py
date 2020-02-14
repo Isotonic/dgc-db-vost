@@ -19,13 +19,16 @@ def change_user_group(user, group, changed_by):
     audit_action(changed_by, AuditLog.action_values['edit_user_group'])
 
 
-def edit_deployment(deployment, name, description, group_ids, user_ids, changed_by):
-    if name == '' or description == '':
+def edit_deployment(deployment, name, description, open_status, group_ids, user_ids, changed_by):
+    groups = Group.query.filter(Group.id.in_(group_ids)).all()
+    users = User.query.filter(User.id.in_(user_ids)).all()
+    if deployment.name == name and deployment.description == description and deployment.open_status == open_status and deployment.groups == groups and deployment.users == users:
         return False
     deployment.name = name
     deployment.description = description
-    deployment.groups = Group.query.filter(Group.id.in_(group_ids)).all()
-    deployment.users = User.query.filter(User.id.in_(user_ids)).all()
+    deployment.open_status = open_status
+    deployment.groups = groups
+    deployment.users = users
     #emit('create_deployment', {'html': render_template('deployment_card.html', deployment=deployment), 'code': 200}, room='deployments')
     audit_action(changed_by, action_type=AuditLog.action_values['edit_deployment'], target_id=deployment.id)
     return deployment

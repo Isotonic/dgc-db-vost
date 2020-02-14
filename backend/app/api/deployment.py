@@ -1,14 +1,25 @@
 from ..api import api
+from flask_restx import marshal
 from .utils.resource import Resource
 from .utils.namespace import Namespace
 from ..utils.change import edit_deployment
 from ..models import User, Group, Deployment
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from ..utils.create import create_deployment, create_incident
-from .utils.models import new_deployment_model, deployment_model, new_incident_model, incident_model, user_model, group_model
+from .utils.models import new_deployment_model, deployment_model, edit_deployment_model, new_incident_model, incident_model, user_model, group_model
 
 ns_deployment = Namespace('Deployment', description='Used to carry out actions related to deployments.', path='/deployments', decorators=[jwt_required])
 
+def format_incidents(incidents, user):
+    formatted = []
+    for x in incidents:
+        incident = marshal(x, incident_model)
+        if user in x.users_pinned:
+            incident['pinned'] = True
+        else:
+            incident['pinned'] = False
+        formatted.append(incident)
+    return formatted
 
 @ns_deployment.route('')
 class DeploymentsEndpoint(Resource):
@@ -82,7 +93,6 @@ class DeploymentEndpoint(Resource):
     @ns_deployment.response(401, 'Incorrect credentials')
     @ns_deployment.response(403, 'Missing deployment access')
     @ns_deployment.response(404, 'Deployment doesn\'t exist')
-    @api.marshal_with(deployment_model)
     def post(self, deployment):
         """
                 Creates a new incident.
@@ -93,10 +103,10 @@ class DeploymentEndpoint(Resource):
         created_incident = create_incident(payload['name'], payload['description'], payload['location'], payload['reported_via'], payload['reference'], deployment, current_user)
         if created_incident is False:
             ns_deployment.abort(400, 'Name is empty')
-        return created_incident, 200
+        return format_incidents(created_incident, current_user)[0], 200
 
 
-    @ns_deployment.expect(new_deployment_model, validate=True)
+    @ns_deployment.expect(edit_deployment_model, validate=True)
     @ns_deployment.doc(security='access_token')
     @ns_deployment.response(200, 'Success', deployment_model)
     @ns_deployment.response(400, 'Name is empty')
@@ -129,7 +139,7 @@ class DeploymentEndpoint(Resource):
         else:
             groups = []
 
-        if edit_deployment(deployment, payload['name'], payload['description'], groups, users, current_user) is False:
+        if edit_deployment(deployment, payload['name'], payload['description'], payload['open'], groups, users, current_user) is False:
             ns_deployment.abort(400, 'Deployment already has these settings')
         return deployment, 200
 
@@ -143,7 +153,6 @@ class IncidentsEndpoint(Resource):
     @ns_deployment.response(401, 'Incorrect credentials')
     @ns_deployment.response(403, 'Missing deployment access')
     @ns_deployment.response(404, 'Deployment doesn\'t exist')
-    @api.marshal_with(incident_model)
     def get(self, deployment):
         """
                 Returns all incidents the user has access to.
@@ -151,7 +160,7 @@ class IncidentsEndpoint(Resource):
         current_user = User.query.filter_by(id=get_jwt_identity()).first()
         ns_deployment.has_deployment_access(current_user, deployment)
         all_incidents = current_user.get_incidents(deployment.id)
-        return all_incidents, 200
+        return format_incidents(all_incidents, current_user), 200
 
 
 @ns_deployment.route('/<int:id>/open-incidents')
@@ -163,7 +172,6 @@ class OpenIncidentsEndpoint(Resource):
     @ns_deployment.response(401, 'Incorrect credentials')
     @ns_deployment.response(403, 'Missing deployment access')
     @ns_deployment.response(404, 'Deployment doesn\'t exist')
-    @api.marshal_with(incident_model)
     def get(self, deployment):
         """
                 Returns open incidents the user has access to.
@@ -171,7 +179,7 @@ class OpenIncidentsEndpoint(Resource):
         current_user = User.query.filter_by(id=get_jwt_identity()).first()
         ns_deployment.has_deployment_access(current_user, deployment)
         all_incidents = current_user.get_incidents(deployment.id, open_only=True)
-        return all_incidents, 200
+        return format_incidents(all_incidents, current_user), 200
 
 
 @ns_deployment.route('/<int:id>/assigned-incidents')
@@ -183,7 +191,6 @@ class AssignedIncidentsEndpoint(Resource):
     @ns_deployment.response(401, 'Incorrect credentials')
     @ns_deployment.response(403, 'Missing deployment access')
     @ns_deployment.response(404, 'Deployment doesn\'t exist')
-    @api.marshal_with(incident_model)
     def get(self, deployment):
         """
                 Returns assigned incidents to the current user.
@@ -191,7 +198,7 @@ class AssignedIncidentsEndpoint(Resource):
         current_user = User.query.filter_by(id=get_jwt_identity()).first()
         ns_deployment.has_deployment_access(current_user, deployment)
         all_incidents = current_user.get_incidents(deployment.id, ignore_permissions=True)
-        return all_incidents, 200
+        return format_incidents(all_incidents, current_user), 200
 
 
 @ns_deployment.route('/<int:id>/closed-incidents')
@@ -203,7 +210,6 @@ class ClosedIncidentsEndpoint(Resource):
     @ns_deployment.response(401, 'Incorrect credentials')
     @ns_deployment.response(403, 'Missing deployment access')
     @ns_deployment.response(404, 'Deployment doesn\'t exist')
-    @api.marshal_with(incident_model)
     def get(self, deployment):
         """
                 Returns closed incidents the user has access to.
@@ -211,7 +217,7 @@ class ClosedIncidentsEndpoint(Resource):
         current_user = User.query.filter_by(id=get_jwt_identity()).first()
         ns_deployment.has_deployment_access(current_user, deployment)
         all_incidents = current_user.get_incidents(deployment.id, closed_only=False)
-        return all_incidents, 200
+        return format_incidents(all_incidents, current_user), 200
 
 
 @ns_deployment.route('/<int:id>/users')
