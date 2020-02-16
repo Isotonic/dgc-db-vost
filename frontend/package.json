@@ -11,7 +11,7 @@
     "@xkeshi/image-compressor": "^0.5.3",
     "axios": "^0.19.2",
     "bootstrap": "^4.4.1",
-    "bootstrap-vue": "^2.4.1",
+    "bootstrap-vue": "^2.4.2",
     "core-js": "^3.6.4",
     "fuzzaldrin-plus": "^0.6.0",
     "html-to-text": "^5.1.1",

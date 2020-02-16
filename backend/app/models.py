@@ -1,13 +1,13 @@
 import pyavagen
 from flask import url_for
 from string import Template
+from threading import Thread
 from os import path, makedirs
 from flask_admin import Admin  ##TODO Remove
 from flask_mail import Message
 from mailjet_rest import Client
 from flask import render_template
 from flask_login import UserMixin
-from .utils.decorators import async
 from datetime import datetime, timedelta
 from flask_admin.contrib.sqla import ModelView
 from app import app, db, login, argon2, moment, mail
@@ -70,8 +70,13 @@ def task_string(tasks):
     completed = [m for m in tasks if m.completed]
     return f'{len(completed)}/{len(tasks)}'
 
+def async_decorator(f):
+    def wrapper(*args, **kwargs):
+        thr = Thread(target=f, args=args, kwargs=kwargs)
+        thr.start()
+    return wrapper
 
-@async
+@async_decorator
 def send_async_email(app, msg):
     with app.app_context():
         mail.send(msg)
