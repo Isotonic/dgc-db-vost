@@ -3,7 +3,7 @@
     <router-link v-if="nosidebar" :to="'deployments'" class="deployments_brand_img">
       <img class="deployments_brand_img" src="@/assets/img/Logos/Default.png">
     </router-link>
-    <button v-else id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
+    <button v-else class="btn btn-link d-md-none rounded-circle mr-3" @click="$emit('toggleSidebar')">
       <i class="fa fa-bars"></i>
     </button>
     <div v-if="!nosidebar">

@@ -10,7 +10,7 @@
       <div v-if="edit" class="form-group mb-4">
         <select v-model="open" class="custom-select custom-select-sm text-primary font-weight-bold full-length">
             <option :value="true"><i class="fas fa-car"></i>Active</option>
-            <option :value="false">Deactivated</option><i class="fas fa-subway"></i>
+            <option :value="false">Inactive</option><i class="fas fa-subway"></i>
         </select>
       </div>
       <span class="font-weight-bold">Optionally whitelist users and groups, leave both blank to allow everyone access.</span>

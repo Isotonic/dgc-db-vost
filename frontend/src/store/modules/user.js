@@ -60,6 +60,14 @@ const actions = {
           commit('setAccessToken', tokens.access_token)
           commit('setRefreshToken', tokens.refresh_token)
           dispatch('checkLoaded')
+          localStorage.removeItem('showingIncidents')
+          localStorage.removeItem('showingStatus')
+          localStorage.removeItem('showingIncidentsMap')
+          localStorage.removeItem('showingStatusMap')
+          localStorage.removeItem('heatmapMap')
+          localStorage.removeItem('sortedByTypeMap')
+          localStorage.removeItem('sortedByOrderMap')
+          localStorage.removeItem('minimiseSidebar')
           resolve()
         })
         .catch(error => {
@@ -98,9 +106,9 @@ const actions = {
   storeDestroy ({ commit, dispatch }) {
     commit('deleteAccessToken')
     commit('deleteRefreshToken')
-    dispatch('deployments/destroy', null, { root: true })
-    dispatch('incidents/destroy', null, { root: true })
-    dispatch('users/destroy', null, { root: true })
+    dispatch('deployments/storeDestroy', null, { root: true })
+    dispatch('incidents/storeDestroy', null, { root: true })
+    dispatch('users/storeDestroy', null, { root: true })
     localStorage.removeItem('showingIncidents')
     localStorage.removeItem('showingStatus')
     localStorage.removeItem('showingIncidentsMap')
@@ -108,6 +116,7 @@ const actions = {
     localStorage.removeItem('heatmapMap')
     localStorage.removeItem('sortedByTypeMap')
     localStorage.removeItem('sortedByOrderMap')
+    localStorage.removeItem('minimiseSidebar')
   }
 }
 

@@ -22,7 +22,7 @@ new_group_model = api.model('New Group',
                                     'change_priority': fields.Boolean(description='Change an incident\'s priority.', required=True),
                                     'change_status': fields.Boolean(description='Change an incident\'s open status.', required=True),
                                     'change_allocation': fields.Boolean(description='Change an incident\'s allocation.', required=True),
-                                    'mark_as_public': fields.Boolean(description='Change if an incident if viewable by the public or not.', required=True)})
+                                    'mark_as_public': fields.Boolean(description='Change if an incident or incident comment if viewable by the public or not.', required=True)})
 
 
 new_deployment_model = api.model('New Deployment',
@@ -38,7 +38,7 @@ edit_deployment_model = api.model('Edit Deployment',
 
 new_comment_model = api.model('New Comment',
                               {'text': fields.String(required=True, description='Comment text.'),
-                               'public': fields.Boolean(required=True, description='If the comment will be viewable by the public once the incident is marked public.')})
+                               'public': fields.Boolean(description='If the comment will be viewable by the public once the incident is marked public. Field will be ignored if you don\'t have the mark as public permission and defaulted to False. Optionally omit this field.')})
 
 new_task_model = api.model('New Task',
                            {'name': fields.String(required=True, description='Task name'),
@@ -158,16 +158,17 @@ task_comment_model = api.model('Task Comment',
                              'editedAt': fields.Integer(attribute=lambda x: int(x.edited_at.timestamp()) if x.edited_at else None, description='UTC timestamp of when the update was last edited at, can be null.')})
 
 task_model = api.model('Task',
-                        {'id': fields.Integer(),
-                         'name': fields.String(),
-                         'description': fields.String(),
-                         'completed': fields.Boolean(),
+                        {'id': fields.Integer(description='ID of the task.'),
+                         'name': fields.String(description='Name of the task.'),
+                         'description': fields.String(description='Description of the task.'),
+                         'tags': fields.List(fields.String, attribute=lambda x: x.tags if x.tags else [], description='Tags given to a task, can be empty.'),
+                         'completed': fields.Boolean(description='If the task is marked as complete or not.'),
                          'createdAt': fields.Integer(attribute=lambda x: int(x.created_at.timestamp()), description='UTC timestamp of the task\'s creation.'),
                          'completedAt': fields.Integer(attribute=lambda x: int(x.created_at.timestamp()), description='UTC timestamp of the task\'s completion, will be null if it isn\'t completed.'),
-                         'assignedTo': fields.List(fields.Nested(user_model_without_group), attribute='assigned_to'),
-                         'subtasks': fields.List(fields.Nested(subtask_model)),
-                         'comments': fields.List(fields.Nested(task_comment_model)),
-                         'logs': fields.List(fields.Nested(activity_model))}) ##TODO Change to actions
+                         'assignedTo': fields.List(fields.Nested(user_model_without_group), attribute='assigned_to', description='User\'s the task is assigned to, can be empty.'),
+                         'subtasks': fields.List(fields.Nested(subtask_model), description='Tasks within the task, can be empty.'),
+                         'comments': fields.List(fields.Nested(task_comment_model), description='Comments in the task, can be empty.'),
+                         'activity': fields.List(fields.Nested(activity_model), attribute='logs', description='Actions the occured in the task.')}) ##TODO Change to actions
 
 incident_model = api.model('Incident',
                             {'id': fields.Integer(description='ID of the incident.'),
@@ -188,10 +189,10 @@ incident_model = api.model('Incident',
                              'createdAt': fields.Integer(attribute=lambda x: int(x.created_at.timestamp()), description='UTC timestamp of the incident\'s creation.'),
                              'closedAt': fields.Integer(attribute=lambda x: int(x.closed_at.timestamp()) if x.closed_at else None, description='UTC timestamp of the incident\'s closure, can be null.'),
                              'lastUpdatedAt': fields.Integer(attribute=lambda x: int(x.last_updated.timestamp()), description='UTC timestamp of the incident\'s last update.'),
-                             'assignedTo': fields.List(fields.Nested(user_model), attribute='assigned_to'),
-                             'tasks': fields.List(fields.Nested(task_model)),
-                             'comments': fields.List(fields.Nested(comment_model)),
-                             'activity': fields.List(fields.Nested(activity_model), attribute='actions')})
+                             'assignedTo': fields.List(fields.Nested(user_model), attribute='assigned_to', description='User\'s the incident is assigned to, can be empty.'),
+                             'tasks': fields.List(fields.Nested(task_model), description='Tasks in the incident, can be empty.'),
+                             'comments': fields.List(fields.Nested(comment_model), description='Comments in the incidents, can be empty.'),
+                             'activity': fields.List(fields.Nested(activity_model), attribute='actions', description='Actions the occured in the incident.')})
 
 public_incident_model = api.model('Public Incident',
                             {'id': fields.Integer(description='ID of the incident.'),
@@ -226,6 +227,11 @@ subtask_edited_model = api.model('Subtask Edited',
                             {'name': fields.String(required=True),
                              'assignedTo': fields.List(fields.Integer(), description='Optional IDs of the assigned users.')})
 
-permission_model = api.model('Permission Model',
-                             {'name': fields.String(required=True),
-                              'value': fields.Integer(attribute=lambda x: x.get_value(), required=True)})
+tags_model = api.model('Tags',
+                             {'tags': fields.List(fields.String, attribute=lambda x: x.tags if x.tags else [], required=True, description='Tags given to a task, can be empty')})
+
+email_model = api.model('Email', {'email': fields.String(description='Email address.', required=True)})
+
+registration_model = api.model('Registration', {'firstname': fields.String(description='Firstname of the user.'),
+                                                'surname': fields.String(description='Surname of the user.'),
+                                                'password': fields.String(description='Password, must be at least 8 characters, contain a lowercase and uppercase letter and contain a number.')})

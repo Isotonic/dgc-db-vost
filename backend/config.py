@@ -6,8 +6,18 @@ class Config(object):
         try:
             return os.environ[name]
         except KeyError:
-            message = "Expected environment variable '{}' not set.".format(name)
-            raise Exception(message)
+            raise Exception(f"Expected environment variable '{name}' not set.")
+
+    def get_env_boolean(name, default):
+        env = os.environ.get(name, default)
+        if isinstance(env, str):
+            if env.lower() == 'false':
+                env = False
+            elif env.lower() == 'true':
+                env = True
+            else:
+                raise Exception(f"Expected environment variable '{name}' is not a boolean.")
+        return env
 
     load_dotenv()
 
@@ -30,4 +40,13 @@ class Config(object):
     JWT_BLACKLIST_TOKEN_CHECKS = ['access', 'refresh']
 
     MAPBOX_API_KEY = os.environ.get('MAPBOX_API_KEY')
+
+    MAIL_SERVER = get_env_variable('MAIL_SERVER')
+    MAIL_PORT = get_env_variable('MAIL_PORT')
+    MAIL_USE_TLS = get_env_boolean('MAIL_USE_TLS', False)
+    MAIL_USE_SSL = get_env_boolean('MAIL_USE_SSL', True)
+    MAIL_USERNAME = get_env_variable('MAIL_USERNAME')
+    MAIL_PASSWORD = get_env_variable('MAIL_PASSWORD')
+
+    DOMAIN_NAME = get_env_variable('DOMAIN_NAME')
     ERROR_404_HELP = False

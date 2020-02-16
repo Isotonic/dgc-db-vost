@@ -1,7 +1,22 @@
+import re
+from app import db
 from datetime import datetime
 from flask_socketio import emit
 from app.models import User, Group, AuditLog, IncidentLog, TaskLog
 from .actions import audit_action, incident_action, task_action
+
+
+def complete_registration(email_link, firstname, surname, password):
+    pattern = re.compile('(?=.*\d)(?=.*[a-z])(?=.*[A-Z])')
+    if not pattern.match(password):
+        return False
+    user = email_link.user
+    user.firstname = firstname
+    user.surname = surname
+    user.set_password(password)
+    user.status = 1
+    db.session.delete(email_link)
+    audit_action(user, AuditLog.action_values['verify_user'])
 
 
 def edit_group(group, name, permissions, changed_by):
@@ -151,6 +166,18 @@ def change_task_description(task, description, changed_by):
                 task=task, extra=description)
     incident_action(user=changed_by, action_type=IncidentLog.action_values['changed_task_description'], incident=task.incident, task=task,
                     extra=description)
+
+
+def change_task_tags(task, tags, changed_by):
+    if (not task.tags and not tags) or (task.tags and tags and set(task.tags) == set(tags)):
+        return False
+    task.tags = list(set(tags))
+    task.incident.last_updated = datetime.utcnow()
+    #emit('change_task_description', {'id': task.id, 'description': task.description,
+    #                                 'code': 200}, room=f'{task.incident.id}-{task.id}')
+    task_action(user=changed_by, action_type=TaskLog.action_values['changed_tags'],
+                task=task)
+    incident_action(user=changed_by, action_type=IncidentLog.action_values['changed_task_tags'], incident=task.incident, task=task)
 
 
 def change_task_assigned(task, assigned_to, changed_by):

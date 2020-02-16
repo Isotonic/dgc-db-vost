@@ -12,7 +12,7 @@ from .utils.models import id_model, incident_model, pinned_model, status_model, 
 ns_incident = Namespace('Incident', description='Used to carry out actions related to incidents.', path='/incidents', decorators=[jwt_required])
 
 def format_incident(incident, user):
-    incident_marshalled = marshal(x, incident_model)
+    incident_marshalled = marshal(incident, incident_model)
     if user in incident.users_pinned:
         incident_marshalled['pinned'] = True
     else:
@@ -257,7 +257,7 @@ class PriorityEndpoint(Resource):
 @ns_incident.route('/<int:id>/public')
 @ns_incident.doc(params={'id': 'Incident ID.'})
 @ns_incident.resolve_object('incident', lambda kwargs: Incident.query.get_or_error(kwargs.pop('id')))
-class Public(Resource):
+class PublicEndpoint(Resource):
     @ns_incident.doc(security='access_token')
     @ns_incident.response(200, 'Success', public_model)
     @ns_incident.response(401, 'Incorrect credentials')
@@ -312,7 +312,7 @@ class Public(Resource):
 @ns_incident.route('/<int:id>/comments')
 @ns_incident.doc(params={'id': 'Incident ID.'})
 @ns_incident.resolve_object('incident', lambda kwargs: Incident.query.get_or_error(kwargs.pop('id')))
-class Comments(Resource):
+class CommentsEndpoint(Resource):
     @ns_incident.doc(security='access_token')
     @ns_incident.response(200, 'Success', comment_model)
     @ns_incident.response(401, 'Incorrect credentials')
@@ -343,7 +343,13 @@ class Comments(Resource):
         """
         current_user = User.query.filter_by(id=get_jwt_identity()).first()
         ns_incident.has_incident_access(current_user, incident)
-        comment = create_comment(api.payload['text'], api.payload['public'], incident, current_user)
+
+        if current_user.has_permission('mark_as_public') and 'public' in api.payload.keys():
+            public = api.payload['public']
+        else:
+            public = False
+
+        comment = create_comment(api.payload['text'], public, incident, current_user)
         if comment is False:
             ns_incident.abort(400, 'Text is empty')
         return comment, 200
@@ -352,7 +358,7 @@ class Comments(Resource):
 @ns_incident.route('/<int:id>/tasks')
 @ns_incident.doc(params={'id': 'Incident ID.'})
 @ns_incident.resolve_object('incident', lambda kwargs: Incident.query.get_or_error(kwargs.pop('id')))
-class Tasks(Resource):
+class TasksEndpoint(Resource):
     @ns_incident.doc(security='access_token')
     @ns_incident.response(200, 'Success', comment_model)
     @ns_incident.response(401, 'Incorrect credentials')

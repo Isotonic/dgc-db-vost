@@ -19,7 +19,7 @@ def check_if_token_in_blacklist(decrypted_token): ##TODO Check if it returns fal
     iat = decrypted_token['iat']
     identity = int(decrypted_token['identity'])
     user = User.query.filter_by(id=identity).first()
-    return not user or user.status != 1 or user.password_last_updated.timestamp() > iat or RevokedToken.is_jti_blacklisted(jti)
+    return not user or user.status != 1 or user.password_last_updated.timestamp() + 15 < iat or RevokedToken.is_jti_blacklisted(jti)
 
 api_blueprint = Blueprint('api', __name__)
 

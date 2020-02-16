@@ -356,9 +356,9 @@ export default {
     deployment: {
       deep: true,
       handler () {
-        if (this.deployment && this.deploymentName !== this.deployment.name) {
+        if (this.deployment && this.deploymentName !== this.deployment.name.replace(/ /g, '-')) {
           this.deploymentName = this.deployment.name
-          history.pushState(null, '', `/deployments/${this.deployment.name.replace(/ /g, '-')}-${this.deploymentId}/incidents`)
+          history.pushState(null, '', `/deployments/${this.deployment.name.replace(/ /g, '-')}-${this.deploymentId}/map`)
         }
       }
     },

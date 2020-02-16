@@ -5,8 +5,8 @@ from .utils.namespace import Namespace
 from ..models import User, IncidentTask
 from ..utils.create import create_task_comment
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from ..utils.change import change_task_status, change_task_description, change_task_assigned
-from .utils.models import id_model, task_model, completion_model, user_model, task_comment_model, text_model
+from ..utils.change import change_task_status, change_task_description, change_task_tags, change_task_assigned
+from .utils.models import id_model, task_model, completion_model, user_model, task_comment_model, text_model, tags_model
 
 ns_task = Namespace('Task', description='Used to carry out actions related to tasks.', path='/tasks', decorators=[jwt_required])
 
@@ -121,15 +121,53 @@ class DescriptionEndpoint(Resource):
         return task, 200
 
 
+@ns_task.route('/<int:id>/tags')
+@ns_task.doc(params={'id': 'Task ID.'})
+@ns_task.resolve_object('task', lambda kwargs: IncidentTask.query.get_or_error(kwargs.pop('id')))
+class TagsEndpoint(Resource):
+    @ns_task.doc(security='access_token')
+    @ns_task.response(200, 'Success', [tags_model])
+    @ns_task.response(401, 'Incorrect credentials')
+    @ns_task.response(403, 'Missing incident access')
+    @ns_task.response(404, 'Task doesn\'t exist')
+    @api.marshal_with(tags_model)
+    def get(self, task):
+        """
+                Returns task's assigned users.
+        """
+        current_user = User.query.filter_by(id=get_jwt_identity()).first()
+        ns_task.has_incident_access(current_user, task.incident)
+        return task, 200
+
+
+    @ns_task.doc(security='access_token')
+    @ns_task.expect(tags_model, validate=True)
+    @ns_task.response(200, 'Success', tags_model)
+    @ns_task.response(400, 'Task already has these tags')
+    @ns_task.response(401, 'Incorrect credentials')
+    @ns_task.response(403, 'Missing incident access')
+    @ns_task.response(404, 'Task doesn\'t exist')
+    @api.marshal_with(tags_model)
+    def put(self, task):
+        """
+                Changes task's assigned users. Supply a list of user IDs, can be empty.
+        """
+        current_user = User.query.filter_by(id=get_jwt_identity()).first()
+        ns_task.has_incident_access(current_user, task.incident)
+        if change_task_tags(task, api.payload['tags'], current_user) is False:
+            ns_task.abort(400, 'Task already had these tags')
+        return task, 200
+
+
 @ns_task.route('/<int:id>/assigned')
-@ns_task.doc(params={'id': 'Incident ID.'})
+@ns_task.doc(params={'id': 'Task ID.'})
 @ns_task.resolve_object('task', lambda kwargs: IncidentTask.query.get_or_error(kwargs.pop('id')))
 class AssignedEndpoint(Resource):
     @ns_task.doc(security='access_token')
     @ns_task.response(200, 'Success', [user_model])
     @ns_task.response(401, 'Incorrect credentials')
     @ns_task.response(403, 'Missing incident access')
-    @ns_task.response(404, 'Subtask doesn\'t exist')
+    @ns_task.response(404, 'Task doesn\'t exist')
     @api.marshal_with(user_model)
     def get(self, task):
         """
@@ -143,10 +181,10 @@ class AssignedEndpoint(Resource):
     @ns_task.doc(security='access_token')
     @ns_task.expect([id_model], validate=True)
     @ns_task.response(200, 'Success', [user_model])
-    @ns_task.response(400, 'Subtask already has this priority')
+    @ns_task.response(400, 'Task already has this allocation')
     @ns_task.response(401, 'Incorrect credentials')
     @ns_task.response(403, 'Missing incident access')
-    @ns_task.response(404, 'Subtask doesn\'t exist')
+    @ns_task.response(404, 'Task doesn\'t exist')
     @api.marshal_with(user_model)
     def put(self, task):
         """
@@ -161,14 +199,14 @@ class AssignedEndpoint(Resource):
 
 
 @ns_task.route('/<int:id>/comments')
-@ns_task.doc(params={'id': 'Incident ID.'})
+@ns_task.doc(params={'id': 'Task ID.'})
 @ns_task.resolve_object('task', lambda kwargs: IncidentTask.query.get_or_error(kwargs.pop('id')))
 class CommentsEndpoint(Resource):
     @ns_task.doc(security='access_token')
     @ns_task.response(200, 'Success', [task_comment_model])
     @ns_task.response(401, 'Incorrect credentials')
     @ns_task.response(403, 'Missing incident access')
-    @ns_task.response(404, 'Subtask doesn\'t exist')
+    @ns_task.response(404, 'Task doesn\'t exist')
     @api.marshal_with(task_comment_model)
     def get(self, task):
         """
@@ -182,11 +220,10 @@ class CommentsEndpoint(Resource):
     @ns_task.doc(security='access_token')
     @ns_task.expect(text_model, validate=True)
     @ns_task.response(200, 'Success', [task_comment_model])
-    @ns_task.response(400, 'Subtask already has this priority')
     @ns_task.response(400, 'Text is empty')
     @ns_task.response(401, 'Incorrect credentials')
     @ns_task.response(403, 'Missing incident access')
-    @ns_task.response(404, 'Subtask doesn\'t exist')
+    @ns_task.response(404, 'Task doesn\'t exist')
     @api.marshal_with(task_comment_model)
     def post(self, task):
         """

@@ -30,6 +30,7 @@ class ClosedIncidentsEndpoint(Resource):
         incidents = Incident.query.filter(Incident.open_status==False, Incident.public==True, Incident.closed_at>(datetime.utcnow() - timedelta(days=1))).all()
         return incidents, 200
 
+
 @ns_public.route('/incidents/<int:id>')
 @ns_public.doc(params={'id': 'Incident ID.'})
 @ns_public.resolve_object('incident', lambda kwargs: Incident.query.get_or_error(kwargs.pop('id')))

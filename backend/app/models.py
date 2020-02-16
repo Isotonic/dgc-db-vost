@@ -3,10 +3,14 @@ from flask import url_for
 from string import Template
 from os import path, makedirs
 from flask_admin import Admin  ##TODO Remove
+from flask_mail import Message
+from mailjet_rest import Client
+from flask import render_template
 from flask_login import UserMixin
+from .utils.decorators import async
 from datetime import datetime, timedelta
 from flask_admin.contrib.sqla import ModelView
-from app import app, db, login, argon2, moment
+from app import app, db, login, argon2, moment, mail
 
 avatar_colours = ['#26de81', '#3867d6', '#eb3b5a', '#0fb9b1', '#f7b731', '#a55eea', '#fed330', '#45aaf2', '#fa8231',
                   '#2bcbba', '#fd9644', '#2d98da', '#8854d0', '#20bf6b', '#fc5c65', '#4b7bec']
@@ -67,6 +71,11 @@ def task_string(tasks):
     return f'{len(completed)}/{len(tasks)}'
 
 
+@async
+def send_async_email(app, msg):
+    with app.app_context():
+        mail.send(msg)
+
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     firstname = db.Column(db.String(64))
@@ -85,6 +94,7 @@ class User(db.Model, UserMixin):
 
     def set_password(self, password):
         self.password_hash = argon2.generate_password_hash(password)
+        self.password_last_updated = datetime.utcnow()
 
     def check_password(self, password):
         return argon2.check_password_hash(self.password_hash, password)
@@ -129,7 +139,7 @@ class User(db.Model, UserMixin):
             else:
                 return deployment.incidents
         for x in deployment.incidents:
-            if ((open_only and x.open_status) or (closed_only and not x.open_status)) and self in x.assigned_to and x.supervisor_approved:
+            if ((not open_only and not closed_only) or (open_only and x.open_status) or (closed_only and not x.open_status)) and self in x.assigned_to and x.supervisor_approved:
                 incidents.append(x)
         return incidents
 
@@ -221,7 +231,6 @@ class Deployment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64), index=True)
     description = db.Column(db.String(256))
-    areas = db.Column(db.ARRAY(db.String(64)))
     open_status = db.Column(db.Boolean(), default=True)
     incidents = db.relationship('Incident', backref='deployment')
     users = db.relationship('User', secondary=deployment_user_junction, backref='deployments')
@@ -256,7 +265,7 @@ class Incident(db.Model):
     priority_colours = {'Standard': 'yellow', 'Prompt': 'orange', 'Immediate': 'orange-dark'}
     ##TODO Should really load these from a file.
     incident_types = {'Road Incident': 'car', 'Rail Incident': 'subway', 'Aviation Incident': 'plane',
-                      'Maritane Inicent': 'ship', 'Snow/Ice': 'snowflake',
+                      'Maritane Incident': 'ship', 'Snow/Ice': 'snowflake',
                       'Severe Wind': 'wind', 'Rain / Flooding': 'cloud-showers-heavy', 'Industrial': 'industry',
                       'Major Accident Hazard Pipeline': '',
                       'Nuclear Incident': 'radiation', 'Fire/Explosion': 'fire', 'Building Collapse': 'building',
@@ -361,6 +370,7 @@ class IncidentTask(db.Model):
     incident_id = db.Column(db.Integer, db.ForeignKey('incident.id'))
     name = db.Column(db.String(64))
     description = db.Column(db.String(1024))
+    tags = db.Column(db.ARRAY(db.String(64)))
     completed = db.Column(db.Boolean(), default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     completed_at = db.Column(db.DateTime)
@@ -429,7 +439,7 @@ class IncidentComment(db.Model):
     text = db.Column(db.String())
     public = db.Column(db.Boolean(), default=False)
     sent_at = db.Column(db.DateTime, default=datetime.utcnow)
-    edited_at = db.Column(db.DateTime, default=datetime.utcnow)
+    edited_at = db.Column(db.DateTime)
 
     def __repr__(self):
         return f'{self.text}'
@@ -465,6 +475,11 @@ class EmailLink(db.Model):
     verify = db.Column(db.Boolean(), default=False)
     forgot_password = db.Column(db.Boolean(), default=False)
 
+    def send_registration_email(self):
+        msg = Message('DGVOST Registration', sender=app.config.get('MAIL_USERNAME'), recipients=[self.user.email])
+        msg.html = render_template('registration_email.html', email_link=self.link)
+        send_async_email(app, msg)
+
 
 class AuditLog(db.Model):
     action_values = {'create_user': 1, 'verify_user': 2, 'edit_user_group': 3, 'edit_user_status': 4, 'delete_user': 5, 'create_group': 6,
@@ -484,7 +499,7 @@ class IncidentLog(db.Model):
                      'marked_complete': 10, 'marked_incomplete': 11, 'changed_priority': 12,
                      'changed_task_description': 13, 'assigned_user_task': 14,
                      'removed_user_task': 15, 'marked_public': 16, 'marked_not_public': 17, 'complete_subtask': 18, 'incomplete_subtask': 19, 'create_subtask': 20, 'add_subtask_comment': 21,
-                     'marked_comment_public': 22, 'marked_comment_not_public': 23, 'update_comment': 24, 'edit_subtask': 25, 'edit_incident': 26}  ##TODO RE-ORDER ONCE DONE
+                     'marked_comment_public': 22, 'marked_comment_not_public': 23, 'update_comment': 24, 'edit_subtask': 25, 'edit_incident': 26, 'changed_task_tags': 27}  ##TODO RE-ORDER ONCE DONE
     action_strings = {1: 'created incident', 2: 'created task $task', 3: 'marked $task as complete',
                       4: 'deleted task $task',
                       5: 'added an update', 6: 'deleted an update', 7: 'marked $task as incomplete',
@@ -492,8 +507,8 @@ class IncidentLog(db.Model):
                       9: 'removed $target_users from incident', 10: 'marked incident as complete',
                       11: 'marked incident as incomplete', 12: 'changed priority to $extra',
                       13: 'changed $task description to "$extra"', 14: 'added $target_users to $task',
-                      15: 'removed $target_users from $task', 16: 'set the incident to public', 17: 'set the incident to private', 18: 'marked $extra as complete', 19: 'marked $extra as incomplete', 20: 'created sub-task $extra', 21: 'added comment to $task',
-                      22: 'marked comment as publicly viewable', 23: 'marked comment as not publicly viewable', 24: 'edited update', 25: 'edited subtask $extra', 26: 'edited incident details'}
+                      15: 'removed $target_users from $task', 16: 'set the incident to publicly viewable', 17: 'set the incident to private', 18: 'marked $extra as complete', 19: 'marked $extra as incomplete', 20: 'created sub-task $extra', 21: 'added comment to $task',
+                      22: 'marked comment as publicly viewable', 23: 'marked comment as not publicly viewable', 24: 'edited update', 25: 'edited subtask $extra', 26: 'edited incident details', 27: 'changed tags for $task'}
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
@@ -525,11 +540,11 @@ class IncidentLog(db.Model):
 
 class TaskLog(db.Model):
     action_values = {'create_subtask': 1, 'complete_subtask': 2, 'delete_subtask': 3, 'changed_description': 4,
-                     'assigned_user': 5, 'removed_user': 6, 'incomplete_subtask': 7, 'add_comment': 8, 'edit_subtask': 9}  ##TODO RE-ORDER ONCE DONE
+                     'assigned_user': 5, 'removed_user': 6, 'incomplete_subtask': 7, 'add_comment': 8, 'edit_subtask': 9, 'changed_tags': 10}  ##TODO RE-ORDER ONCE DONE
     action_strings = {1: 'created $subtask', 2: 'marked $subtask as complete',
                       3: 'deleted $extra',
                       4: 'changed task description to "$extra"', 5: 'added $target_users to task',
-                      6: 'removed $target_users from task', 7: 'marked $subtask as incomplete', 8: 'added comment to task', 9: 'edited subtask $subtask'}
+                      6: 'removed $target_users from task', 7: 'marked $subtask as incomplete', 8: 'added comment to task', 9: 'edited subtask $subtask', 10: 'changed the task\'s tags'}
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))

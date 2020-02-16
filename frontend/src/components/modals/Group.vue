@@ -13,7 +13,7 @@
         <checkbox v-model="change_priority" :text="'Change Priority'" :extra="'Change an incident\'s priority.'" />
         <checkbox v-model="change_status" :text="'Change Status'" :extra="'Change an incident\'s open status.'" />
         <checkbox v-model="change_allocation" :text="'Change Allocation'" :extra="'Change an incident\'s allocation.'" />
-        <checkbox v-model="mark_as_public" :text="'Mark as Public'" :extra="'Change if an incident if viewable by the public or not.'" />
+        <checkbox v-model="mark_as_public" :text="'Mark as Public'" :extra="'Change if an incident or update if viewable by the public or not.'" />
       </div>
       <div class="text-center">
         <button type="submit" class="btn btn-primary mt-1">{{ edit ? 'Save' : 'Submit' }}</button>

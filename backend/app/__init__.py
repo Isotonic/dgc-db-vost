@@ -1,5 +1,6 @@
 from flask import Flask
 from config import Config
+from flask_mail import Mail
 from flask_cors import CORS
 from flask_restx import abort
 from flask_moment import Moment
@@ -31,6 +32,7 @@ jwt = JWTManager(app)
 db = SQLAlchemy(app, query_class=CustomBaseQuery)
 migrate = Migrate(app, db)
 login = LoginManager(app)
+mail = Mail(app)
 moment = Moment(app)
 csrf = CSRFProtect(app)
 socketio = SocketIO(app)

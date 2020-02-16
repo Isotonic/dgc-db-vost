@@ -14,6 +14,19 @@ const routes = [
     }
   },
   {
+    path: '/complete-registration/:link',
+    name: 'registration',
+    component: () => import(/* webpackChunkName: "registration" */ '../views/Registration.vue'),
+    props (route) {
+      const props = { ...route.params }
+      return props
+    },
+    meta: {
+      title: _ => 'Complete Registration',
+      requiresAuth: false
+    }
+  },
+  {
     path: '/deployments',
     alias: '/',
     name: 'deployments',

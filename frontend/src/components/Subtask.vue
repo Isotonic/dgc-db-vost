@@ -3,7 +3,7 @@
       <div class="row align-items-center no-gutters">
           <div class="col mr-2">
               <h6 class="mb-0">
-                  <input :class="['mr-2', subtask.completed ? 'text-success' : '']" type="checkbox" :checked="subtask.completed" @click="toggle">
+                  <input class="mr-2" type="checkbox" :checked="subtask.completed" @click="toggle">
                   <strong v-if="!edit">{{ subtask.name }} </strong>
                   <input v-else v-model="newName" type="text" required="required" class="form-control-sm was-validated mr-2">
                   <span class="text-xs ml-1">{{ subtaskStatusText }}</span>
@@ -37,7 +37,7 @@
               <template v-slot:body>
               <div class="delete-subtask">
                 <h6>
-                  <input v-if="isSubtask" :class="['mr-2', task.completed ? 'text-success' : '']" type="checkbox" :checked="task.completed" :disabled="true">
+                  <input v-if="isSubtask" class="mr-2" type="checkbox" :checked="task.completed" :disabled="true">
                   <strong>{{ task.name }} </strong><span class="text-xs">{{ taskStatusText }}</span>
                 </h6>
                 <span v-if="task.assignedTo.length" :class="['text-xs', isSubtask ? 'ml-4' : '']">Assigned to {{ assignedToText }}</span>

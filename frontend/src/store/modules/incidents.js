@@ -47,7 +47,7 @@ const actions = {
         router.push({ name: 'pageNotFound' })
       })
   },
-  destroy ({ commit }) {
+  storeDestroy ({ commit }) {
     commit('destroy')
   }
 }

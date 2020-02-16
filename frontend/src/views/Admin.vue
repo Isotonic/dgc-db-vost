@@ -39,6 +39,7 @@
                     <div slot="status" slot-scope="{row}">
                       <span v-if="row.status == 0">
                         <span>Sent email</span>
+                        <i class="fas fa-redo-alt ml-3" @click="resendEmail(row)" v-tooltip="'Resend email'"></i>
                         <i class="fas fa-times ml-2" @click="confirmRevokeUser(row)" v-tooltip="'Revoke'"></i>
                       </span>
                       <span v-else>
@@ -249,6 +250,10 @@ export default {
     editGroup (group) {
       this.editGroupObj = group
       this.isEditGroupModalVisible = true
+    },
+    resendEmail (user) {
+      this.ApiPost(`/users/${user.id}/resend-email`)
+        .then(() => Vue.noty.success(`Re-sent registration email to ${user.email}`))
     },
     confirmRevokeUser (user) {
       this.revokeUserObj = user

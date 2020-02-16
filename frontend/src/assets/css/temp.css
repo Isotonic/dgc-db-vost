@@ -83,8 +83,9 @@
 
 .task:hover,
 .incident-card:hover,
-tbody > tr:hover {
+#IncidentsTable > .table-responsive > table > tbody > tr:hover {
   cursor: pointer;
+  color: #858796;
   background-color: #f6f8fe !important;
 }
 
@@ -235,6 +236,9 @@ MODIFIED VERSION
     transform: rotate(-90deg) translate(50%, -20px);
     -webkit-transform-origin: right;
     transform-origin: right;
+  }
+  .toggle-sidebar {
+    display: none;
   }
 }
 
@@ -444,8 +448,14 @@ input[type=radio] + span {
   margin-left: .35em;
 }
 
-input[type=checkbox]:checked::after {
+input[type=checkbox]:not(.error):checked::after {
   content: '\f058';
+  color: #02df90 !important;
+}
+
+input[type=checkbox].checkbox-error:checked::after {
+  content: '\f057';
+  color: #f44336 !important;
 }
 
 input[type=radio]:checked::after {
@@ -1227,7 +1237,7 @@ div .marker {
   border-top: none;
 }
 
-.VueTables__search__input {
+.VueTables__search-field {
   margin-left: 2px;
 }
 
@@ -1240,6 +1250,24 @@ div .marker {
 }
 
 .VueTables__child-row-toggler:hover,
-.far.fa-bookmark:hover {
+.fa-bookmark:hover {
   color: black;
+}
+
+.toggled > .sidebar-brand {
+  padding: 0;
+}
+
+.sidebar-brand > img {
+  margin-left: 1.5rem;
+  margin-right: 1.5rem;
+}
+
+.fa-redo-alt:hover {
+  cursor: pointer;
+  color: #0061f2;
+}
+
+.invalid {
+  border-color: #f44336
 }

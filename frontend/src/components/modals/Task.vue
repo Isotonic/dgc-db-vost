@@ -7,7 +7,7 @@
             <i class="fas fa-align-left mr-2"></i>
             <span class="font-weight-bold"> Description</span>
             <div class="float-right">
-              <b-dropdown id="ChangeAssignedDropdown" size="xs" right menu-class="mt-3 width-15" variant="link" toggle-tag="a" offset="100" @shown="openedAssignedDropdown" @hidden="closedAssignedDropdown">
+              <b-dropdown id="ChangeAssignedDropdown" size="xs" right menu-class="mt-3 width-15" variant="link" toggle-tag="div" offset="100" @shown="openedAssignedDropdown" @hidden="closedAssignedDropdown">
                 <template slot="button-content">
                   <a class="fas fa-users-cog mr-3 text-black hover-primary" aria-haspopup="true" v-tooltip="'Change Assigned'"></a>
                 </template>
@@ -22,17 +22,17 @@
                   </multiselect>
                 </div>
               </b-dropdown>
-              <b-dropdown id="ChangeAssignedDropdown" size="xs" right menu-class="mt-3 width-15" variant="link" toggle-tag="a" offset="100" @shown="openedAssignedDropdown" @hidden="closedAssignedDropdown">
+              <b-dropdown id="ChangeTagsDropdown" size="xs" right menu-class="mt-3 width-15" variant="link" toggle-tag="div" offset="100" @hidden="closedTagsDropdown">
                 <template slot="button-content">
                   <a class="fas fa-tags mr-3 text-black hover-primary" aria-haspopup="true" v-tooltip="'Change Tags'"></a>
                 </template>
                 <h6 class="text-primary text-center font-weight-bold">Change Tags</h6>
                 <b-dropdown-divider />
                 <div class="pl-1 pr-1">
-                  <multiselect v-model="tagsSelected" tag-placeholder="Add this as new tag" placeholder="Search or add a tag" label="name" track-by="name" :options="tagOptions" :multiple="true" :taggable="true" @tag="addTag" :closeOnSelect="false" :limit="0" :limitText="count => `${count} tag${count > 1 ? 's' : ''} assigned.`" selectLabel="" deselectLabel="" selectedLabel=""></multiselect>
+                  <multiselect v-model="tagsSelected" tag-placeholder="Add this as new tag" placeholder="Search or create a tag" :options="tagOptions" :multiple="true" :taggable="true" @tag="addTag" :closeOnSelect="false" :limit="0" :limitText="count => `${count} tag${count > 1 ? 's' : ''} assigned.`" selectLabel="" deselectLabel="" selectedLabel="" />
                 </div>
               </b-dropdown>
-              <b-dropdown id="DeleteTaskDropdown" ref="DeleteTaskDropdown" size="xs" right menu-class="mt-3" variant="link" toggle-tag="a" offset="60">
+              <b-dropdown id="DeleteTaskDropdown" ref="DeleteTaskDropdown" size="xs" right menu-class="mt-3" variant="link" toggle-tag="div" offset="60">
                 <template slot="button-content">
                   <a class="fas fa-trash-alt text-black hover-danger" aria-haspopup="true" v-tooltip="'Delete Task'"></a>
                 </template>
@@ -49,9 +49,9 @@
         <textarea-autosize class="form-control-plaintext text-dark" placeholder="Add a description" v-model="newDescription" :min-height="10" :max-height="350"/>
         <i v-if="hasTypedDescription" class="fas fa-times ml-3 text-black float-right" @click="newDescription = task.description" v-tooltip="'Cancel'"></i>
         <i v-if="hasTypedDescription" class="fas fa-check hover ml-3 text-black float-right" @click="updateDescription" v-tooltip="'Save'"></i>
-        <div v-if="tagsSelected.length">
-          <span v-for="tag in tagsSelected" :key="tag.name" class="badge badge-pill badge-primary mr-2">
-            {{ tag.name }}
+        <div v-if="task.tags.length" class="mb-3">
+          <span v-for="tag in task.tags" :key="tag" :class="['badge', 'badge-pill', 'mr-2', tagClass(tag)]">
+            {{ tag }}
           </span>
         </div>
       </div>
@@ -89,10 +89,10 @@
       <div class="col-xl-12 col-sm-8 mt-4">
         <h5>
           <i class="fas fa-clipboard-list mb-2 mr-2"></i>
-          <span class="font-weight-bold"> Actions</span>
+          <span class="font-weight-bold"> Activity</span>
         </h5>
         <ul class="activity">
-          <activity v-for="action in orderBy(task.logs, 'occurredAt', -1)" :key="action.id" :action="action"></activity>
+          <activity v-for="action in orderBy(task.activity, 'occurredAt', -1)" :key="action.id" :action="action"></activity>
         </ul>
       </div>
     </div>
@@ -130,14 +130,11 @@ export default {
       assignedSelected: [],
       isSelectLoading: false,
       isHandlingAssigned: false,
+      isHandlingTags: false,
       newDescription: '',
       newComment: '',
       tagsSelected: [],
-      tagOptions: [
-        { name: 'High Priority' },
-        { name: 'Medium Priority' },
-        { name: 'Low Priority' }
-      ]
+      tagOptions: ['High Priority', 'Medium Priority', 'Low Priority']
     }
   },
   methods: {
@@ -179,16 +176,38 @@ export default {
       if (this.didAssignedChange) {
         this.ApiPut(`tasks/${this.task.id}/assigned`, { users: this.assignedSelected.map(user => user.id) })
           .then(() => { this.isHandlingAssigned = false })
+          .catch(() => { this.isHandlingAssigned = false })
       } else {
         this.isHandlingAssigned = false
       }
     },
     addTag (newTag) {
-      const tag = {
-        name: newTag
+      this.tagOptions.push(newTag)
+      this.tagsSelected.push(newTag)
+    },
+    tagClass (tag) {
+      if (tag === 'High Priority') {
+        return 'badge-danger'
+      } else if (tag === 'Medium Priority') {
+        return 'badge-orange'
+      } else if (tag === 'Low Priority') {
+        return 'badge-warning'
+      } else {
+        return 'badge-primary'
       }
-      this.tagOptions.push(tag)
-      this.tagsSelected.push(tag)
+    },
+    closedTagsDropdown () {
+      if (this.isHandlingTags) {
+        return
+      }
+      this.isHandlingTags = true // Fix for Bootstrap-vue firing twice.
+      if (this.didTagsChange) {
+        this.ApiPut(`tasks/${this.task.id}/tags`, { tags: this.tagsSelected })
+          .then(() => { this.isHandlingTags = false })
+          .catch(() => { this.isHandlingTags = false })
+      } else {
+        this.isHandlingTags = false
+      }
     },
     deleteTask () {
       this.ApiDelete(`tasks/${this.task.id}`)
@@ -227,6 +246,10 @@ export default {
       return this.assignedSelected.length !== this.task.assignedTo.length ||
       !this.assignedSelected.every(e => this.task.assignedTo.includes(e))
     },
+    didTagsChange: function () {
+      return this.tagsSelected.length !== this.task.tags.length ||
+      !this.tagsSelected.every(e => this.task.tags.includes(e))
+    },
     hasTypedDescription: function () {
       if (this.task.description === this.newDescription) {
         return false
@@ -240,6 +263,11 @@ export default {
   },
   created () {
     this.newDescription = this.task.description
+    this.tagsSelected = JSON.parse(JSON.stringify(this.task.tags))
+    const newTags = this.task.tags.filter(tag => !this.tagOptions.includes(tag))
+    for (let tag of newTags) {
+      this.tagOptions.push(tag)
+    }
   }
 }
 </script>

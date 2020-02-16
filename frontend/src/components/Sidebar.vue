@@ -1,7 +1,7 @@
 <template>
-  <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
+  <ul :class="['navbar-nav', 'bg-gradient-primary', 'sidebar', 'sidebar-dark', 'accordion', hasClass ? 'toggle-sidebar' : '', minimised ? 'toggled' : '']" ref="sidebar">
     <router-link :to="{ name: 'deployments' }" class="sidebar-brand d-flex align-items-center justify-content-center">
-      <img class="mx-4" src="@/assets/img/Logos/White.png">
+      <img src="@/assets/img/Logos/White.png">
     </router-link>
     <hr class="sidebar-divider my-0">
     <li class="nav-item">
@@ -58,7 +58,7 @@
     </div>
     <hr class="sidebar-divider d-none d-md-block">
     <div class="text-center d-none d-md-inline">
-      <button class="rounded-circle border-0" id="sidebarToggle"></button>
+      <button class="rounded-circle border-0" id="sidebarToggle" @click="minimised = !minimised"></button>
     </div>
   </ul>
 </template>
@@ -70,9 +70,31 @@ export default {
     deploymentId: Number,
     deploymentName: String
   },
+  data () {
+    return {
+      hasClass: true,
+      minimised: false
+    }
+  },
+  methods: {
+    toggleSidebar: function () {
+      this.hasClass = !this.hasClass
+      this.minimised = false
+    }
+  },
   computed: {
     isSupervisor: function () {
       return this.$store.getters['user/hasPermission']('supervisor')
+    }
+  },
+  watch: {
+    minimised (value) {
+      localStorage.minimiseSidebar = value
+    }
+  },
+  async created () {
+    if (localStorage.minimiseSidebar) {
+      this.minimised = localStorage.minimiseSidebar
     }
   }
 }

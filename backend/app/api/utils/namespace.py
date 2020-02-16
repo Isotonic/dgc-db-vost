@@ -32,7 +32,7 @@ class Namespace(OriginalNamespace):
         return decorator
 
     def has_permission(self, user, permission):
-        if not user.group.has_permission(permission):
+        if not user.has_permission(permission):
             self.abort(403, f'Missing {permission.title()} permission')
 
     def has_deployment_access(self, user, deployment):

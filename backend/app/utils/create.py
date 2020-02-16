@@ -17,7 +17,7 @@ def create_user(email, group, created_by):
     email_link = EmailLink(user_id=user.id, link=secrets.token_urlsafe(20), verify=True)
     db.session.add(email_link)
     audit_action(created_by, action_type=AuditLog.action_values['create_user'], target_id=user.id)
-    email_link.send_email()
+    email_link.send_registration_email()
     return user
 
 

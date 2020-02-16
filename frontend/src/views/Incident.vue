@@ -55,7 +55,7 @@
               <vcl-list />
             </div>
             <div v-else class="card border-left-primary shadow h-100 py-2">
-              <b-dropdown id="ChangeAllocationDropdown" v-if="hasPermission('change_allocation')" size="xs" right menu-class="mt-3 width-110" variant="link" toggle-tag="a" @shown="openedAllocationDropdown" @hidden="closedAllocationDropdown">
+              <b-dropdown id="ChangeAllocationDropdown" v-if="hasPermission('change_allocation')" size="xs" right menu-class="mt-3 width-110" variant="link" toggle-tag="div" @shown="openedAllocationDropdown" @hidden="closedAllocationDropdown">
                 <template slot="button-content">
                   <a class="fas fa-cog incident-cog float-right" aria-haspopup="true" v-tooltip="'Change Priority'"></a>
                 </template>
@@ -95,7 +95,7 @@
               <vcl-list />
             </div>
             <div v-else :class="['card', 'shadow', 'h-100', 'py-2', 'border-left-' + incident.priority]">
-              <b-dropdown id="ChangePriorityDropdown" v-if="hasPermission('change_priority')" size="xs" right menu-class="mt-3" variant="link" toggle-tag="a">
+              <b-dropdown id="ChangePriorityDropdown" v-if="hasPermission('change_priority')" size="xs" right menu-class="mt-3" variant="link" toggle-tag="div">
                 <template slot="button-content">
                   <a :class="['fas', 'fa-cog', 'incident-cog', 'float-right', 'text-' + incident.priority]" aria-haspopup="true" v-tooltip="'Change Priority'"></a>
                 </template>
@@ -230,12 +230,10 @@
               </div>
               <div class="card-body bg-light">
                 <vcl-bullet-list v-if="!incident" :rows="3" />
+                <p v-else-if="incident && !incident.comments.length" class="card-text text-center mb-3">No updates currently.</p>
                 <ul v-else class="list-unstyled">
                   <comment v-for="comment in orderBy(incident.comments, 'sentAt')" :key="comment.id" :comment="comment" :incident="incident" @showCommentBox="showCommentBox"></comment>
                 </ul>
-                <div v-if="incident && !incident.comments.length">
-                  <p class="card-text text-center">No updates currently.</p>
-                </div>
                 <comment-box v-if="incident" v-show="commentBoxVisible" @submitComment="submitComment" ref="commentBox" />
               </div>
               <question-modal v-if="isCommentQuestionModalVisible" v-show="isCommentQuestionModalVisible" :visible="isCommentQuestionModalVisible" :title="'Public Update'" @btnAction="addComment" @close="isCommentQuestionModalVisible = false">
@@ -368,9 +366,13 @@ export default {
       this.ApiPut(`tasks/${taskId}/status`, { completed: toggle })
     },
     submitComment (editor) {
-      this.commentHtml = editor.getHTML()
-      this.commentJson = editor.getJSON()
-      this.isCommentQuestionModalVisible = true
+      if (this.hasPermission('mark_as_public')) {
+        this.commentHtml = editor.getHTML()
+        this.commentJson = editor.getJSON()
+        this.isCommentQuestionModalVisible = true
+      } else {
+        this.ApiPost(`incidents/${this.incidentId}/comments`, { text: JSON.stringify(editor.getJSON()) })
+      }
     },
     addComment (publicBoolean) {
       this.ApiPost(`incidents/${this.incidentId}/comments`, { text: JSON.stringify(this.commentJson), public: publicBoolean })
@@ -518,16 +520,16 @@ export default {
     deployment: {
       deep: true,
       handler () {
-        if (this.deployment && this.deploymentName !== this.deployment.name) {
-          history.pushState(null, '', `/deployments/${this.deployment.name.replace(/ /g, '-')}-${this.deploymentId}/incidents`)
+        if (this.deployment && this.deploymentName !== this.deployment.name.replace(/ /g, '-')) {
+          history.pushState(null, '', `/deployments/${this.deployment.name.replace(/ /g, '-')}-${this.deploymentId}/incidents/${this.incidentName.replace(/ /g, '-')}-${this.incidentId}`)
         }
       }
     },
     incident: {
       deep: true,
       handler () {
-        if (this.incident && this.incidentName !== this.incident.name) {
-          history.pushState(null, '', `/deployments/${this.deployment.name.replace(/ /g, '-')}-${this.deploymentId}/incidents`)
+        if (this.incident && this.incidentName !== this.incident.name.replace(/ /g, '-')) {
+          history.pushState(null, '', `/deployments/${this.deployment.name.replace(/ /g, '-')}-${this.deploymentId}/incidents/${this.incident.name.replace(/ /g, '-')}-${this.incidentId}`)
         }
       }
     }

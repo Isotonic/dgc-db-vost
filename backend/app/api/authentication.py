@@ -20,7 +20,7 @@ class LoginEndpoint(Resource):
                 'refresh_token' is needed to refresh your access token once it has expired, it has a lifetime of 2 days.
         """
         user = User.query.filter(func.lower(User.email) == func.lower(api.payload['email'])).first()
-        if not user:
+        if not user or user.status != 1:
             ns_auth.abort(401, 'Incorrect credentials')
 
         if user.check_password(api.payload['password']):

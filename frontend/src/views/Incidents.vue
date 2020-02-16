@@ -1,8 +1,8 @@
 <template>
   <div id="wrapper">
-  <sidebar :deploymentId="this.deploymentId" :deploymentName="deploymentNameApi"/>
+  <sidebar :deploymentId="this.deploymentId" :deploymentName="deploymentNameApi" ref="sidebar" />
     <div id="content-wrapper" class="d-flex flex-column">
-      <topbar :deploymentId="deploymentId" :deploymentName="deploymentNameApi" />
+      <topbar :deploymentId="deploymentId" :deploymentName="deploymentNameApi" @toggleSidebar="toggleSidebar" />
       <div class="container-fluid">
         <div class="d-sm-flex align-items-center justify-content-between mb-4">
           <h1 v-if="this.deployment" class="font-weight-bold mb-0">{{ this.deployment.name }}</h1>
@@ -75,7 +75,7 @@
           </div>
           <div class="card-body">
             <div class="table-responsive">
-              <v-client-table :data="incidents" :columns="columns" :options="options">
+              <v-client-table id="IncidentsTable" :data="incidents" :columns="columns" :options="options" ref="incidentsTable">
                 <div slot="child_row" slot-scope="props">
                   <span class="font-weight-bold">Description:</span> {{ props.row.description }}
                 </div>
@@ -263,6 +263,9 @@ export default {
     changePin: function (incident) {
       this.ApiPost(`incidents/${incident.id}/pinned`, { pinned: !incident.pinned })
     },
+    toggleSidebar: function () {
+      this.$refs.sidebar.toggleSidebar()
+    },
     ...mapActions('user', {
       checkUserLoaded: 'checkLoaded'
     }),
@@ -363,7 +366,7 @@ export default {
     deployment: {
       deep: true,
       handler () {
-        if (this.deployment && this.deploymentName !== this.deployment.name) {
+        if (this.deployment && this.deploymentName !== this.deployment.name.replace(/ /g, '-')) {
           this.deploymentName = this.deployment.name
           history.pushState(null, '', `/deployments/${this.deployment.name.replace(/ /g, '-')}-${this.deploymentId}/incidents`)
         }
@@ -371,6 +374,7 @@ export default {
     },
     showingIncidents (value) {
       localStorage.showingIncidents = value
+      this.$refs.incidentsTable.setPage(1)
     },
     showingStatus (value) {
       localStorage.showingStatus = value

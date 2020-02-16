@@ -7,7 +7,7 @@
       </div>
       <div class="form-group mb-3">
         <span class="font-weight-bold text-primary mr-2">Group:</span>
-        <select :value="group" class="custom-select custom-select-sm font-weight-bold">
+        <select v-model="groupId" class="custom-select custom-select-sm font-weight-bold">
           <option :value="null">None</option>
           <option disabled>──────────</option>
           <option v-for="group in orderBy(groups, 'id')" :key="group.id" :value="group.id">{{ group.name }}</option>
@@ -36,7 +36,7 @@ export default {
   data () {
     return {
       email: '',
-      group: null
+      groupId: null
     }
   },
   methods: {
@@ -44,12 +44,12 @@ export default {
       if (!this.email.length) {
         return
       }
-      this.ApiPost('users', this.group ? { email: this.email, group: parseInt(this.group) } : { email: this.email })
+      this.ApiPost('users', this.groupId ? { email: this.email, group: parseInt(this.groupId) } : { email: this.email })
         .then(() => {
           this.$emit('close')
           document.body.classList.remove('modal-open')
           this.email = ''
-          this.group = null
+          this.groupId = null
           e.target.reset()
         })
     }

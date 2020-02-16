@@ -1387,11 +1387,6 @@ pre code {
   border: 0;
 }
 
-.table-hover tbody tr:hover {
-  color: #858796;
-  background-color: rgba(0, 0, 0, 0.075);
-}
-
 .table-primary,
 .table-primary > th,
 .table-primary > td {
@@ -1641,9 +1636,9 @@ pre code {
   .table-responsive-md > .table-bordered {
     border: 0;
   }
-  .mx-4 {
-    margin-left: 0px !important;
-    margin-right: 0px !important;
+  .sidebar-brand > img {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
   }
 }
 
@@ -4845,6 +4840,11 @@ a.badge-warning:hover, a.badge-warning:focus {
 a.badge-warning:focus, a.badge-warning.focus {
   outline: 0;
   box-shadow: 0 0 0 0.2rem rgba(246, 194, 62, 0.5);
+}
+
+.badge-orange {
+  color: #fff;
+  background-color: #ff8300;
 }
 
 .badge-danger {
@@ -10054,7 +10054,6 @@ a:focus {
   height: 4.375rem;
   display: flex;
   align-items: center;
-  padding: 0 0.75rem;
 }
 
 .topbar .nav-item .nav-link:focus {

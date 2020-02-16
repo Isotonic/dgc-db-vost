@@ -35,7 +35,7 @@ const actions = {
         console.log(error.response.data.message)
       })
   },
-  destroy ({ commit }) {
+  storeDestroy ({ commit }) {
     commit('destroy')
   }
 }
