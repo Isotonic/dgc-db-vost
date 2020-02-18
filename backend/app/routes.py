@@ -2,6 +2,7 @@ import functools
 from itertools import groupby
 from app import app, db, socketio
 from .utils.delete import delete_subtask
+from flask_jwt_extended import decode_token
 from flask_socketio import emit, join_room, disconnect
 from flask import render_template, redirect, url_for, request
 from flask_login import current_user, login_user, logout_user, login_required
@@ -10,11 +11,12 @@ from .models import User, Group, Deployment, Incident, IncidentTask, IncidentSub
 from .utils.create import create_user, create_group, create_deployment, create_incident, create_task, create_subtask, create_task_comment, create_comment
 from .utils.change import change_incident_status, change_incident_allocation, change_incident_public, change_incident_priority, change_task_status, change_task_description, change_task_assigned, change_subtask_status
 
+
 def login_required_sockets(f):
     @functools.wraps(f)
     def wrapped(*args, **kwargs):
         if not current_user.is_authenticated:
-            disconnect()
+            return emit('login', {'message': 'Not logged in.', 'code': 401})
         else:
             return f(*args, **kwargs)
     return wrapped
@@ -127,10 +129,44 @@ def supervisor_actions(deployment_name, deployment_id):
     actions = SupervisorActions.query.filter_by(deployment_id=deployment_id, completed=False).all()
     return render_template('actions.html', title=f'{deployment}', deployment=deployment, actions=actions, supervisor_actions_active=True, back_url=url_for('view_incidents', deployment_name=deployment.name, deployment_id=deployment.id))
 
+def handle_join(data):
+    if 'deploymentId' not in data.keys():
+        return
+    if current_user.has_deployment_access(data['deploymentId']):
+        if current_user.has_permission('supervisor'):
+            print('Supervisor')
+            join_room(f'{data["deploymentId"]}-all')
+            join_room(f'{data["deploymentId"]}-supervisor')
+        if current_user.has_permission('view_all_incidents'):
+            join_room(f'{data["deploymentId"]}-all')
+        else:
+            join_room(f'{data["deploymentId"]}-limited')
+
+@socketio.on('login')
+def on_login(data):
+    print(2)
+    print(data)
+    if 'accessToken' not in data.keys():
+        return
+    token = decode_token(data['accessToken'])
+    user = User.query.filter_by(id=token['identity'], status=1).first()
+    if not user:
+        return
+    print('Logged in')
+    login_user(user)
+    handle_join(data)
+    print(token)
+    return
 
 @socketio.on('join')
 @login_required_sockets
 def on_join(data):
+    print(1)
+    print(data)
+    handle_join(data)
+
+    print(current_user)
+    return
     if data['type'] == 0:
         join_room('deployments')
         print('Joined Private Room: deployments')
@@ -354,16 +390,16 @@ def change_incident_priority_socket(data):
         return emit('change_incident_priority', {'message': 'Incident already has this priority.', 'code': 400})
 
 
-@socketio.on('change_task_status')
+@socketio.on('task/status')
 @login_required_sockets
 #@has_permission_sockets
 def change_task_status_socket(data):
     print(data)
-    task_id = data['task_id']
+    task_id = data['id']
     completed = data['completed']
        # return emit('change_task_status', {'message': 'Incorrect data supplied.', 'code': 403})
-    task = IncidentTask.query.filter_by(incident_id=data['incident_id'], id=task_id).first()
-    if not task or task.incident.deployment_id != data['deployment_id']:
+    task = IncidentTask.query.filter_by(id=task_id).first()
+    if not task:
         return emit('change_task_status', {'message': 'Unable to find the deployment, incident or task.', 'code': 404})
     if change_task_status(task, completed, current_user) is False:
         return emit('change_task_status', {'message': 'Task already has this status.', 'code': 400})

@@ -73,7 +73,7 @@ class IncidentEndpoint(Resource):
             reference = None
 
         if edit_incident(incident, payload['name'],description, payload['type'], reported_via, reference, current_user) is False:
-            ns_deployment.abort(400, 'Incident already has these details')
+            ns_incident.abort(400, 'Incident already has these details')
         return format_incident(incident, current_user), 200
 
 
@@ -389,7 +389,7 @@ class TasksEndpoint(Resource):
         """
         current_user = User.query.filter_by(id=get_jwt_identity()).first()
         ns_incident.has_incident_access(current_user, incident)
-        users = None
+        users = []
         description = None
         if 'assignedTo' in api.payload.keys():
             users = [m for m in User.query.filter(User.id.in_(api.payload['assignedTo'])).all() if m.has_deployment_access(incident.deployment)]

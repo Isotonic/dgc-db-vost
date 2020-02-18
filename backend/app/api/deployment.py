@@ -100,10 +100,10 @@ class DeploymentEndpoint(Resource):
         payload = api.payload
         current_user = User.query.filter_by(id=get_jwt_identity()).first()
 
-        created_incident = create_incident(payload['name'], payload['description'], payload['location'], payload['reported_via'], payload['reference'], deployment, current_user)
+        created_incident = create_incident(deployment, payload['name'], payload['description'], payload['type'], payload['reportedVia'], payload['reference'], payload['address'], payload['longitude'], payload['latitude'], current_user)
         if created_incident is False:
             ns_deployment.abort(400, 'Name is empty')
-        return format_incidents(created_incident, current_user)[0], 200
+        return format_incidents([created_incident], current_user)[0], 200
 
 
     @ns_deployment.expect(edit_deployment_model, validate=True)

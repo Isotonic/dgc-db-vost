@@ -222,6 +222,9 @@ export default {
         ]
       }, bounds)
     },
+    ...mapActions('sockets', {
+      checkSocketsConnected: 'checkConnected'
+    }),
     ...mapActions('user', {
       checkUserLoaded: 'checkLoaded'
     }),
@@ -405,6 +408,7 @@ export default {
     this.checkUserLoaded()
     this.checkDeploymentsLoaded()
     this.checkIncidentsLoaded(this.deploymentId)
+    this.checkSocketsConnected(this.deploymentId)
   }
 }
 </script>

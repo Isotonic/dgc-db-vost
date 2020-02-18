@@ -14,12 +14,12 @@ def specs_url(self):
     return url_for(self.endpoint('specs'), _external=False)
 
 @jwt.token_in_blacklist_loader
-def check_if_token_in_blacklist(decrypted_token): ##TODO Check if it returns false when the password updated is greater than iat
+def check_if_token_in_blacklist(decrypted_token):
     jti = decrypted_token['jti']
     iat = decrypted_token['iat']
     identity = int(decrypted_token['identity'])
-    user = User.query.filter_by(id=identity).first()
-    return not user or user.status != 1 or user.password_last_updated.timestamp() - 15 > iat or RevokedToken.is_jti_blacklisted(jti)
+    user = User.query.filter_by(id=identity, status=1).first()
+    return not user or (user.password_last_updated and user.password_last_updated.timestamp() > iat) or RevokedToken.is_jti_blacklisted(jti)
 
 api_blueprint = Blueprint('api', __name__)
 
@@ -81,6 +81,7 @@ from .deployment import ns_deployment
 from .incident import ns_incident
 from .comment import ns_comment
 from .task import ns_task
+from .task_comment import ns_task_comment
 from .subtask import ns_subtask
 from .public import ns_public
 
@@ -91,5 +92,6 @@ api.add_namespace(ns_deployment)
 api.add_namespace(ns_incident)
 api.add_namespace(ns_comment)
 api.add_namespace(ns_task)
+api.add_namespace(ns_task_comment)
 api.add_namespace(ns_subtask)
 api.add_namespace(ns_public)

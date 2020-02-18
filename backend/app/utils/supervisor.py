@@ -1,7 +1,9 @@
 from app import db, moment
+from flask_restx import marshal
 from flask_socketio import emit
 from flask import render_template
 from app.models import SupervisorActions
+from ..api.utils.models import incident_model
 
 def request_incident_complete(incident, status, reason, request_by):
     if incident.open_status == status:
@@ -23,12 +25,15 @@ def flag_to_supervisor(incident, reason, request_by):
 
 def new_incident(incident, created_by):
     if created_by.has_permission('supervisor'):
+        incident_marshalled = marshal(incident, incident_model)
+        incident_marshalled['pinned'] = False
+        emit('NEW_INCIDENT', {'incident': incident_marshalled, 'code': 200}, namespace='', room=f'{incident.deployment_id}-all')
         return
     action = SupervisorActions(deployment_id=incident.deployment_id, incident=incident, action_type='New Incident', requested_by=created_by)
     db.session.add(action)
     db.session.commit()
-    emit('action_required_count', {'count': incident.deployment.calculate_actions_required(), 'code': 200}, room=f'{incident.deployment_id}-actions-count')
-    emit('new_action_request', {'id': action.id, 'name': incident.name, 'requested_by': str(created_by), 'action_type': action.action_type, 'reason': 'None', 'requested_at': moment.create(action.requested_at).fromNow(refresh=True), 'requested_at_timestamp': action.requested_at.timestamp(), 'code': 200}, room=f'{incident.deployment_id}-actions')
+    #emit('action_required_count', {'count': incident.deployment.calculate_actions_required(), 'code': 200}, room=f'{incident.deployment_id}-actions-count')
+    #emit('new_action_request', {'id': action.id, 'name': incident.name, 'requested_by': str(created_by), 'action_type': action.action_type, 'reason': 'None', 'requested_at': moment.create(action.requested_at).fromNow(refresh=True), 'requested_at_timestamp': action.requested_at.timestamp(), 'code': 200}, room=f'{incident.deployment_id}-actions')
 
 
 def mark_request_complete(requested_action, completed_by):

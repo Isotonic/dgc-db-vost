@@ -260,6 +260,7 @@ export default {
       this.isRevokeUserModalVisible = true
     },
     revokeUser (modalAnswer) {
+      document.body.classList.remove('modal-open')
       this.isRevokeUserModalVisible = false
       if (modalAnswer) {
         this.ApiDelete(`/users/${this.revokeUserObj.id}`)
@@ -270,6 +271,7 @@ export default {
       this.isDeleteGroupModalVisible = true
     },
     deleteGroup (modalAnswer) {
+      document.body.classList.remove('modal-open')
       this.isDeleteGroupModalVisible = false
       if (modalAnswer) {
         this.ApiDelete(`/groups/${this.deleteGroupObj.id}`)

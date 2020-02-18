@@ -12,7 +12,7 @@
             </span>
             <span class="text">New Incident</span>
           </button>
-          <new-incident-modal v-show="isNewIncidentModalVisible" :visible="isNewIncidentModalVisible" @close="isNewIncidentModalVisible = false" />
+          <new-incident-modal v-if="isNewIncidentModalVisible" v-show="isNewIncidentModalVisible" :visible="isNewIncidentModalVisible" :deploymentId="this.deploymentId" @close="isNewIncidentModalVisible = false" />
         </div>
         <div class="row">
           <div class="col-xl-3 col-md-6 mb-4">
@@ -266,6 +266,9 @@ export default {
     toggleSidebar: function () {
       this.$refs.sidebar.toggleSidebar()
     },
+    ...mapActions('sockets', {
+      checkSocketsConnected: 'checkConnected'
+    }),
     ...mapActions('user', {
       checkUserLoaded: 'checkLoaded'
     }),
@@ -306,8 +309,8 @@ export default {
     totalIncidentsStat: function () {
       const hourAgo = (Date.now() / 1000) - 3600
       const twoHoursAgo = hourAgo - 3600
-      const hourAgoIncidents = this.getShowingIncidents.filter(incident => incident.createdAt >= hourAgo)
-      const twoHoursAgoIncidents = this.getShowingIncidents.filter(incident => incident.createdAt >= twoHoursAgo && incident.createdAt < hourAgo)
+      const hourAgoIncidents = this.getShowingIncidents.filter(incident => incident.createdAt >= hourAgo).length
+      const twoHoursAgoIncidents = this.getShowingIncidents.filter(incident => incident.createdAt >= twoHoursAgo && incident.createdAt < hourAgo).length
       if (hourAgoIncidents > twoHoursAgoIncidents) {
         return { stat: hourAgoIncidents - twoHoursAgoIncidents, class: 'text-danger', icon: 'fa-plus' }
       } else if (twoHoursAgoIncidents > hourAgoIncidents) {
@@ -390,6 +393,7 @@ export default {
     this.checkUserLoaded()
     this.checkDeploymentsLoaded()
     this.checkIncidentsLoaded(this.deploymentId)
+    this.checkSocketsConnected(this.deploymentId)
   },
   mounted () {
     let self = this

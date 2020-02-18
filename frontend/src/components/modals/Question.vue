@@ -20,7 +20,6 @@ export default {
   },
   methods: {
     btnAction (actionBoolean) {
-      document.body.classList.remove('modal-open')
       this.$emit('btnAction', actionBoolean)
     }
   }

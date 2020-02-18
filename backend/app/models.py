@@ -97,9 +97,10 @@ class User(db.Model, UserMixin):
     incident_comments = db.relationship('IncidentComment', backref='user')
     media_uploads = db.relationship('IncidentMedia', backref='uploaded_by')
 
-    def set_password(self, password):
+    def set_password(self, password, initial=False):
         self.password_hash = argon2.generate_password_hash(password)
-        self.password_last_updated = datetime.utcnow()
+        if initial:
+            self.password_last_updated = datetime.utcnow()
 
     def check_password(self, password):
         return argon2.check_password_hash(self.password_hash, password)
@@ -376,6 +377,8 @@ class IncidentTask(db.Model):
     name = db.Column(db.String(64))
     description = db.Column(db.String(1024))
     tags = db.Column(db.ARRAY(db.String(64)))
+    subtasks = db.relationship('IncidentSubTask', backref='task', lazy='selectin', cascade='all,delete')
+    comments = db.relationship('TaskComment', backref='task', lazy='selectin', cascade='all,delete')
     completed = db.Column(db.Boolean(), default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     completed_at = db.Column(db.DateTime)
@@ -409,7 +412,6 @@ class IncidentTask(db.Model):
 class IncidentSubTask(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     task_id = db.Column(db.Integer, db.ForeignKey('incident_task.id'))
-    task = db.relationship('IncidentTask', backref='subtasks', lazy='selectin')
     name = db.Column(db.String(64))
     completed = db.Column(db.Boolean(), default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -426,7 +428,6 @@ class IncidentSubTask(db.Model):
 class TaskComment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     task_id = db.Column(db.Integer, db.ForeignKey('incident_task.id'))
-    task = db.relationship('IncidentTask', backref='comments', lazy='selectin')
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     user = db.relationship('User', backref='task_comments', lazy='selectin')
     text = db.Column(db.String())
@@ -504,7 +505,7 @@ class IncidentLog(db.Model):
                      'marked_complete': 10, 'marked_incomplete': 11, 'changed_priority': 12,
                      'changed_task_description': 13, 'assigned_user_task': 14,
                      'removed_user_task': 15, 'marked_public': 16, 'marked_not_public': 17, 'complete_subtask': 18, 'incomplete_subtask': 19, 'create_subtask': 20, 'add_subtask_comment': 21,
-                     'marked_comment_public': 22, 'marked_comment_not_public': 23, 'update_comment': 24, 'edit_subtask': 25, 'edit_incident': 26, 'changed_task_tags': 27}  ##TODO RE-ORDER ONCE DONE
+                     'marked_comment_public': 22, 'marked_comment_not_public': 23, 'edit_comment': 24, 'edit_subtask': 25, 'edit_incident': 26, 'changed_task_tags': 27, 'edit_task_comment': 28,  'delete_task_comment': 29, 'delete_subtask': 30}  ##TODO RE-ORDER ONCE DONE
     action_strings = {1: 'created incident', 2: 'created task $task', 3: 'marked $task as complete',
                       4: 'deleted task $task',
                       5: 'added an update', 6: 'deleted an update', 7: 'marked $task as incomplete',
@@ -513,7 +514,7 @@ class IncidentLog(db.Model):
                       11: 'marked incident as incomplete', 12: 'changed priority to $extra',
                       13: 'changed $task description to "$extra"', 14: 'added $target_users to $task',
                       15: 'removed $target_users from $task', 16: 'set the incident to publicly viewable', 17: 'set the incident to private', 18: 'marked $extra as complete', 19: 'marked $extra as incomplete', 20: 'created sub-task $extra', 21: 'added comment to $task',
-                      22: 'marked comment as publicly viewable', 23: 'marked comment as not publicly viewable', 24: 'edited update', 25: 'edited subtask $extra', 26: 'edited incident details', 27: 'changed tags for $task'}
+                      22: 'marked comment as publicly viewable', 23: 'marked comment as not publicly viewable', 24: 'edited update', 25: 'edited subtask $extra', 26: 'edited incident details', 27: 'changed tags for $task', 28: 'edited comment in $task', 29: 'deleted comment in $task', 30: 'deleted sub-task in $task'}
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
@@ -528,7 +529,7 @@ class IncidentLog(db.Model):
     target_users = db.relationship('User', secondary=incidentlog_target_users_junction, lazy='selectin', backref='incident_log_target')
     action_type = db.Column(db.Integer())
     reason = db.Column(db.String(256))
-    extra = db.Column(db.String(64))
+    extra = db.Column(db.String())
     occurred_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __repr__(self):
@@ -545,11 +546,11 @@ class IncidentLog(db.Model):
 
 class TaskLog(db.Model):
     action_values = {'create_subtask': 1, 'complete_subtask': 2, 'delete_subtask': 3, 'changed_description': 4,
-                     'assigned_user': 5, 'removed_user': 6, 'incomplete_subtask': 7, 'add_comment': 8, 'edit_subtask': 9, 'changed_tags': 10}  ##TODO RE-ORDER ONCE DONE
+                     'assigned_user': 5, 'removed_user': 6, 'incomplete_subtask': 7, 'add_comment': 8, 'edit_subtask': 9, 'changed_tags': 10, 'edit_task_comment': 11, 'delete_task_comment': 12}  ##TODO RE-ORDER ONCE DONE
     action_strings = {1: 'created $subtask', 2: 'marked $subtask as complete',
                       3: 'deleted $extra',
                       4: 'changed task description to "$extra"', 5: 'added $target_users to task',
-                      6: 'removed $target_users from task', 7: 'marked $subtask as incomplete', 8: 'added comment to task', 9: 'edited subtask $subtask', 10: 'changed the task\'s tags'}
+                      6: 'removed $target_users from task', 7: 'marked $subtask as incomplete', 8: 'added comment to task', 9: 'edited subtask $subtask', 10: 'changed the task\'s tags', 11: 'edited task comment', 12: 'deleted task comment'}
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
@@ -561,7 +562,7 @@ class TaskLog(db.Model):
     target_users = db.relationship('User', secondary=tasklog_target_users_junction, backref='task_log_target')
     action_type = db.Column(db.Integer())
     reason = db.Column(db.String(256))
-    extra = db.Column(db.String(64))
+    extra = db.Column(db.String())
     occurred_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __repr__(self):
@@ -598,6 +599,7 @@ admin.add_view(ModelView(Deployment, db.session))
 admin.add_view(ModelView(Incident, db.session))
 admin.add_view(ModelView(IncidentTask, db.session))
 admin.add_view(ModelView(IncidentSubTask, db.session))
+admin.add_view(ModelView(TaskComment, db.session))
 admin.add_view(ModelView(IncidentComment, db.session))
 admin.add_view(ModelView(IncidentMedia, db.session))
 admin.add_view(ModelView(SupervisorActions, db.session))

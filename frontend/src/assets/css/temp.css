@@ -90,11 +90,13 @@
 }
 
 .subtask:first-child {
-  border-radius: 10px 10px 0px 0px;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
 }
 
 .subtask:last-child {
-  border-radius: 0px 0px 10px 10px;
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
 }
 
 /*!
@@ -254,29 +256,12 @@ MODIFIED VERSION
     margin-right: 30px;
 }
 
-.map-container{
-    overflow: hidden;
-    padding-bottom: 56.25%;
-    position: relative;
-    height: 70vh;
-}
-
 .map-container-incident {
     overflow:hidden;
     padding-bottom: 56.25%;
     position: relative;
     height: 300px;
     box-shadow: 0 5px 11px 0 rgba(0,0,0,0.18),0 4px 15px 0 rgba(0,0,0,0.15);
-}
-
-
-.map-container iframe{
-    left: 0;
-    top: 0;
-    border: 0;
-    height: 100%;
-    width: 100%;
-    position: absolute;
 }
 
 li.update-log,
@@ -1270,4 +1255,17 @@ div .marker {
 
 .invalid {
   border-color: #f44336
+}
+
+.map-container{
+  height: 55vh;
+}
+
+.mapboxgl-map { 
+  position: absolute !important;
+  top:0 !important;
+  bottom:0 !important;
+  width: 100% !important;
+  overflow: visible !important;
+  height: 70vh;
 }

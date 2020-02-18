@@ -11,6 +11,8 @@ import Vue2Filters from 'vue2-filters'
 import VueNoty from 'vuejs-noty'
 import TextareaAutosize from 'vue-textarea-autosize'
 import SocialSharing from 'vue-social-sharing'
+import VueSocketIOExt from 'vue-socket.io-extended'
+import io from 'socket.io-client'
 import { DropdownPlugin } from 'bootstrap-vue'
 import { ClientTable } from 'vue-tables-2'
 
@@ -27,6 +29,10 @@ Vue.use(TextareaAutosize)
 Vue.use(DropdownPlugin)
 Vue.use(ClientTable)
 Vue.use(SocialSharing)
+
+const socket = io(process.env.NODE_ENV === 'development' ? 'http://localhost:5000/' : '')
+
+Vue.use(VueSocketIOExt, socket, { debug: true, store })
 
 Vue.use(VueNoty, {
   timeout: 2000,

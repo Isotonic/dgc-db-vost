@@ -431,8 +431,12 @@ export default {
         })
       }
     },
+    ...mapActions('sockets', {
+      checkSocketsConnected: 'checkConnected'
+    }),
     ...mapActions('user', {
-      checkUserLoaded: 'checkLoaded'
+      checkUserLoaded: 'checkLoaded',
+      getAccessToken: 'getAccessToken'
     }),
     ...mapActions('users', {
       fetchUsers: 'fetchUsers'
@@ -470,7 +474,7 @@ export default {
       return Math.round((completedCounter / this.incident.tasks.length) * 100)
     },
     calculateProgressColour: function () {
-      let percentage = this.calculateProgressPercentage
+      const percentage = this.calculateProgressPercentage
       return {
         'bg-success': percentage >= 80,
         'bg-orange': percentage >= 50 && percentage < 80,
@@ -538,6 +542,7 @@ export default {
     this.checkUserLoaded()
     this.checkDeploymentsLoaded()
     this.checkIncidentsLoaded(this.deploymentId)
+    this.checkSocketsConnected(this.deploymentId)
   }
 }
 </script>

@@ -48,11 +48,11 @@ new_task_model = api.model('New Task',
 new_incident_model = api.model('Create Incident',
                                       {'name': fields.String(required=True),
                                        'description': fields.String(required=True),
-                                       'incident_type': fields.String(required=True),
-                                       'location': fields.String(required=True),
+                                       'type': fields.String(required=True),
+                                       'address': fields.String(required=True),
                                        'longitude': fields.Float(required=True),
                                        'latitude': fields.Float(required=True),
-                                       'reported_via': fields.String(),
+                                       'reportedVia': fields.String(),
                                        'reference': fields.String()})
 
 edit_incident_model = api.model('Edit Incident',
@@ -120,11 +120,11 @@ deployment_model = api.model('Deployment',
                              'open': fields.Boolean(attribute='open_status', description='Open status of the deployment.'),
                              'createdAt': fields.Integer(attribute=lambda x: int(x.created_at.timestamp()), description='UTC timestamp of the deployment\'s creation.'),
                              'groups': fields.List(fields.Nested(group_model), description='Whitelisted groups that are able to access this deployment, if both users and groups are empty then all users and groups have access to it.'),
-                             'users': fields.List(fields.Nested(user_model), description='Whitelisted users that are able to access this deployment, if both users and groups are empty then all users and groups have access to it.')})
+                             'users': fields.List(fields.Nested(user_model_without_group), description='Whitelisted users that are able to access this deployment, if both users and groups are empty then all users and groups have access to it.')})
 
 activity_model = api.model('Activity',
                            {'id': fields.Integer(),
-                            'user': fields.Nested(user_model),
+                            'user': fields.Nested(user_model_without_group),
                             'text': fields.String(attribute=lambda x: str(x)),
                             'occurredAt': fields.Integer(attribute=lambda x: int(x.occurred_at.timestamp()))})
 
@@ -164,7 +164,7 @@ task_model = api.model('Task',
                          'tags': fields.List(fields.String, attribute=lambda x: x.tags if x.tags else [], description='Tags given to a task, can be empty.'),
                          'completed': fields.Boolean(description='If the task is marked as complete or not.'),
                          'createdAt': fields.Integer(attribute=lambda x: int(x.created_at.timestamp()), description='UTC timestamp of the task\'s creation.'),
-                         'completedAt': fields.Integer(attribute=lambda x: int(x.created_at.timestamp()), description='UTC timestamp of the task\'s completion, will be null if it isn\'t completed.'),
+                         'completedAt': fields.Integer(attribute=lambda x: int(x.completed_at.timestamp()) if x.completed_at else None, description='UTC timestamp of the task\'s completion, will be null if it isn\'t completed.'),
                          'assignedTo': fields.List(fields.Nested(user_model_without_group), attribute='assigned_to', description='User\'s the task is assigned to, can be empty.'),
                          'subtasks': fields.List(fields.Nested(subtask_model), description='Tasks within the task, can be empty.'),
                          'comments': fields.List(fields.Nested(task_comment_model), description='Comments in the task, can be empty.'),
@@ -189,13 +189,14 @@ incident_model = api.model('Incident',
                              'createdAt': fields.Integer(attribute=lambda x: int(x.created_at.timestamp()), description='UTC timestamp of the incident\'s creation.'),
                              'closedAt': fields.Integer(attribute=lambda x: int(x.closed_at.timestamp()) if x.closed_at else None, description='UTC timestamp of the incident\'s closure, can be null.'),
                              'lastUpdatedAt': fields.Integer(attribute=lambda x: int(x.last_updated.timestamp()), description='UTC timestamp of the incident\'s last update.'),
-                             'assignedTo': fields.List(fields.Nested(user_model), attribute='assigned_to', description='User\'s the incident is assigned to, can be empty.'),
+                             'assignedTo': fields.List(fields.Nested(user_model_without_group), attribute='assigned_to', description='User\'s the incident is assigned to, can be empty.'),
                              'tasks': fields.List(fields.Nested(task_model), description='Tasks in the incident, can be empty.'),
                              'comments': fields.List(fields.Nested(comment_model), description='Comments in the incidents, can be empty.'),
                              'activity': fields.List(fields.Nested(activity_model), attribute='actions', description='Actions the occured in the incident.')})
 
 public_incident_model = api.model('Public Incident',
                             {'id': fields.Integer(description='ID of the incident.'),
+                             'deployment': fields.String(description='Deployment the incident belongs to'),
                              'name': fields.String(attribute=lambda x: x.public_name if x.public_name else x.name, description='Name of the incident.'),
                              'description': fields.String(attribute=lambda x: x.public_description if x.public_description else x.public_description, description='Description of the incident, can be null.'),
                              'type': fields.String(attribute='incident_type', description='Type of incident.'),
@@ -223,12 +224,12 @@ text_model = api.model('Text', {'text': fields.String(description='Comment text,
 comment_edited_model = api.model('Commented Edited', {'text': fields.String(description='Comment text, can be a stringified ProseMirror JSON object.', required=True),
                                                       'editedAt': fields.Integer(attribute=lambda x: int(x.edited_at.timestamp()), description='UTC timestamp of when the update was last edited at.')})
 
-subtask_edited_model = api.model('Subtask Edited',
+new_subtask_model = api.model('New Subtask',
                             {'name': fields.String(required=True),
                              'assignedTo': fields.List(fields.Integer(), description='Optional IDs of the assigned users.')})
 
 tags_model = api.model('Tags',
-                             {'tags': fields.List(fields.String, attribute=lambda x: x.tags if x.tags else [], required=True, description='Tags given to a task, can be empty')})
+                             {'tags': fields.List(fields.String, attribute=lambda x: x.tags if x.tags else [], required=True, description='Tags given to a task, can be an empty.')})
 
 email_model = api.model('Email', {'email': fields.String(description='Email address.', required=True)})
 

@@ -1,12 +1,13 @@
 <template>
   <modal :title="'New Incident'" @close="close">
-    <form aria-label="Add a new incident">
+    <form @submit.prevent="handleSubmit" aria-label="Add a new incident">
       <div class="form-group mb-3">
-        <input class="form-control was-validated" name="name" placeholder="Incident Name" type="text" required>
+        <input v-model="name" class="form-control was-validated" placeholder="Incident Name" type="text" required>
       </div>
-      <textarea class="form-control" rows="3" name="description" placeholder="Description"></textarea>
+      <textarea v-model="description" class="form-control" rows="3" placeholder="Description"></textarea>
       <div class="form-group my-3">
-        <select>
+        <select v-model="type" class="custom-select custom-select-sm full-length">
+          <option :value="null" disabled>Select the type of incident</option>
           <optgroup label="Transport Disruption">
             <option value="Road Incident"><i class="fas fa-car"></i> Road Obstruction / Closure / Disruption</option>
             <option value="Rail Incident">Railway Incident / Disruption</option><i class="fas fa-subway"></i>
@@ -85,12 +86,35 @@
         </select>
       </div>
       <div class="form-group mt-3 mb-3">
-        <input class="form-control" name="reported_via" placeholder="Reported Via" type="text" required>
+        <input v-model="reportedVia" class="form-control" placeholder="Reported Via" type="text" required>
       </div>
       <div class="form-group mb-3">
-        <input class="form-control" name="reference" placeholder="Reference (Optional)" type="text">
+        <input v-model="reference" class="form-control" placeholder="Reference (Optional)" type="text">
+      </div>
+      <div class="form-group mb-3">
+        <input v-model="address" class="form-control" placeholder="Address" type="text">
       </div>
       <span id="LocationNotChosen" class="text-danger d-none">Please select the location of the incident.</span>
+      <div id="Map" class="map-container">
+      <MglMap
+    :accessToken="accessToken"
+    :mapStyle="mapStyle"
+    @click="onClickMap"
+  >
+    <MglGeocoderControl
+      :accessToken="accessToken"
+      :input="searchResult"
+      @result="handleResult"
+      :filter="geocodeFilter"
+      :draggable="true"
+    />
+    <MglMarker
+          v-if="markerSet"
+          :coordinates="location"
+          :draggable="true"
+          color="blue" ref="marker" />
+  </MglMap>
+  </div>
       <div class="text-center">
         <button type="submit" class="btn btn-primary my-4">Submit</button>
       </div>
@@ -99,13 +123,77 @@
 </template>
 
 <script>
+import 'mapbox-gl/dist/mapbox-gl.css'
+import '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css'
+import { MglMap, MglMarker } from 'vue-mapbox'
+import MglGeocoderControl from '@/utils/geocoderControl'
+
 import { ModalMixin } from '@/utils/mixins'
 
 export default {
   name: 'NewIncidentModal',
   mixins: [ModalMixin],
+  components: {
+    MglMap,
+    MglMarker,
+    MglGeocoderControl
+  },
   props: {
-    title: String
+    deploymentId: Number
+  },
+  data () {
+    return {
+      name: '',
+      description: '',
+      type: null,
+      reportedVia: '',
+      reference: '',
+      address: '',
+      markerSet: false,
+      location: [0, 0],
+      accessToken: process.env.MAPBOX_API_KEY,
+      mapStyle: 'mapbox://styles/mapbox/streets-v11',
+      searchResult: ''
+    }
+  },
+  methods: {
+    handleSubmit (e) {
+      if (!this.name.length || !this.description.length || !this.type) {
+        return
+      }
+      this.ApiPost(`deployments/${this.deploymentId}`, { name: this.name, description: this.description, type: this.type, reportedVia: this.reportedVia, reference: this.reference, address: this.address, longitude: this.location[0], latitude: this.location[1] })
+        .then(() => {
+          this.$emit('close')
+          document.body.classList.remove('modal-open')
+          this.name = ''
+          this.description = ''
+          this.type = ''
+          this.reportedVia = ''
+          this.reference = ''
+          this.address = ''
+          this.location = []
+          e.target.reset()
+        })
+    },
+    handleResult (event) {
+      this.location = event.result.geometry.coordinates
+      this.address = event.result.place_name
+      this.markerSet = true
+    },
+    onClickMap (event) {
+      if (this.markerSet) {
+        this.location[0] = event.mapboxEvent.lngLat.lng
+        this.location[1] = event.mapboxEvent.lngLat.lat
+        this.$refs.marker.coordinates = this.location
+      } else {
+        this.markerSet = true
+        this.location[0] = event.mapboxEvent.lngLat.lng
+        this.location[1] = event.mapboxEvent.lngLat.lat
+      }
+    },
+    geocodeFilter (feature) {
+      return feature.context.find(context => context.id.startsWith('country')).short_code.toLowerCase() === 'gb'
+    }
   }
 }
 </script>

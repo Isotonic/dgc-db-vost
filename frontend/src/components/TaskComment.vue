@@ -10,7 +10,6 @@
     <div class="update-log-text">
       <editor-content class="editor__content" :editor="editor" />
       <div class="update-body">
-        <i v-if="comment.public" class="fas fa-eye mr-1" v-tooltip="publicIncident ? 'Viewable by the public' : 'Viewable by the public when incident is marked public'"></i>
         {{ comment.sentAt | moment("from", "now") }}
         <b-dropdown variant="link" size="xs" toggle-tag="div" offset="-70">
           <template slot="button-content">
@@ -67,8 +66,7 @@ export default {
     EditorContent
   },
   props: {
-    comment: Object,
-    publicIncident: Boolean
+    comment: Object
   },
   data () {
     return {
@@ -116,16 +114,13 @@ export default {
     editComment: function (editor) {
       this.cancelEdit()
       this.$emit('showCommentBox', true)
-      this.ApiPut(`comments/${this.comment.id}`, { text: JSON.stringify(editor.getJSON()) })
+      this.ApiPut(`task-comments/${this.comment.id}`, { text: JSON.stringify(editor.getJSON()) })
     },
     deleteComment: function (modalAnswer) {
       this.isCommentQuestionModalVisible = false
       if (modalAnswer) {
-        this.ApiDelete(`comments/${this.comment.id}`)
+        this.ApiDelete(`task-comments/${this.comment.id}`)
       }
-    },
-    togglePublic: function () {
-      this.ApiPut(`comments/${this.comment.id}/public`, { public: !this.comment.public })
     }
   },
   computed: {
@@ -142,6 +137,14 @@ export default {
         return true
       }
       return false
+    }
+  },
+  watch: {
+    comment: {
+      deep: true,
+      handler () {
+        this.setContent()
+      }
     }
   },
   created () {

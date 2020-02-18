@@ -60,7 +60,7 @@
       <div class="col-xl-12 col-sm-8 mb-4">
         <h5>
           <i class="fas fa-tasks mb-3 mr-2"></i>
-          <span class="font-weight-bold"> Tasks</span>
+          <span class="font-weight-bold"> Subtasks</span>
         </h5>
         <div v-if="task.subtasks.length" class="row">
           <div class="col-auto">
@@ -75,6 +75,18 @@
         <ul class="list-group">
           <subtask v-for="subtask in orderBy(task.subtasks, 'createdAt')" :key="subtask.id" :subtask="subtask" :deploymentId="deploymentId" @toggle="toggle" />
         </ul>
+        <form @submit.prevent="handleSubmit" aria-label="Add a new subtask">
+          <input v-model="subtaskName" class="form-control mb-2 mt-3" placeholder="Subtask name" type="text" required>
+          <multiselect v-model="subtaskAssignedSelected" :options="selectOptions" :multiple="true" group-values="users" group-label="name" :group-select="true" placeholder="Assign users to the subtask" track-by="id" :custom-label="formatSelect" :closeOnSelect="false" openDirection="bottom" :limit="0" :limitText="count => `${count} user${count > 1 ? 's' : ''} assigned.`" :blockKeys="['Delete']" selectLabel="" selectGroupLabel="" deselectLabel="" deselectGroupLabel="" selectedLabel="" :loading="isSelectLoading">
+            <template v-if="didSubtaskAssignedChange" slot="clear">
+              <div class="multiselect__clear" v-tooltip.right="'Reset changes'" @mousedown.prevent.stop="subtaskAssignedSelected = []"></div>
+            </template>
+            <span slot="noResult">Oops! No user found.</span>
+          </multiselect>
+          <div class="text-right">
+            <button type="submit" class="btn btn-primary mt-2">Create</button>
+          </div>
+        </form>
       </div>
       <div class="col-xl-12 col-sm-8 mt-4 mb-4">
         <h5>
@@ -128,6 +140,8 @@ export default {
     return {
       selectOptions: [],
       assignedSelected: [],
+      subtaskName: '',
+      subtaskAssignedSelected: [],
       isSelectLoading: false,
       isHandlingAssigned: false,
       isHandlingTags: false,
@@ -153,20 +167,6 @@ export default {
     },
     openedAssignedDropdown () {
       this.setAssignedSelecter()
-      if (this.selectOptions.length || this.isSelectLoading) {
-        return
-      }
-      if (this.usersIsLoaded) {
-        this.selectOptions = this.getUsersGrouped
-      } else {
-        this.isSelectLoading = true
-        this.fetchUsers(this.deploymentId)
-          .then(() => {
-            this.selectOptions = this.getUsersGrouped
-            this.isSelectLoading = false
-          })
-          .catch(() => { this.isSelectLoading = false })
-      }
     },
     closedAssignedDropdown () {
       if (this.isHandlingAssigned) {
@@ -211,13 +211,32 @@ export default {
     },
     deleteTask () {
       this.ApiDelete(`tasks/${this.task.id}`)
-        .then(() => { this.$emit('close') })
+        .then(() => {
+          document.body.classList.remove('modal-open')
+          this.$emit('close')
+        })
     },
     hideDeleteDropdown () {
       this.$refs.DeleteTaskDropdown.hide(true)
     },
     updateDescription () {
       this.ApiPut(`tasks/${this.task.id}/description`, { text: this.newDescription })
+    },
+    handleSubmit (e) {
+      if (!this.subtaskName.length) {
+        return
+      }
+      let subtaskData = { name: this.subtaskName }
+
+      if (this.subtaskAssignedSelected.length) {
+        subtaskData.assignedTo = this.subtaskAssignedSelected.map(user => user.id)
+      }
+      this.ApiPost(`tasks/${this.task.id}/subtasks`, subtaskData)
+        .then(() => {
+          this.subtaskName = ''
+          this.subtaskAssignedSelected = []
+          e.target.reset()
+        })
     },
     ...mapActions('users', {
       fetchUsers: 'fetchUsers'
@@ -246,6 +265,9 @@ export default {
       return this.assignedSelected.length !== this.task.assignedTo.length ||
       !this.assignedSelected.every(e => this.task.assignedTo.includes(e))
     },
+    didSubtaskAssignedChange: function () {
+      return this.subtaskAssignedSelected.length
+    },
     didTagsChange: function () {
       return this.tagsSelected.length !== this.task.tags.length ||
       !this.tagsSelected.every(e => this.task.tags.includes(e))
@@ -267,6 +289,20 @@ export default {
     const newTags = this.task.tags.filter(tag => !this.tagOptions.includes(tag))
     for (let tag of newTags) {
       this.tagOptions.push(tag)
+    }
+    if (this.selectOptions.length || this.isSelectLoading) {
+      return
+    }
+    if (this.usersIsLoaded) {
+      this.selectOptions = this.getUsersGrouped
+    } else {
+      this.isSelectLoading = true
+      this.fetchUsers(this.deploymentId)
+        .then(() => {
+          this.selectOptions = this.getUsersGrouped
+          this.isSelectLoading = false
+        })
+        .catch(() => { this.isSelectLoading = false })
     }
   }
 }

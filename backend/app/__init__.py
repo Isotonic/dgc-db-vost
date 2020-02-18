@@ -35,7 +35,7 @@ login = LoginManager(app)
 mail = Mail(app)
 moment = Moment(app)
 csrf = CSRFProtect(app)
-socketio = SocketIO(app)
+socketio = SocketIO(app, cors_allowed_origins='*')
 argon2 = Argon2(app)
 
 from .api import api_blueprint
