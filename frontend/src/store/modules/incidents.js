@@ -69,6 +69,10 @@ const mutations = {
       incident.activity.push(data.activity)
     }
   },
+  SOCKET_NEW_INCIDENT (state, data) {
+    console.log('Recieved incident event')
+    state.incidents.push(data.incident)
+  },
   SOCKET_TASK_ACTIVITY (state, data) {
     console.log('Recieved task activity event')
     const incident = state.incidents.find(incident => incident.id === data.incidentId)
@@ -152,6 +156,13 @@ const mutations = {
       incident.public = data.public
       incident.publicName = data.publicName
       incident.publicDescription = data.publicDescription
+    }
+  },
+  SOCKET_CHANGE_INCIDENT_LOCATION (state, data) {
+    console.log('Recieved location event')
+    const incident = state.incidents.find(incident => incident.id === data.id)
+    if (incident) {
+      incident.location = data.location
     }
   },
   SOCKET_CHANGE_COMMENT_PUBLIC (state, data) {
@@ -245,13 +256,16 @@ const mutations = {
     }
   },
   SOCKET_CHANGE_SUBTASK_EDIT (state, data) {
-    console.log('Recieved task tags event')
+    console.log('Recieved task edit event')
     const incident = state.incidents.find(incident => incident.id === data.incidentId)
     if (incident) {
+      console.log(543)
       const task = incident.tasks.find(task => task.id === data.taskId)
       if (task) {
+        console.log(45365)
         const subtask = task.subtasks.find(subtask => subtask.id === data.id)
         if (subtask) {
+          console.log(435)
           subtask.name = data.name
           subtask.assignedTo = data.assignedTo
         }

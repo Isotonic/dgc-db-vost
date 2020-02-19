@@ -5,7 +5,7 @@
         <input v-model="name" class="form-control" placeholder="Deployment Name" type="text" required>
       </div>
       <div class="form-group mb-4">
-        <input v-model="description" class="form-control" placeholder="Description" type="text" required>
+        <textarea-autosize v-model="description" class="form-control" placeholder="Description" type="text" required />
       </div>
       <div v-if="edit" class="form-group mb-4">
         <select v-model="open" class="custom-select custom-select-sm text-primary font-weight-bold full-length">

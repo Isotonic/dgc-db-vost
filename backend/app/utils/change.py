@@ -3,9 +3,9 @@ from app import db
 from datetime import datetime
 from flask_restx import marshal
 from flask_socketio import emit
-from ..api.utils.models import user_model_without_group
 from .actions import audit_action, incident_action, task_action
 from app.models import User, Group, AuditLog, IncidentLog, TaskLog
+from ..api.utils.models import user_model_without_group, point_feature_model
 
 
 def complete_registration(email_link, firstname, surname, password):
@@ -16,7 +16,7 @@ def complete_registration(email_link, firstname, surname, password):
     user.firstname = firstname
     user.surname = surname
     user.set_password(password, initial=True)
-    user.status = 2
+    user.status = 1
     db.session.delete(email_link)
     audit_action(user, AuditLog.action_values['verify_user'])
 
@@ -114,6 +114,12 @@ def change_incident_public(incident, public, name, description, changed_by):
     incident_action(user=changed_by, action_type=IncidentLog.action_values['marked_public' if public else 'marked_not_public'],
                     incident=incident)
 
+def change_incident_location(incident, longitude, latitude, changed_by):
+    incident.longitude = longitude
+    incident.latitude = latitude
+    location_marshalled = marshal(incident, point_feature_model)
+    emit('CHANGE_INCIDENT_LOCATION', {'id': incident.id, 'location': location_marshalled, 'code': 200}, namespace='', room=f'{incident.deployment_id}-all')
+
 
 def change_comment_public(comment, public, changed_by):
     if comment.public == public:
@@ -175,22 +181,22 @@ def change_task_tags(task, tags, changed_by):
 def change_task_assigned(task, assigned_to, changed_by):
     if set(assigned_to) == set(task.assigned_to):
         return False
-    if any([m for m in assigned_to if m not in task.incident.assigned_to]):
-        change_incident_allocation(task.incident, assigned_to + task.incident.assigned_to, assigned_to)
+    #if any([m for m in assigned_to if m not in task.incident.assigned_to]):
+    #    change_incident_allocation(task.incident, list(set(assigned_to + task.incident.assigned_to)), assigned_to)
     added = list(set(assigned_to) - set(task.assigned_to))
     removed = list(set(task.assigned_to) - set(assigned_to))
     task.assigned_to = assigned_to
     users = marshal(task.assigned_to, user_model_without_group)
     emit('CHANGE_TASK_ASSIGNED', {'id': task.id, 'incidentId': task.incident.id, 'assignedTo': users, 'code': 200}, namespace='', room=f'{task.incident.deployment_id}-all')
-    if removed:
-        task_action(user=changed_by, action_type=TaskLog.action_values['assigned_user'], task=task,
-                    target_users=removed)
-        incident_action(user=changed_by, action_type=IncidentLog.action_values['removed_user_task'],
-                        incident=task.incident, task=task, target_users=removed)
-    if added:
-        task_action(user=changed_by, action_type=TaskLog.action_values['assigned_user'], task=task, target_users=added)
-        incident_action(user=changed_by, action_type=IncidentLog.action_values['assigned_user_task'],
-                        incident=task.incident, task=task, target_users=added)
+    #if removed:
+        #task_action(user=changed_by, action_type=TaskLog.action_values['remove_user'], task=task,
+        #            target_users=removed)
+        #incident_action(user=changed_by, action_type=IncidentLog.action_values['removed_user_task'],
+        #                incident=task.incident, task=task, target_users=removed)
+    #if added:
+        #task_action(user=changed_by, action_type=TaskLog.action_values['assigned_user'], task=task, target_users=added)
+        #incident_action(user=changed_by, action_type=IncidentLog.action_values['assigned_user_task'],
+        #                incident=task.incident, task=task, target_users=added)
 
 
 def change_task_comment_text(task_comment, text, changed_by):
@@ -236,7 +242,7 @@ def change_subtask(subtask, name, assigned_to, changed_by):
     if any([m for m in assigned_to if m not in task.assigned_to]):
         change_task_assigned(task, assigned_to + task.assigned_to, changed_by)
     users = marshal(subtask.assigned_to, user_model_without_group)
-    emit('CHANGE_SUBTASK_EDIT', {'id': subtask.id, 'taskId': task.incident.id, 'incidentId': task.incident.id, 'name': name, 'assignedTo': users, 'code': 200}, namespace='', room=f'{task.incident.deployment_id}-all')
+    emit('CHANGE_SUBTASK_EDIT', {'id': subtask.id, 'taskId': task.id, 'incidentId': task.incident.id, 'name': name, 'assignedTo': users, 'code': 200}, namespace='', room=f'{task.incident.deployment_id}-all')
     task_action(user=changed_by, action_type=TaskLog.action_values['edit_subtask'], task=task, subtask=subtask)
     incident_action(user=changed_by, action_type=IncidentLog.action_values['edit_subtask'], incident=task.incident, task=task,
                     extra=subtask.name)

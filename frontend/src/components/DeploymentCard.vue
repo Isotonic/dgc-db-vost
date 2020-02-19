@@ -3,7 +3,7 @@
     <div :class="['card shadow', 'mb-4', deployment.open ? 'border-left-success' : 'border-left-info']">
       <div class="card-header d-flex align-items-center justify-content-between">
         <h6 class="font-weight-bold text-primary">{{ deployment.name }}
-          <p class="mb-0 mt-1 text-muted text-xs text-nowrap">Created {{ deployment.createdAt | moment("from", "now") }}</p>
+          <p class="mb-0 mt-1 pl-1 text-muted text-xs text-nowrap">Created {{ deployment.createdAt | moment("from", "now") }}</p>
         </h6>
         <div class="dropdown no-arrow">
           <a role="button" class="dropdown-toggle" @click="$emit('edit', deployment)">

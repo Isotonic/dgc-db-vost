@@ -21,12 +21,6 @@
       </router-link>
     </li>
     <li class="nav-item">
-      <router-link :to="{ name: 'notifications' }" class="nav-link">
-        <i class="fas fa-fw fa-bell"></i>
-        <span>Notifications</span>
-      </router-link>
-    </li>
-    <li class="nav-item">
       <router-link :to="{ name: 'map', params: {deploymentName: deploymentName.replace(/ /g, '-'), deploymentId: deploymentId} }" class="nav-link">
         <i class="fas fa-fw fa-map-marker-alt"></i>
         <span>Map</span>

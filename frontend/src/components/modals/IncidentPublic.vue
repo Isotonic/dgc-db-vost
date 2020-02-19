@@ -39,10 +39,12 @@ export default {
     handleSubmit (e) {
       e.preventDefault()
       if (!this.name.length || (this.edit && !this.checkChanged)) {
+        document.body.classList.remove('modal-open')
         return
       }
       this.ApiPut(`incidents/${this.incident.id}/public`, this.getData)
         .then(() => {
+          document.body.classList.remove('modal-open')
           this.$emit('close')
         })
     }

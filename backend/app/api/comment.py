@@ -63,3 +63,41 @@ class CommentEndpoint(Resource):
         ns_comment.has_incident_access(current_user, comment.incident)
         delete_comment(comment, current_user)
         return 'Success', 200
+
+@ns_comment.route('/<int:id>/public')
+@ns_comment.doc(params={'id': 'Comment ID.'})
+@ns_comment.resolve_object('comment', lambda kwargs: IncidentComment.query.get_or_error(kwargs.pop('id')))
+class PublicEndpoint(Resource):
+    @ns_comment.doc(security='access_token')
+    @ns_comment.response(200, 'Success', public_model)
+    @ns_comment.response(401, 'Incorrect credentials')
+    @ns_comment.response(403, 'Missing incident access')
+    @ns_comment.response(404, 'Comment doesn\'t exist')
+    @api.marshal_with(public_model)
+    def get(self, comment):
+        """
+               Returns if comment is viewable by the public or not.
+        """
+        current_user = User.query.filter_by(id=get_jwt_identity()).first()
+        ns_comment.has_incident_access(current_user, comment.incident)
+        return comment, 200
+
+
+    @ns_comment.doc(security='access_token')
+    @ns_comment.expect(public_model, validate=True)
+    @ns_comment.response(200, 'Success', public_model)
+    @ns_comment.response(400, 'Comment is already public')
+    @ns_comment.response(400, 'Comment is already not public')
+    @ns_comment.response(401, 'Incorrect credentials')
+    @ns_comment.response(403, 'Missing incident access')
+    @ns_comment.response(404, 'Comment doesn\'t exist')
+    @api.marshal_with(public_model)
+    def put(self, comment):
+        """
+                Changes if comment is viewable by the public or not.
+        """
+        current_user = User.query.filter_by(id=get_jwt_identity()).first()
+        ns_comment.has_incident_access(current_user, comment.incident)
+        if change_comment_public(comment, api.payload['public'], current_user) is False:
+            ns_comment.abort(400, f'Comment is already {"public" if api.payload["public"] else "not public"}')
+        return comment, 200

@@ -4,7 +4,7 @@
       <div class="form-group mb-3">
         <input v-model="name" class="form-control was-validated" placeholder="Incident Name" type="text" required>
       </div>
-      <textarea v-model="description" class="form-control" rows="3" placeholder="Description"></textarea>
+      <textarea-autosize v-model="description" class="form-control" rows="3" placeholder="Description" required/>
       <div class="form-group my-3">
         <select v-model="type" class="custom-select custom-select-sm full-length">
           <option :value="null" disabled>Select the type of incident</option>
@@ -115,6 +115,7 @@ import '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css'
 import { MglMap, MglMarker } from 'vue-mapbox'
 import MglGeocoderControl from '@/utils/geocoderControl'
 
+import router from '@/router/index'
 import { ModalMixin } from '@/utils/mixins'
 
 export default {
@@ -126,6 +127,7 @@ export default {
     MglGeocoderControl
   },
   props: {
+    deploymentName: String,
     deploymentId: Number
   },
   data () {
@@ -148,8 +150,10 @@ export default {
       if (!this.name.length || !this.description.length || !this.type) {
         return
       }
-      this.ApiPost(`deployments/${this.deploymentId}`, { name: this.name, description: this.description, type: this.type, reportedVia: this.reportedVia, reference: this.reference, address: this.address, longitude: this.location[0], latitude: this.location[1] })
-        .then(() => {
+      Vue.prototype.$api
+        .post(`deployments/${this.deploymentId}`, { name: this.name, description: this.description, type: this.type, reportedVia: this.reportedVia, reference: this.reference, address: this.address, longitude: this.location[0], latitude: this.location[1] })
+        .then(r => r.data)
+        .then(data => {
           this.$emit('close')
           document.body.classList.remove('modal-open')
           this.name = ''
@@ -160,6 +164,7 @@ export default {
           this.address = ''
           this.location = []
           e.target.reset()
+          router.push({ name: 'incident', params: { deploymentName: this.deploymentName.replace(/ /g, '-'), deploymentId: this.deploymentId, incidentName: data.name.replace(/ /g, '-'), incidentId: data.id } })
         })
     },
     handleResult (event) {

@@ -12,7 +12,7 @@
             </span>
             <span class="text">New Incident</span>
           </button>
-          <new-incident-modal v-if="isNewIncidentModalVisible" v-show="isNewIncidentModalVisible" :visible="isNewIncidentModalVisible" :deploymentId="this.deploymentId" @close="isNewIncidentModalVisible = false" />
+          <new-incident-modal v-if="isNewIncidentModalVisible" v-show="isNewIncidentModalVisible" :visible="isNewIncidentModalVisible" :deploymentName="this.deploymentName" :deploymentId="this.deploymentId" @close="isNewIncidentModalVisible = false" />
         </div>
         <div class="row">
           <div class="col-xl-3 col-md-6 mb-4">

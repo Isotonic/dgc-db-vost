@@ -166,7 +166,7 @@ export default {
       heatmapKey: 0, // Fix to force the heatmap to re-render once the data has changed.
       hasCentered: false,
       mapSettings: {
-        url: 'https://maps.wikimedia.org/osm-intl/{z}/{x}/{y}.png',
+        url: 'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
         attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors | <a href="https://foundation.wikimedia.org/wiki/Maps_Terms_of_Use">Wikimedia Maps</a>',
         zoom: 15
       }
