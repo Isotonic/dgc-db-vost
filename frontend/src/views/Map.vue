@@ -9,7 +9,7 @@
         </div>
         <div class="row">
           <div class="col-xl-12">
-            <div v-if="incidents.length" class="card">
+            <div class="card">
               <div class="card-header d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 font-weight-bold text-primary">Map</h6>
                 <div class="d-flex">
@@ -43,7 +43,8 @@
                 </div>
               </div>
               <div class="row map-height">
-                <div class="col-sm-3 overflow-auto pr-0 map-height">
+                <vcl-bullet-list v-if="!hasLoaded" class="ml-3 mt-2" :rows="4" />
+                <div v-else class="col-sm-3 overflow-auto pr-0 map-height">
                   <ul class="mb-4 pl-0">
                     <div class="input-group">
                       <div class="input-group-append bl-1">
@@ -84,6 +85,7 @@ import fz from 'fuzzaldrin-plus'
 import LeafletHeatmap from '@/utils/LeafletHeatmap'
 import Vue2Filters from 'vue2-filters'
 import { mapGetters, mapActions } from 'vuex'
+import { VclBulletList } from 'vue-content-loading'
 import { divIcon, marker, latLng, latLngBounds } from 'leaflet'
 import { LMap, LTileLayer, LGeoJson, LMarker } from 'vue2-leaflet'
 
@@ -144,6 +146,7 @@ export default {
     Topbar,
     Sidebar,
     IncidentCard,
+    VclBulletList,
     LeafletHeatmap,
     LMap,
     LTileLayer,
@@ -158,7 +161,7 @@ export default {
     return {
       query: '',
       showingStatus: 'open',
-      showingIncidents: 'all',
+      showingIncidents: 'assigned',
       sortedBy: ['lastUpdatedAt', -1],
       beacon: { coords: [0, 0], priority: null },
       showBeacon: false,
@@ -191,18 +194,22 @@ export default {
       if (!this.hasCentered) {
         const map = this.$refs.map
         let geoJsonLayer = null
-        if (this.heatmap) {
-          let coords = []
-          for (let incident of this.queryResults) {
-            coords.push(incident.location.geometry.coordinates)
+        if (this.queryResults.length) {
+          if (this.heatmap) {
+            let coords = []
+            for (let incident of this.queryResults) {
+              coords.push(incident.location.geometry.coordinates)
+            }
+            geoJsonLayer = this.getBounds(coords)
+          } else {
+            geoJsonLayer = this.$refs.geoJsonLayer.getBounds()
           }
-          geoJsonLayer = this.getBounds(coords)
+          if (map && geoJsonLayer) {
+            map.fitBounds(geoJsonLayer)
+            this.hasCentered = true
+          }
         } else {
-          geoJsonLayer = this.$refs.geoJsonLayer.getBounds()
-        }
-        if (map && geoJsonLayer) {
-          map.fitBounds(geoJsonLayer)
-          this.hasCentered = true
+          map.mapObject.setView(latLng(55.019914, -2.592132), 5)
         }
       }
     },
@@ -350,6 +357,7 @@ export default {
       getDeployment: 'getDeployment'
     }),
     ...mapGetters('incidents', {
+      hasLoaded: 'hasLoaded',
       getDeploymentId: 'getDeploymentId',
       getIncidents: 'getIncidents',
       getAssignedIncidents: 'getAssignedIncidents'

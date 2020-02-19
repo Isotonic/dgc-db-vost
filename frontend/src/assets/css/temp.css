@@ -317,7 +317,7 @@ li.update-log > .update-log-text:before {
 }
 
 .map-height {
-  max-height: 70vh;
+  height: 70vh;
 }
 
 .incident-card-actions-list {

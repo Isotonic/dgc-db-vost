@@ -1,5 +1,6 @@
 from app import db
 from ..api import api
+from flask_socketio import emit
 from flask_restx import marshal
 from ..models import User, Incident
 from .utils.resource import Resource
@@ -7,7 +8,7 @@ from .utils.namespace import Namespace
 from ..utils.create import create_comment, create_task
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from ..utils.change import edit_incident, change_incident_status, change_incident_allocation, change_incident_priority, change_incident_public, change_incident_location
-from .utils.models import id_model, incident_model, pinned_model, status_model, user_model, priority_model, public_model, comment_model, new_comment_model, task_model, new_task_model, edit_incident_model, point_geometry_model, coordinates_model
+from .utils.models import id_model, incident_model, pinned_model, status_model, user_model, priority_model, public_model, comment_model, new_comment_model, task_model, new_task_model, edit_incident_model, point_feature_model, coordinates_model
 
 ns_incident = Namespace('Incident', description='Used to carry out actions related to incidents.', path='/incidents', decorators=[jwt_required])
 
@@ -123,6 +124,7 @@ class PinnedEndpoint(Resource):
             incident.users_pinned += [current_user]
         else:
             incident.users_pinned.remove(current_user)
+        emit('CHANGE_PIN', {'id': incident.id, 'pinned': api.payload['pinned'], 'code': 200}, namespace='', room=f'{current_user.id}')
         db.session.commit()
         return api.payload, 200
 
@@ -314,11 +316,11 @@ class PublicEndpoint(Resource):
 @ns_incident.resolve_object('incident', lambda kwargs: Incident.query.get_or_error(kwargs.pop('id')))
 class LocationEndpoint(Resource):
     @ns_incident.doc(security='access_token')
-    @ns_incident.response(200, 'Success', point_geometry_model)
+    @ns_incident.response(200, 'Success', point_feature_model)
     @ns_incident.response(401, 'Incorrect credentials')
     @ns_incident.response(403, 'Missing incident access')
     @ns_incident.response(404, 'Incident doesn\'t exist')
-    @api.marshal_with(point_geometry_model)
+    @api.marshal_with(point_feature_model)
     def get(self, incident):
         """
                 Returns incident's location.
@@ -330,13 +332,13 @@ class LocationEndpoint(Resource):
 
     @ns_incident.doc(security='access_token')
     @ns_incident.expect(coordinates_model, validate=True)
-    @ns_incident.response(200, 'Success', point_geometry_model)
+    @ns_incident.response(200, 'Success', point_feature_model)
     @ns_incident.response(400, 'Input payload validation failed')
     @ns_incident.response(400, 'Text is empty')
     @ns_incident.response(401, 'Incorrect credentials')
     @ns_incident.response(403, 'Missing incident access')
     @ns_incident.response(404, 'Incident doesn\'t exist')
-    @api.marshal_with(point_geometry_model)
+    @api.marshal_with(point_feature_model)
     def put(self, incident):
         """
                 Changes incident's location.
@@ -344,7 +346,8 @@ class LocationEndpoint(Resource):
         current_user = User.query.filter_by(id=get_jwt_identity()).first()
         ns_incident.has_incident_access(current_user, incident)
 
-        change_incident_location(incident, api.payload['longitude'], api.payload['latitude'], current_user)
+        if change_incident_location(incident, api.payload['longitude'], api.payload['latitude'], current_user) is False:
+            ns_incident.abort(400, 'Incident already had this location')
 
         return incident, 200
 

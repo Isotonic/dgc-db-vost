@@ -6,17 +6,21 @@
           <strong><text-highlight :queries="query">{{ incident.name }}</text-highlight></strong>
           <i :class="priorityCircle" v-tooltip="`${incident.priority} Priority`" />
         </h6>
-        <p class="text-xs text-muted mb-3">Created {{ incident.createdAt | moment("from", "now") }}</p>
+        <p class="text-xs text-muted mb-2">Created {{ incident.createdAt | moment("from", "now") }}</p>
         <p class="text-xs mb-1"><text-highlight :queries="query">{{ incident.description }}</text-highlight></p>
         <p class="text-xs mb-0"><text-highlight :queries="query">{{ incident.location.properties.address }}</text-highlight></p>
       </div>
     </div>
     <ol v-if="incident.tasks.length || incident.comments.length" class="incident-card-actions-list list-unstyled">
       <li class="incident-card-actions">
-        <i v-if="incident.tasks.length" class="fas fa-tasks" v-tooltip="'Tasks'"></i>
-        <span class="incident-card-actions-text">{{ taskText }}</span>
-        <i v-if="incident.comments.length" class="far fa-comment" v-tooltip="'Comments'"></i>
-        <span class="incident-card-actions-text">{{ incident.comments.length }}</span>
+        <div v-if="incident.tasks.length">
+          <i class="fas fa-tasks" v-tooltip="'Tasks'"></i>
+          <span class="incident-card-actions-text">{{ taskText }}</span>
+        </div>
+        <div v-if="incident.comments.length">
+          <i class="far fa-comment" v-tooltip="'Comments'"></i>
+          <span class="incident-card-actions-text">{{ incident.comments.length }}</span>
+        </div>
       </li>
       <ol v-if="incident.assignedTo.length" class="incident-card-assigned-to list-unstyled">
         <div class="avatar-group">

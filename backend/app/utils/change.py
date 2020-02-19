@@ -114,11 +114,15 @@ def change_incident_public(incident, public, name, description, changed_by):
     incident_action(user=changed_by, action_type=IncidentLog.action_values['marked_public' if public else 'marked_not_public'],
                     incident=incident)
 
+
 def change_incident_location(incident, longitude, latitude, changed_by):
+    if incident.longitude == longitude and incident.latitude == latitude:
+        return False
     incident.longitude = longitude
     incident.latitude = latitude
     location_marshalled = marshal(incident, point_feature_model)
     emit('CHANGE_INCIDENT_LOCATION', {'id': incident.id, 'location': location_marshalled, 'code': 200}, namespace='', room=f'{incident.deployment_id}-all')
+    incident_action(user=changed_by, action_type=IncidentLog.action_values['change_incident_location'], incident=incident)
 
 
 def change_comment_public(comment, public, changed_by):
@@ -181,22 +185,22 @@ def change_task_tags(task, tags, changed_by):
 def change_task_assigned(task, assigned_to, changed_by):
     if set(assigned_to) == set(task.assigned_to):
         return False
-    #if any([m for m in assigned_to if m not in task.incident.assigned_to]):
-    #    change_incident_allocation(task.incident, list(set(assigned_to + task.incident.assigned_to)), assigned_to)
     added = list(set(assigned_to) - set(task.assigned_to))
     removed = list(set(task.assigned_to) - set(assigned_to))
     task.assigned_to = assigned_to
+    if any([m for m in assigned_to if m not in task.incident.assigned_to]):
+        change_incident_allocation(task.incident, assigned_to + task.incident.assigned_to, changed_by)
     users = marshal(task.assigned_to, user_model_without_group)
     emit('CHANGE_TASK_ASSIGNED', {'id': task.id, 'incidentId': task.incident.id, 'assignedTo': users, 'code': 200}, namespace='', room=f'{task.incident.deployment_id}-all')
-    #if removed:
-        #task_action(user=changed_by, action_type=TaskLog.action_values['remove_user'], task=task,
-        #            target_users=removed)
-        #incident_action(user=changed_by, action_type=IncidentLog.action_values['removed_user_task'],
-        #                incident=task.incident, task=task, target_users=removed)
-    #if added:
-        #task_action(user=changed_by, action_type=TaskLog.action_values['assigned_user'], task=task, target_users=added)
-        #incident_action(user=changed_by, action_type=IncidentLog.action_values['assigned_user_task'],
-        #                incident=task.incident, task=task, target_users=added)
+    if removed:
+        task_action(user=changed_by, action_type=TaskLog.action_values['removed_user'], task=task,
+                    target_users=removed)
+        incident_action(user=changed_by, action_type=IncidentLog.action_values['removed_user_task'],
+                        incident=task.incident, task=task, target_users=removed)
+    if added:
+        task_action(user=changed_by, action_type=TaskLog.action_values['assigned_user'], task=task, target_users=added)
+        incident_action(user=changed_by, action_type=IncidentLog.action_values['assigned_user_task'],
+                        incident=task.incident, task=task, target_users=added)
 
 
 def change_task_comment_text(task_comment, text, changed_by):
@@ -206,7 +210,6 @@ def change_task_comment_text(task_comment, text, changed_by):
     task_comment.text = text
     task_comment.edited_at = datetime.utcnow()
     emit('CHANGE_TASK_COMMENT_TEXT', {'id': task_comment.id, 'taskId': task.id, 'incidentId': task.incident.id, 'text': text, 'editedAt': task_comment.edited_at.timestamp(), 'code': 200}, namespace='', room=f'{task.incident.deployment_id}-all')
-    print(task_comment.edited_at.timestamp())
     task_action(user=changed_by, action_type=TaskLog.action_values['edit_task_comment'], task=task)
     incident_action(user=changed_by, action_type=IncidentLog.action_values['edit_task_comment'],
                     incident=task.incident, task=task)

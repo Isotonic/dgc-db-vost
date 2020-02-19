@@ -80,7 +80,7 @@
                   <span class="font-weight-bold">Description:</span> {{ props.row.description }}
                 </div>
                 <div slot="pinned" slot-scope="{row}">
-                  <i :class="[row.pinned ? 'fas fa-bookmark' : 'far fa-bookmark']" @click="changePin(row)"></i>
+                  <i :class="[row.pinned ? 'fas fa-bookmark' : 'far fa-bookmark']" v-tooltip="row.pinned ? 'Pinned' : 'Not pinned'" @click="changePin(row)"></i>
                 </div>
                 <div v-if="showingStatus !== 'both'" slot="name" slot-scope="{row}">
                   <span>{{ row.name }}</span>
@@ -111,10 +111,11 @@
 </template>
 
 <script>
-import router from '@/router/index'
+
 import { Event } from 'vue-tables-2'
 import { mapGetters, mapActions } from 'vuex'
 
+import router from '@/router/index'
 import Topbar from '@/components/Topbar'
 import Sidebar from '@/components/Sidebar'
 import NewIncidentModal from '@/components/modals/NewIncident'
@@ -132,7 +133,7 @@ export default {
   },
   data () {
     return {
-      showingIncidents: 'all',
+      showingIncidents: 'assigned',
       showingStatus: 'open',
       columns: ['pinned', 'name', 'location', 'priority', 'assignedTo', 'taskPercentage', 'lastUpdated'],
       options: {
@@ -215,6 +216,24 @@ export default {
               if (lastA === lastB) {
                 lastA = a.lastUpdated
                 lastB = b.lastUpdated
+              }
+              if (ascending) {
+                return lastA >= lastB ? 1 : -1
+              }
+              return lastA <= lastB ? 1 : -1
+            }
+          },
+          lastUpdated: function (ascending) {
+            return function (a, b) {
+              let lastA = a.lastUpdatedAt
+              let lastB = b.lastUpdated
+
+              lastA = isNaN(lastA) ? -1 : lastA
+              lastB = isNaN(lastB) ? -1 : lastB
+
+              if (lastA === lastB) {
+                lastA = a.pinned
+                lastB = b.pinned
               }
               if (ascending) {
                 return lastA >= lastB ? 1 : -1
@@ -314,7 +333,7 @@ export default {
       if (hourAgoIncidents > twoHoursAgoIncidents) {
         return { stat: hourAgoIncidents - twoHoursAgoIncidents, class: 'text-danger', icon: 'fa-plus' }
       } else if (twoHoursAgoIncidents > hourAgoIncidents) {
-        return { stat: twoHoursAgoIncidents > hourAgoIncidents, class: 'text-success', icon: 'fa-down' }
+        return { stat: twoHoursAgoIncidents - hourAgoIncidents, class: 'text-success', icon: 'fa-minus' }
       } else {
         return { stat: 0, class: 'text-primary', icon: '' }
       }

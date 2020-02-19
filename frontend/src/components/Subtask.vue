@@ -37,10 +37,10 @@
               <template v-slot:body>
               <div class="delete-subtask">
                 <h6>
-                  <input v-if="isSubtask" class="mr-2" type="checkbox" :checked="task.completed" :disabled="true">
-                  <strong>{{ task.name }} </strong><span class="text-xs">{{ taskStatusText }}</span>
+                  <input class="mr-2" type="checkbox" :checked="subtask.completed" :disabled="true">
+                  <strong>{{ subtask.name }} </strong><span class="text-xs">{{ subtaskStatusText }}</span>
                 </h6>
-                <span v-if="task.assignedTo.length" :class="['text-xs', isSubtask ? 'ml-4' : '']">Assigned to {{ assignedToText }}</span>
+                <span v-if="subtask.assignedTo.length" class="text-xs ml-4">Assigned to {{ assignedToText }}</span>
               </div>
               </template>
             </question-modal>

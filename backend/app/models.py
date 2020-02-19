@@ -506,7 +506,7 @@ class IncidentLog(db.Model):
                      'marked_complete': 10, 'marked_incomplete': 11, 'changed_priority': 12,
                      'changed_task_description': 13, 'assigned_user_task': 14,
                      'removed_user_task': 15, 'marked_public': 16, 'marked_not_public': 17, 'complete_subtask': 18, 'incomplete_subtask': 19, 'create_subtask': 20, 'add_subtask_comment': 21,
-                     'marked_comment_public': 22, 'marked_comment_not_public': 23, 'edit_comment': 24, 'edit_subtask': 25, 'edit_incident': 26, 'changed_task_tags': 27, 'edit_task_comment': 28,  'delete_task_comment': 29, 'delete_subtask': 30}  ##TODO RE-ORDER ONCE DONE
+                     'marked_comment_public': 22, 'marked_comment_not_public': 23, 'edit_comment': 24, 'edit_subtask': 25, 'edit_incident': 26, 'changed_task_tags': 27, 'edit_task_comment': 28,  'delete_task_comment': 29, 'delete_subtask': 30, 'change_incident_location': 31}  ##TODO RE-ORDER ONCE DONE
     action_strings = {1: 'created incident', 2: 'created task $task', 3: 'marked $task as complete',
                       4: 'deleted task $task',
                       5: 'added an update', 6: 'deleted an update', 7: 'marked $task as incomplete',
@@ -515,7 +515,8 @@ class IncidentLog(db.Model):
                       11: 'marked incident as incomplete', 12: 'changed priority to $extra',
                       13: 'changed $task description to "$extra"', 14: 'added $target_users to $task',
                       15: 'removed $target_users from $task', 16: 'set the incident to publicly viewable', 17: 'set the incident to private', 18: 'marked $extra as complete', 19: 'marked $extra as incomplete', 20: 'created sub-task $extra', 21: 'added comment to $task',
-                      22: 'marked comment as publicly viewable', 23: 'marked comment as not publicly viewable', 24: 'edited update', 25: 'edited subtask $extra', 26: 'edited incident details', 27: 'changed tags for $task', 28: 'edited comment in $task', 29: 'deleted comment in $task', 30: 'deleted sub-task in $task'}
+                      22: 'marked comment as publicly viewable', 23: 'marked comment as not publicly viewable', 24: 'edited update', 25: 'edited subtask $extra', 26: 'edited incident details', 27: 'changed tags for $task', 28: 'edited comment in $task', 29: 'deleted comment in $task', 30: 'deleted sub-task in $task',
+                      31: 'changed the incident location'}
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))

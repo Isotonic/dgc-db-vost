@@ -8,6 +8,9 @@ const state = {
 }
 
 const getters = {
+  hasLoaded: (state) => {
+    return state.loaded
+  },
   getDeploymentId: (state) => {
     return state.deploymentId
   },
@@ -26,7 +29,7 @@ const getters = {
 const actions = {
   checkLoaded ({ state, commit, dispatch }, deploymentId) {
     if ((state.deploymentId && state.deploymentId !== deploymentId) || (state.loaded && !state.deploymentId)) {
-      dispatch('destroy')
+      dispatch('storeDestroy')
     }
     if (!state.loaded) {
       dispatch('fetchAll', deploymentId)
@@ -115,6 +118,13 @@ const mutations = {
       if (task) {
         task.subtasks.push(data.subtask)
       }
+    }
+  },
+  SOCKET_CHANGE_PIN (state, data) {
+    console.log('Recieved pin event')
+    const incident = state.incidents.find(incident => incident.id === data.id)
+    if (incident) {
+      incident.pinned = data.pinned
     }
   },
   SOCKET_CHANGE_INCIDENT_DETAILS (state, data) {
@@ -302,7 +312,7 @@ const mutations = {
     if (incident) {
       const task = incident.tasks.find(task => task.id === data.taskId)
       if (task) {
-        task.subtasks = task.subtask.filter(task => task.id !== data.id)
+        task.subtasks = task.subtasks.filter(task => task.id !== data.id)
       }
     }
   },
