@@ -3,6 +3,7 @@ import App from './App.vue'
 import store from './store'
 import router from './router'
 import authInterceptor from './utils/authInterceptor'
+import configuration from '@/utils/configuration'
 import { ApiMixin } from './utils/mixins'
 import Axios from 'axios'
 import VTooltip from 'v-tooltip'
@@ -66,6 +67,8 @@ Vue.prototype.$api = Vue.prototype.$http.create({
 })
 
 Vue.prototype.$api.interceptors.response.use(undefined, authInterceptor(Vue.prototype.$api))
+
+Vue.prototype.$mapBoxApiKey = configuration.value('mapboxApiKey')
 
 new Vue({
   router,

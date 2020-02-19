@@ -23,8 +23,9 @@
 </template>
 
 <script>
-import { ModalMixin } from '@/utils/mixins'
+import Vue from 'vue'
 
+import { ModalMixin } from '@/utils/mixins'
 import Checkbox from '@/components/utils/Checkbox'
 
 export default {
@@ -79,6 +80,7 @@ export default {
             this.mark_as_public = false
             this.name = ''
             e.target.reset()
+            Vue.noty.success(`Successfully created group.`)
           })
       }
     },
@@ -88,6 +90,7 @@ export default {
           .then(() => {
             this.$emit('close')
             document.body.classList.remove('modal-open')
+            Vue.noty.success(`Successfully edited group.`)
           })
       }
     }

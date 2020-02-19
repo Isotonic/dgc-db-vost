@@ -96,25 +96,11 @@
       </div>
       <span id="LocationNotChosen" class="text-danger d-none">Please select the location of the incident.</span>
       <div id="Map" class="map-container">
-      <MglMap
-    :accessToken="accessToken"
-    :mapStyle="mapStyle"
-    @click="onClickMap"
-  >
-    <MglGeocoderControl
-      :accessToken="accessToken"
-      :input="searchResult"
-      @result="handleResult"
-      :filter="geocodeFilter"
-      :draggable="true"
-    />
-    <MglMarker
-          v-if="markerSet"
-          :coordinates="location"
-          :draggable="true"
-          color="blue" ref="marker" />
-  </MglMap>
-  </div>
+        <MglMap :accessToken="accessToken" :mapStyle="mapStyle" @click="onClickMap" :center="[-4.003661, 56.584255]">
+          <MglGeocoderControl :accessToken="accessToken" :input="searchResult" @result="handleResult" :draggable="true" />
+          <MglMarker v-if="markerSet" :coordinates="location" :draggable="true" color="blue" ref="marker" />
+        </MglMap>
+      </div>
       <div class="text-center">
         <button type="submit" class="btn btn-primary my-4">Submit</button>
       </div>
@@ -123,6 +109,7 @@
 </template>
 
 <script>
+import Vue from 'vue'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css'
 import { MglMap, MglMarker } from 'vue-mapbox'
@@ -151,7 +138,7 @@ export default {
       address: '',
       markerSet: false,
       location: [0, 0],
-      accessToken: process.env.MAPBOX_API_KEY,
+      accessToken: Vue.prototype.$mapBoxApiKey,
       mapStyle: 'mapbox://styles/mapbox/streets-v11',
       searchResult: ''
     }
@@ -190,9 +177,6 @@ export default {
         this.location[0] = event.mapboxEvent.lngLat.lng
         this.location[1] = event.mapboxEvent.lngLat.lat
       }
-    },
-    geocodeFilter (feature) {
-      return feature.context.find(context => context.id.startsWith('country')).short_code.toLowerCase() === 'gb'
     }
   }
 }

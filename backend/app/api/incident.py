@@ -7,7 +7,7 @@ from .utils.namespace import Namespace
 from ..utils.create import create_comment, create_task
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from ..utils.change import edit_incident, change_incident_status, change_incident_allocation, change_incident_priority, change_incident_public
-from .utils.models import id_model, incident_model, pinned_model, status_model, user_model, priority_model, public_model, comment_model, new_comment_model, task_model, new_task_model, edit_incident_model
+from .utils.models import id_model, incident_model, pinned_model, status_model, user_model, priority_model, public_model, comment_model, new_comment_model, task_model, new_task_model, edit_incident_model, point_geometry_model, coordinates_model
 
 ns_incident = Namespace('Incident', description='Used to carry out actions related to incidents.', path='/incidents', decorators=[jwt_required])
 
@@ -307,6 +307,47 @@ class PublicEndpoint(Resource):
         if change_incident_public(incident, api.payload['public'], name, description, current_user) is False:
             ns_incident.abort(400, f'Incident is already {"public" if api.payload["public"] else "not public"}')
         return incident, 200
+
+
+@ns_incident.route('/<int:id>/location')
+@ns_incident.doc(params={'id': 'Incident ID.'})
+@ns_incident.resolve_object('incident', lambda kwargs: Incident.query.get_or_error(kwargs.pop('id')))
+class LocationEndpoint(Resource):
+    @ns_incident.doc(security='access_token')
+    @ns_incident.response(200, 'Success', point_geometry_model)
+    @ns_incident.response(401, 'Incorrect credentials')
+    @ns_incident.response(403, 'Missing incident access')
+    @ns_incident.response(404, 'Incident doesn\'t exist')
+    @api.marshal_with(point_geometry_model)
+    def get(self, incident):
+        """
+                Returns incident's location.
+        """
+        current_user = User.query.filter_by(id=get_jwt_identity()).first()
+        ns_incident.has_incident_access(current_user, incident)
+        return incident.location, 200
+
+
+    @ns_incident.doc(security='access_token')
+    @ns_incident.expect(new_comment_model, validate=True)
+    @ns_incident.response(200, 'Success', point_geometry_model)
+    @ns_incident.response(400, 'Input payload validation failed')
+    @ns_incident.response(400, 'Text is empty')
+    @ns_incident.response(401, 'Incorrect credentials')
+    @ns_incident.response(403, 'Missing incident access')
+    @ns_incident.response(404, 'Incident doesn\'t exist')
+    @api.marshal_with(point_geometry_model)
+    def put(self, incident):
+        """
+                Changes incident's location.
+        """
+        current_user = User.query.filter_by(id=get_jwt_identity()).first()
+        ns_incident.has_incident_access(current_user, incident)
+
+        incident.longitude = api.payload['longitude']
+        incident.latitude = api.payload['latitude']
+
+        return incident.location, 200
 
 
 @ns_incident.route('/<int:id>/comments')

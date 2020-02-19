@@ -158,7 +158,7 @@ export default {
     return {
       query: '',
       showingStatus: 'open',
-      showingIncidents: 'assigned',
+      showingIncidents: 'all',
       sortedBy: ['lastUpdatedAt', -1],
       beacon: { coords: [0, 0], priority: null },
       showBeacon: false,

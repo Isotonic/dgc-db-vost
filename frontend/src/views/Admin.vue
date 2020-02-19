@@ -246,6 +246,7 @@ export default {
     },
     changeUserGroup (userId, value) {
       this.ApiPut(`users/${userId}/group`, value ? { id: parseInt(value) } : {})
+        .then(() => Vue.noty.success(`Successfully changed user's group.`))
     },
     editGroup (group) {
       this.editGroupObj = group
@@ -264,6 +265,7 @@ export default {
       this.isRevokeUserModalVisible = false
       if (modalAnswer) {
         this.ApiDelete(`/users/${this.revokeUserObj.id}`)
+          .then(() => Vue.noty.success(`Successfully revoked email.`))
       }
     },
     confirmDeleteGroup (group) {
@@ -275,6 +277,7 @@ export default {
       this.isDeleteGroupModalVisible = false
       if (modalAnswer) {
         this.ApiDelete(`/groups/${this.deleteGroupObj.id}`)
+          .then(() => Vue.noty.success(`Successfully deleted ${this.deleteGroupObj.name}.`))
       }
     },
     getUsers () {

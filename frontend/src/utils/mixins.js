@@ -9,7 +9,7 @@ export const ApiMixin = {
           .post(url, data)
           .then(r => r.data)
           .then(data => {
-            Vue.noty.success(data)
+            // Vue.noty.success(data)
             resolve()
           })
           .catch(error => {
@@ -29,7 +29,7 @@ export const ApiMixin = {
             resolve()
           })
           .catch(error => {
-            console.log(error.response.data.message)
+            // console.log(error.response.data.message)
             Vue.noty.error(error.response.data.message)
             reject(error)
           })
@@ -41,7 +41,7 @@ export const ApiMixin = {
           .delete(url)
           .then(r => r.data)
           .then(data => {
-            Vue.noty.success(data)
+            // Vue.noty.success(data)
             resolve()
           })
           .catch(error => {

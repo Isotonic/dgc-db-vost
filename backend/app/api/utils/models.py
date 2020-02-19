@@ -236,3 +236,7 @@ email_model = api.model('Email', {'email': fields.String(description='Email addr
 registration_model = api.model('Registration', {'firstname': fields.String(description='Firstname of the user.'),
                                                 'surname': fields.String(description='Surname of the user.'),
                                                 'password': fields.String(description='Password, must be at least 8 characters, contain a lowercase and uppercase letter and contain a number.')})
+
+coordinates_model = api.model('Coordinates',
+                            {'longitude': fields.Float(required=True),
+                             'latitude': fields.Float(required=True)})

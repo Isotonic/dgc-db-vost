@@ -19,13 +19,14 @@ const actions = {
       dispatch('connect', deploymentId)
     }
   },
-  connect ({ rootGetters }, deploymentId) {
+  connect ({ commit, rootGetters }, deploymentId) {
     console.log(2)
-    const data = {}
+    const data = { accessToken: rootGetters['user/getAccessToken'] }
     if (deploymentId) {
       data.deploymentId = deploymentId
     }
-    this._vm.$socket.client.emit('join', data)
+    this._vm.$socket.client.emit('login', data)
+    commit('connected')
     console.log(3)
   },
   socket_login ({ rootGetters, commit }) {

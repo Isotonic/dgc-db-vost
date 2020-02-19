@@ -113,6 +113,7 @@ class User(db.Model, UserMixin):
         avatar.generate().save(f'./app/static/img/avatars/{self.id}_{self.firstname}_{self.surname}.png')
 
     def get_avatar(self, static=True):
+        return 'https://dgvost.herokuapp.com/static/img/avatars/3_test_test.png'
         try:
             avatar_path = f'{"/static/" if static else ""}img/avatars/{self.id}_{self.firstname}_{self.surname}.png'
             if path.exists(f'./app{avatar_path}'):
@@ -120,7 +121,7 @@ class User(db.Model, UserMixin):
             self.create_avatar()
             return f'http://localhost:5000{avatar_path}'
         except: ##TODO FIX: Store in docker volume
-            return 'https://dgvost.herokuapp.com/static/img/avatars/3_test_test.png'
+           pass
 
     def get_deployments(self):
         deployments = []
@@ -230,7 +231,7 @@ class Group(db.Model):
             return False
 
     def __repr__(self):
-        return f'<Group {self.name}>'
+        return self.name
 
 
 class Deployment(db.Model):

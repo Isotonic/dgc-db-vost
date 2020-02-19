@@ -21,6 +21,7 @@
 </template>
 
 <script>
+import Vue from 'vue'
 import Vue2Filters from 'vue2-filters'
 
 import { ModalMixin } from '@/utils/mixins'
@@ -51,6 +52,7 @@ export default {
           this.email = ''
           this.groupId = null
           e.target.reset()
+          Vue.noty.success(`Successfully sent email registration to user.`)
         })
     }
   }
