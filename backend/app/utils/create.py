@@ -5,7 +5,7 @@ from flask_socketio import emit
 from .supervisor import new_incident
 from .change import change_task_status
 from .actions import audit_action, incident_action, task_action
-from ..api.utils.models import comment_model, task_model, task_comment_model, subtask_model
+from ..api.utils.models import deployment_model, comment_model, task_model, task_comment_model, subtask_model
 from app.models import User, Group, Deployment, Incident, IncidentTask, IncidentSubTask, TaskComment, IncidentComment, EmailLink, AuditLog, IncidentLog, TaskLog
 
 
@@ -41,7 +41,8 @@ def create_deployment(name, description, group_ids, user_ids, created_by):
     deployment = Deployment(name=name, description=description, groups=groups, users=users)
     db.session.add(deployment)
     db.session.commit()
-    #emit('create_deployment', {'html': render_template('deployment_card.html', deployment=deployment), 'code': 200}, room='deployments')
+    deployment_marshalled = marshal(deployment, deployment_model)
+    emit('NEW_DEPLOYMENT', {'deployment': deployment_marshalled, 'code': 200}, namespace='', room=f'deployments')
     audit_action(created_by, action_type=AuditLog.action_values['create_deployment'], target_id=deployment.id)
     return deployment
 

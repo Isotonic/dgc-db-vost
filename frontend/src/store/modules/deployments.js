@@ -47,6 +47,21 @@ const mutations = {
   setDeployments (state, deployments) {
     state.deployments = deployments
   },
+  SOCKET_NEW_DEPLOYMENT (state, data) {
+    console.log('Recieved deployment event')
+    state.deployments.push(data.deployment)
+  },
+  SOCKET_CHANGE_DEPLOYMENT_EDIT (state, data) {
+    console.log('Recieved deployment edit event')
+    const deployment = state.deployments.find(deployment => deployment.id === data.id)
+    if (deployment) {
+      deployment.name = data.name
+      deployment.description = data.description
+      deployment.open = data.open
+      deployment.reference = data.groups
+      deployment.users = data.users
+    }
+  },
   destroy (state) {
     state.loaded = false
     state.deployments = []

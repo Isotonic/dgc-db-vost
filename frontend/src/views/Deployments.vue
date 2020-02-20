@@ -117,7 +117,7 @@ export default {
     })
   },
   async created () {
-    this.checkUserLoaded()
+    this.checkUserLoaded(false)
     this.checkDeploymentsLoaded()
   }
 }

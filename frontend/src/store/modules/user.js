@@ -38,17 +38,27 @@ const getters = {
 }
 
 const actions = {
-  checkLoaded ({ state, commit }) {
+  checkLoaded ({ state, commit, dispatch }, deployment) {
     if (!state.user && localStorage.getItem('accessToken') !== null) {
       Vue.prototype.$api
         .get('users/me')
         .then(r => r.data)
         .then(user => {
           commit('setUser', user)
+          if (deployment) {
+            dispatch('checkActionsRequired')
+          }
         })
-        .catch(response => {
-          console.log(response.data.errors)
+        .catch(error => {
+          console.log(error.response.data.message)
         })
+    } else if (deployment) {
+      dispatch('checkActionsRequired')
+    }
+  },
+  checkActionsRequired ({ dispatch, getters }) {
+    if (getters['hasPermission']('supervisor') && !getters['incidents/hasActionsRequiredLoaded']) {
+      dispatch('incidents/getActionsRequired', null, { root: true })
     }
   },
   login ({ commit, dispatch }, [email, password]) {
@@ -101,11 +111,12 @@ const actions = {
   },
   logout ({ dispatch }) {
     dispatch('storeDestroy')
-    router.push({ name: 'login' })
+    router.push({ name: 'publicMap' })
   },
   storeDestroy ({ commit, dispatch }) {
     commit('deleteAccessToken')
     commit('deleteRefreshToken')
+    commit('deleteUser')
     dispatch('deployments/storeDestroy', null, { root: true })
     dispatch('incidents/storeDestroy', null, { root: true })
     dispatch('users/storeDestroy', null, { root: true })
@@ -139,6 +150,9 @@ const mutations = {
   deleteRefreshToken (state) {
     localStorage.removeItem('refreshToken')
     state.refreshToken = ''
+  },
+  deleteUser (state) {
+    state.user = null
   },
   setUser (state, value) {
     state.user = value

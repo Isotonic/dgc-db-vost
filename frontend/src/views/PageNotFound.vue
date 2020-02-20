@@ -2,6 +2,7 @@
   <div id="wrapper">
     <div id="content-wrapper" class="d-flex flex-column">
       <topbar v-if="isLoggedIn" :nosidebar="true" />
+      <topbar v-else :noSidebar="true" :publicPage="true" :noSearchBar="true" :noMargin="true" />
       <div class="text-center">
         <div class="error mx-auto" data-text="404">404</div>
         <p class="lead text-gray-800 mb-5">Page Not Found</p>
@@ -33,7 +34,7 @@ export default {
     })
   },
   async created () {
-    this.checkUserLoaded()
+    this.checkUserLoaded(false)
   }
 }
 </script>

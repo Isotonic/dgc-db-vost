@@ -1,13 +1,13 @@
 <template>
-  <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
-    <router-link v-if="nosidebar" :to="'deployments'" class="deployments_brand_img">
+  <nav :class="['navbar', 'navbar-expand', 'navbar-light', 'bg-white', 'topbar', 'static-top shadow', noMargin ? '' : 'mb-4']">
+    <router-link v-if="nosidebar || noSearchBar" :to="{ name: 'publicMap' }" class="deployments_brand_img">
       <img class="deployments_brand_img" src="@/assets/img/Logos/Default.png">
     </router-link>
     <button v-else class="btn btn-link d-md-none rounded-circle mr-3" @click="$emit('toggleSidebar')">
       <i class="fa fa-bars"></i>
     </button>
     <div v-if="!nosidebar">
-      <div class="ml-md-2 my-2 my-md-0 navbar-search input-group">
+      <div v-if="!noSearchBar" class="ml-md-2 my-2 my-md-0 navbar-search input-group">
         <input v-model="queryDebounced" type="text" :class="['form-control', 'bg-light', 'small', queryDebounced.length ? 'navbar-search-results' : '']" placeholder="Search for an incident..." aria-label="Search for an incident" @focus="hideResults = false" @blur="hideResults = true">
         <div class="input-group-append">
           <div class="btn bg-primary">
@@ -23,7 +23,15 @@
       </div>
     </div>
     <ul class="navbar-nav ml-auto">
-      <li class="nav-item dropdown no-arrow mx-1">
+      <router-link v-if="publicPage" :to="{ name: !user ? 'login' : 'deployments' }">
+        <button class="btn btn-icon-split btn-primary">
+          <span class="btn-icon">
+              <i :class="['fas', !user ? 'fa-sign-in-alt' : 'fa-list']"></i>
+          </span>
+          <span class="text">{{ !user ? 'Login' : 'View Deployments' }}</span>
+        </button>
+      </router-link>
+      <li v-if="!publicPage" class="nav-item dropdown no-arrow mx-1">
         <a class="nav-link dropdown-toggle" id="notificationDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
           <i class="fas fa-bell fa-fw"></i>
             <span class="badge badge-danger badge-counter"></span>
@@ -35,8 +43,8 @@
           <a class="dropdown-item text-center small text-gray-500">No Notifications</a>
         </div>
       </li>
-      <div class="topbar-divider d-none d-sm-block"></div>
-      <b-dropdown variant="link" size="xs" toggle-tag="li" toggle-class="nav-item">
+      <div v-if="!publicPage" class="topbar-divider d-none d-sm-block"></div>
+      <b-dropdown v-if="!publicPage" variant="link" size="xs" toggle-tag="li" toggle-class="nav-item">
           <template slot="button-content">
               <a class="nav-link">
                 <span class="mr-2 d-none d-lg-inline text-gray-600 small">{{ name }}</span>
@@ -69,6 +77,18 @@ export default {
     deploymentId: Number,
     deploymentName: String,
     nosidebar: {
+      type: Boolean,
+      default: false
+    },
+    noSearchBar: {
+      type: Boolean,
+      default: false
+    },
+    publicPage: {
+      type: Boolean,
+      default: false
+    },
+    noMargin: {
       type: Boolean,
       default: false
     }
@@ -130,7 +150,8 @@ export default {
         .sort((a, b) => scores[b.id] - scores[a.id])
     },
     ...mapGetters('user', {
-      hasPermission: 'hasPermission'
+      hasPermission: 'hasPermission',
+      user: 'getUser'
     }),
     ...mapGetters('incidents', {
       allIncidents: 'getIncidents'

@@ -3,10 +3,10 @@ from flask_restx import marshal
 from .utils.resource import Resource
 from .utils.namespace import Namespace
 from ..utils.change import edit_deployment
-from ..models import User, Group, Deployment
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from ..utils.create import create_deployment, create_incident
-from .utils.models import new_deployment_model, deployment_model, edit_deployment_model, new_incident_model, incident_model, user_model, group_model
+from ..models import User, Group, Deployment, SupervisorActions
+from .utils.models import new_deployment_model, deployment_model, edit_deployment_model, new_incident_model, incident_model, user_model, group_model, action_required_model
 
 ns_deployment = Namespace('Deployment', description='Used to carry out actions related to deployments.', path='/deployments', decorators=[jwt_required])
 
@@ -88,6 +88,7 @@ class DeploymentEndpoint(Resource):
 
     @ns_deployment.expect(new_incident_model, validate=True)
     @ns_deployment.doc(security='access_token')
+    @ns_deployment.response(200, 'Success')
     @ns_deployment.response(200, 'Success', incident_model)
     @ns_deployment.response(400, 'Name is empty')
     @ns_deployment.response(401, 'Incorrect credentials')
@@ -95,7 +96,7 @@ class DeploymentEndpoint(Resource):
     @ns_deployment.response(404, 'Deployment doesn\'t exist')
     def post(self, deployment):
         """
-                Creates a new incident.
+                Creates a new incident. If the user doesn't have the supervisor permission then it will first need to go through a supervisor before the user can possibly see it.
         """
         payload = api.payload
         current_user = User.query.filter_by(id=get_jwt_identity()).first()
@@ -103,6 +104,8 @@ class DeploymentEndpoint(Resource):
         created_incident = create_incident(deployment, payload['name'], payload['description'], payload['type'], payload['reportedVia'], payload['reference'], payload['address'], payload['longitude'], payload['latitude'], current_user)
         if created_incident is False:
             ns_deployment.abort(400, 'Name is empty')
+        if not current_user.has_permission('supervisor'):
+            return 'Success', 200
         return format_incidents([created_incident], current_user)[0], 200
 
 
@@ -270,3 +273,25 @@ class DeploymentGroupsEndpoint(Resource):
             all_groups = Group.query.all()
             return all_groups, 200
         return deployment.groups, 200
+
+
+@ns_deployment.route('/<int:id>/actions-required')
+@ns_deployment.doc(params={'id': 'Deployment ID.'})
+@ns_deployment.resolve_object('deployment', lambda kwargs: Deployment.query.get_or_error(kwargs.pop('id')))
+class DeploymentSupervisorActionsEndpoint(Resource):
+    @ns_deployment.doc(security='access_token')
+    @ns_deployment.response(200, 'Success', [action_required_model])
+    @ns_deployment.response(401, 'Incorrect credentials')
+    @ns_deployment.response(403, 'Missing deployment access')
+    @ns_deployment.response(403, 'Missing supervisor permission')
+    @ns_deployment.response(404, 'Deployment doesn\'t exist')
+    @api.marshal_with(action_required_model)
+    def get(self, deployment):
+        """
+                Returns all actions required by supervisor's.
+        """
+        current_user = User.query.filter_by(id=get_jwt_identity()).first()
+        ns_deployment.has_permission(current_user, 'supervisor')
+
+        actions = SupervisorActions.query.filter_by(deployment_id=deployment.id).all()
+        return actions, 200

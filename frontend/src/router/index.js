@@ -5,6 +5,30 @@ Vue.use(VueRouter)
 
 const routes = [
   {
+    path: '/',
+    name: 'publicMap',
+    component: () => import(/* webpackChunkName: "public map" */ '../views/PublicMap.vue'),
+    meta: {
+      title: _ => 'DGVOST',
+      requiresAuth: false
+    }
+  },
+  {
+    path: '/incidents/:incidentName-:incidentId(\\d+)',
+    name: 'publicIncident',
+    component: () => import(/* webpackChunkName: "public incident" */ '../views/PublicIncident.vue'),
+    props (route) {
+      const props = { ...route.params }
+      props.deploymentId = +props.deploymentId
+      props.incidentId = +props.incidentId
+      return props
+    },
+    meta: {
+      title: route => route.params.incidentName.replace(/-/g, ' '),
+      requiresAuth: false
+    }
+  },
+  {
     path: '/login',
     name: 'login',
     component: () => import(/* webpackChunkName: "login" */ '../views/Login.vue'),
@@ -28,7 +52,6 @@ const routes = [
   },
   {
     path: '/deployments',
-    alias: '/',
     name: 'deployments',
     component: () => import(/* webpackChunkName: "deployments" */ '../views/Deployments.vue'),
     meta: {
@@ -120,7 +143,7 @@ const routes = [
   {
     path: '/deployments/:deploymentName-:deploymentId(\\d+)/actions-required',
     name: 'actionsRequired',
-    component: () => import(/* webpackChunkName: "actions required" */ '../views/Incident.vue'),
+    component: () => import(/* webpackChunkName: "actions required" */ '../views/Supervisor.vue'),
     props (route) {
       const props = { ...route.params }
       props.deploymentId = +props.deploymentId
@@ -139,21 +162,6 @@ const routes = [
     meta: {
       title: _ => 'Admin Settings',
       requiresAuth: true
-    }
-  },
-  {
-    path: '/incidents/:incidentName-:incidentId(\\d+)',
-    name: 'public incident',
-    component: () => import(/* webpackChunkName: "public incident" */ '../views/PublicIncident.vue'),
-    props (route) {
-      const props = { ...route.params }
-      props.deploymentId = +props.deploymentId
-      props.incidentId = +props.incidentId
-      return props
-    },
-    meta: {
-      title: route => route.params.incidentName.replace(/-/g, ' '),
-      requiresAuth: false
     }
   },
   {

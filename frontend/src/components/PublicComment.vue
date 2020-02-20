@@ -1,5 +1,13 @@
 <template>
-  <editor-content class="editor__content" :editor="editor" />
+  <li class="update-log">
+    <div class="update-log-text public">
+      <editor-content class="editor__content" :editor="editor" />
+      <div class="update-body">
+        {{ comment.sentAt | moment("from", "now") }}
+      </div>
+    </div>
+    <span v-if="comment.editedAt" class="text-xs font-weight-bold half-opacity float-right mt-1 mb-2">Edited {{ comment.editedAt | moment("from", "now") }}</span>
+  </li>
 </template>
 
 <script>

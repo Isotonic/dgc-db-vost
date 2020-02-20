@@ -11,8 +11,10 @@
                 <span class="btn-icon">
                     <i class="fas fa-check"></i>
                 </span>
-                <span v-if="incident" class="text">{{ incident.open ? 'Mark As Complete' : 'Mark As Incomplete' }}</span>
+                <span v-if="incident && hasPermission('change_status')" class="text">{{ incident.open ? 'Mark As Complete' : 'Mark As Incomplete' }}</span>
+                <span v-else-if="incident" class="text">{{ incident.open ? 'Request Mark As Complete' : 'Request Mark As Incomplete' }}</span>
             </button>
+            <request-status-change-modal v-if="isRequestStatusChangeModalVisible" v-show="isRequestStatusChangeModalVisible" :visible="isRequestStatusChangeModalVisible" :incidentId="incidentId" @close="isRequestStatusChangeModalVisible = false" />
             <button v-if="incident && !incident.public && hasPermission('mark_as_public')" class="btn btn-icon-split mr-2 btn-success" @click="isIncidentPublicModalVisible = true">
                 <span class="btn-icon">
                     <i class="fas fa-eye"></i>
@@ -26,7 +28,7 @@
                   </span>
                   <span class="text">Public View</span>
               </template>
-              <b-dropdown-item :to="{ name: 'public incident', params: { incidentName: this.incidentName.replace(/ /g, '-'), incidentId: this.incidentId }}">View public page</b-dropdown-item>
+              <b-dropdown-item :to="{ name: 'publicIncident', params: { incidentName: this.incidentName.replace(/ /g, '-'), incidentId: this.incidentId }}">View public page</b-dropdown-item>
               <b-dropdown-item @click="isIncidentPublicModalVisible = true">Edit public page</b-dropdown-item>
               <social-sharing url="" :title="`[System Generated] ${getName}\n${getDescription}\n${getUrl}`" inline-template>
                 <network network="twitter">
@@ -46,13 +48,13 @@
               <b-dropdown-item>User</b-dropdown-item>
               <b-dropdown-item @click="isFlagToSupervisorModalVisible = true">Supervisor</b-dropdown-item>
             </b-dropdown>
-            <flag-to-supervisor-modal v-if="isFlagToSupervisorModalVisible" v-show="isFlagToSupervisorModalVisible" :visible="isFlagToSupervisorModalVisible" @close="isFlagToSupervisorModalVisible = false" />
+            <flag-to-supervisor-modal v-if="isFlagToSupervisorModalVisible" v-show="isFlagToSupervisorModalVisible" :visible="isFlagToSupervisorModalVisible" :incidentId="incidentId" @close="isFlagToSupervisorModalVisible = false" />
           </div>
         </div>
         <div class="row">
           <div class="col-xl-3 col-md-6 mb-4">
             <div v-if="!incident" class="card border-left-primary shadow h-100 py-2">
-              <vcl-list />
+              <vcl-bullet-list-reversed />
             </div>
             <div v-else class="card border-left-primary shadow h-100 py-2">
               <b-dropdown id="ChangeAllocationDropdown" v-if="hasPermission('change_allocation')" size="xs" right menu-class="mt-3 width-110" variant="link" toggle-tag="div" @shown="openedAllocationDropdown" @hidden="closedAllocationDropdown">
@@ -92,7 +94,7 @@
           </div>
           <div class="col-xl-3 col-md-6 mb-4">
             <div v-if="!incident" class="card border-left-primary shadow h-100 py-2">
-              <vcl-list />
+              <vcl-bullet-list-reversed />
             </div>
             <div v-else :class="['card', 'shadow', 'h-100', 'py-2', 'border-left-' + incident.priority]">
               <b-dropdown id="ChangePriorityDropdown" v-if="hasPermission('change_priority')" size="xs" right menu-class="mt-3" variant="link" toggle-tag="div">
@@ -146,7 +148,7 @@
           </div>
           <div class="col-xl-3 col-md-6 mb-4">
             <div v-if="!incident" class="card border-left-primary shadow h-100 py-2">
-              <vcl-list />
+              <vcl-bullet-list-reversed />
             </div>
             <div v-else-if="incident.lastUpdatedAt !== incident.createdAt" class="card border-left-info shadow h-100 py-2">
               <div class="card-body">
@@ -220,7 +222,7 @@
               <incident-map-modal v-if="isIncidentMapModalVisible" v-show="isIncidentMapModalVisible" :visible="isIncidentMapModalVisible" :incidentId="incidentId" :currentLocation="incident.location.geometry.coordinates" @close="isIncidentMapModalVisible = false" />
               <div class="card-body">
                 <div v-if="!incident">
-                  <vcl-facebook />
+                  <vcl-square />
                 </div>
                 <l-map v-else-if="incident.location.geometry.coordinates" :zoom="mapSettings.zoom" :center="mapCoords" class="map-container-incident" ref="map">
                   <l-tile-layer :url="mapSettings.url" :attribution="mapSettings.attribution" />
@@ -276,7 +278,7 @@ import Multiselect from 'vue-multiselect'
 import { divIcon, latLng } from 'leaflet'
 import { mapGetters, mapActions } from 'vuex'
 import { LMap, LTileLayer, LMarker } from 'vue2-leaflet'
-import { VclList, VclFacebook, VclBulletList } from 'vue-content-loading'
+import { VclFacebook, VclBulletList } from 'vue-content-loading'
 
 import router from '@/router/index'
 import Topbar from '@/components/Topbar'
@@ -285,6 +287,7 @@ import Task from '@/components/Task'
 import Comment from '@/components/Comment'
 import Activity from '@/components/Activity'
 import CommentBox from '@/components/CommentBox'
+import RequestStatusChangeModal from '@/components/modals/RequestStatusChange'
 import FlagToSupervisorModal from '@/components/modals/FlagToSupervisor'
 import IncidentPublicModal from '@/components/modals/IncidentPublic'
 import IncidentDetailsModal from '@/components/modals/IncidentDetails'
@@ -293,6 +296,8 @@ import NewTaskModal from '@/components/modals/NewTask'
 import TaskModal from '@/components/modals/Task'
 import FileUploaderModal from '@/components/modals/FileUploader'
 import QuestionModal from '@/components/modals/Question'
+import VclSquare from '@/components/utils/VclSquare'
+import VclBulletListReversed from '@/components/utils/VclBulletListReversed'
 
 export default {
   name: 'incident',
@@ -304,6 +309,7 @@ export default {
     Comment,
     Activity,
     CommentBox,
+    RequestStatusChangeModal,
     FlagToSupervisorModal,
     NewTaskModal,
     TaskModal,
@@ -315,9 +321,10 @@ export default {
     LMap,
     LTileLayer,
     LMarker,
-    VclList,
     VclFacebook,
     VclBulletList,
+    VclSquare,
+    VclBulletListReversed,
     Multiselect
   },
   props: {
@@ -341,6 +348,7 @@ export default {
       isSelectLoading: false,
       showFlagDropdown: false,
       showPriorityDropdown: false,
+      isRequestStatusChangeModalVisible: false,
       isFlagToSupervisorModalVisible: false,
       isIncidentPublicModalVisible: false,
       isIncidentDetailsModalVisible: false,
@@ -357,6 +365,8 @@ export default {
     markAsComplete: function () {
       if (this.hasPermission('change_status')) {
         this.ApiPut(`incidents/${this.incidentId}/status`, { open: !this.incident.open })
+      } else {
+        this.isRequestStatusChangeModalVisible = true
       }
     },
     changePriority: function (priority) {
@@ -511,7 +521,7 @@ export default {
       return this.incident.publicDescription ? this.incident.publicDescription : this.incident.description
     },
     getUrl: function () {
-      return window.location.origin + '/' + router.resolve({ name: 'public incident', params: { incidentName: this.incident.name.replace(/ /g, '-'), incidentId: this.incident.id } }).href
+      return window.location.origin + '/' + router.resolve({ name: 'publicIncident', params: { incidentName: this.incident.name.replace(/ /g, '-'), incidentId: this.incident.id } }).href
     },
     ...mapGetters('user', {
       hasPermission: 'hasPermission'
@@ -547,7 +557,7 @@ export default {
     }
   },
   async created () {
-    this.checkUserLoaded()
+    this.checkUserLoaded(true)
     this.checkDeploymentsLoaded()
     this.checkIncidentsLoaded(this.deploymentId)
     this.checkSocketsConnected(this.deploymentId)

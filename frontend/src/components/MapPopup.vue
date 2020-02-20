@@ -15,9 +15,12 @@
         <p class="card-text my-1"><b>Description:</b> {{ properties.description }}</p>
         <p class="card-text my-1"><b>Location:</b> {{ properties.address }}</p>
         <p v-if="properties.tasks" class="card-text my-1"><b>Tasks:</b> {{ properties.tasks }}</p>
-        <p v-if="properties.comments" class="card-text my-1"><b>Comments:</b> {{ properties.comments }}</p>
+        <p v-if="properties.comments" class="card-text my-1"><b>Updates:</b> {{ properties.comments }}</p>
         <div class="text-center mt-3">
-          <router-link :to="{ name: 'incident', params: { deploymentName: properties.deploymentName.replace(/ /g, '-'), deploymentId: properties.deploymentId, incidentName: properties.name.replace(/ /g, '-'), incidentId: properties.id }}">
+          <router-link v-if="!publicPage" :to="{ name: 'incident', params: { deploymentName: properties.deploymentName.replace(/ /g, '-'), deploymentId: properties.deploymentId, incidentName: properties.name.replace(/ /g, '-'), incidentId: properties.id }}">
+            <a :class="btnClass">Go To Incident</a>
+          </router-link>
+          <router-link v-else :to="{ name: 'publicIncident', params: { incidentName: properties.name.replace(/ /g, '-'), incidentId: properties.id }}">
             <a :class="btnClass">Go To Incident</a>
           </router-link>
         </div>
@@ -29,20 +32,24 @@
 export default {
   name: 'MapPopup',
   props: {
-    properties: Object
+    properties: Object,
+    publicPage: {
+      type: Boolean,
+      default: false
+    }
   },
   computed: {
     updated: function () {
       return this.properties.lastUpdatedAt !== this.properties.createdAt
     },
     cardHeaderClass: function () {
-      return `card-header bg-${this.properties.open ? 'success' : 'info'} align-items-center justify-content-between`
+      return `card-header bg-${this.properties.open ? 'success' : 'closed'} align-items-center justify-content-between`
     },
     iconClass: function () {
       return `fas fa-${this.properties.icon} float-right text-white fa-stack-1x fa-inverse`
     },
     btnClass: function () {
-      return `btn btn-${this.properties.open ? 'success' : 'info'} text-light`
+      return `btn btn-${this.properties.open ? 'success' : 'closed'} text-light`
     }
   }
 }

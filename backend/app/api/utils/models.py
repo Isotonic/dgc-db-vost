@@ -204,7 +204,7 @@ public_incident_model = api.model('Public Incident',
                              'icon': fields.String(attribute=lambda x: x.get_icon(), description='FontAwesome Icon.'),
                              'location': fields.Nested(point_feature_model, attribute=lambda x: x, description='GeoJSON Point of the location.'),
                              'createdAt': fields.Integer(attribute=lambda x: int(x.created_at.timestamp()), description='UTC timestamp of the incident\'s creation.'),
-                             'lastUpdatedAt': fields.Integer(attribute=lambda x: int(x.last_updated.timestamp()), description='UTC timestamp of the incident\'s last update.'),
+                             'lastUpdatedAt': fields.Integer(attribute=lambda x: x.get_last_public_updated_at(), description='UTC timestamp of the incident\'s last update.'),
                              'comments': fields.List(fields.Nested(public_comment_model), attribute=lambda x: x.public_comments())})
 
 pinned_model = api.model('Pinned', {'pinned': fields.Boolean(description='Pinned status.', required=True)})
@@ -240,3 +240,27 @@ registration_model = api.model('Registration', {'firstname': fields.String(descr
 coordinates_model = api.model('Coordinates',
                             {'longitude': fields.Float(required=True),
                              'latitude': fields.Float(required=True)})
+
+incident_model_name = api.model('Incident Name',
+                            {'id': fields.Integer(description='ID of the incident.'),
+                             'name': fields.String(description='Name of the incident.')})
+
+
+action_required_model = api.model('Actions Required',
+                                     {'id': fields.Integer(description='ID of the requested action.'),
+                                      'incident': fields.Nested(incident_model_name, attribute='incident'),
+                                      'requestedBy': fields.Nested(user_model_without_group, attribute='requested_by'),
+                                      'type': fields.String(attribute='action_type'),
+                                      'reason': fields.String(),
+                                      'requestedAt': fields.Integer(attribute=lambda x: int(x.requested_at.timestamp()))})
+
+mark_dealt_with_model = api.model('Mark Dealt With', {'carryOutAction': fields.Boolean(description='Optional carrying out of action if it\'s changing the incident\'s status.')})
+
+flag_reason_model = api.model('Flag Reason', {'reason': fields.String(description='Reason for flagging.', required=True)})
+
+status_change_reason_model = api.model('Reason', {'reason': fields.String(description='Optional reason for requesting status change')})
+
+public_deployment_model = api.model('Public Deployment',
+                            {'id': fields.Integer(description='ID of the deployment.'),
+                             'name': fields.String(description='Name of the deployment.'),
+                             'description': fields.String(description='Description of the deployment.')})

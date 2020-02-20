@@ -165,7 +165,7 @@ export default {
       return this.incident.publicName ? this.incident.publicName : this.incident.name
     },
     publicUrl: function () {
-      return window.location.origin + '/' + router.resolve({ name: 'public incident', params: { incidentName: this.incident.name.replace(/ /g, '-'), incidentId: this.incident.id } }).href
+      return window.location.origin + '/' + router.resolve({ name: 'publicIncident', params: { incidentName: this.incident.name.replace(/ /g, '-'), incidentId: this.incident.id } }).href
     },
     ...mapGetters('user', {
       hasPermission: 'hasPermission'

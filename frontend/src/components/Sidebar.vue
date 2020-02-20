@@ -46,7 +46,9 @@
       <li class="nav-item">
         <router-link :to="{ name: 'actionsRequired', params: {deploymentName: deploymentName.replace(/ /g, '-'), deploymentId: deploymentId} }" class="nav-link">
           <i class="fas fa-fw fa-flag"></i>
-          <span>Actions Required </span>
+          <span>Actions Required
+            <span v-if="actionsRequired > 0"  class="badge badge-light ml-1">{{ actionsRequired }}</span>
+            </span>
         </router-link>
       </li>
     </div>
@@ -79,6 +81,9 @@ export default {
   computed: {
     isSupervisor: function () {
       return this.$store.getters['user/hasPermission']('supervisor')
+    },
+    actionsRequired: function () {
+      return this.$store.getters['incidents/getActionsRequiredAmount']
     }
   },
   watch: {

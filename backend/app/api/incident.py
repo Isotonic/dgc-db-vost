@@ -7,8 +7,9 @@ from .utils.resource import Resource
 from .utils.namespace import Namespace
 from ..utils.create import create_comment, create_task
 from flask_jwt_extended import jwt_required, get_jwt_identity
+from ..utils.supervisor import flag_to_supervisor, request_incident_status_change
 from ..utils.change import edit_incident, change_incident_status, change_incident_allocation, change_incident_priority, change_incident_public, change_incident_location
-from .utils.models import id_model, incident_model, pinned_model, status_model, user_model, priority_model, public_model, comment_model, new_comment_model, task_model, new_task_model, edit_incident_model, point_feature_model, coordinates_model
+from .utils.models import id_model, incident_model, pinned_model, status_model, user_model, priority_model, public_model, comment_model, new_comment_model, task_model, new_task_model, edit_incident_model, point_feature_model, coordinates_model, flag_reason_model, status_change_reason_model
 
 ns_incident = Namespace('Incident', description='Used to carry out actions related to incidents.', path='/incidents', decorators=[jwt_required])
 
@@ -151,7 +152,6 @@ class StatusEndpoint(Resource):
     @ns_incident.doc(security='access_token')
     @ns_incident.expect(status_model, validate=True)
     @ns_incident.response(200, 'Success', status_model)
-    @ns_incident.response(400, 'Input payload validation failed')
     @ns_incident.response(400, 'Incident already has this status')
     @ns_incident.response(401, 'Incorrect credentials')
     @ns_incident.response(403, 'Missing incident access')
@@ -168,6 +168,52 @@ class StatusEndpoint(Resource):
         if change_incident_status(incident, api.payload['open'], current_user) is False:
             ns_incident.abort(400, 'Incident already has this status')
         return incident, 200
+
+
+@ns_incident.route('/<int:id>/request-status-change')
+@ns_incident.doc(params={'id': 'Incident ID.'})
+@ns_incident.resolve_object('incident', lambda kwargs: Incident.query.get_or_error(kwargs.pop('id')))
+class RequestStatusChangeEndpoint(Resource):
+    @ns_incident.doc(security='access_token')
+    @ns_incident.expect(status_change_reason_model)
+    @ns_incident.response(200, 'Success', status_change_reason_model)
+    @ns_incident.response(400, 'Reason is empty')
+    @ns_incident.response(401, 'Incorrect credentials')
+    @ns_incident.response(403, 'Missing incident access')
+    @ns_incident.response(404, 'Incident doesn\'t exist')
+    def post(self, incident):
+        """
+                Request incident to change it's status.
+        """
+        current_user = User.query.filter_by(id=get_jwt_identity()).first()
+        ns_incident.has_incident_access(current_user, incident)
+        reason = None
+        if 'reason' in api.payload.keys():
+            reason = api.payload['reason']
+        request_incident_status_change(incident, reason, current_user)
+        return 'Success', 200
+
+
+@ns_incident.route('/<int:id>/flag-to-supervisor')
+@ns_incident.doc(params={'id': 'Incident ID.'})
+@ns_incident.resolve_object('incident', lambda kwargs: Incident.query.get_or_error(kwargs.pop('id')))
+class FlagToSupervisorEndpoint(Resource):
+    @ns_incident.doc(security='access_token')
+    @ns_incident.expect(flag_reason_model, validate=True)
+    @ns_incident.response(200, 'Success', flag_reason_model)
+    @ns_incident.response(400, 'Reason is empty')
+    @ns_incident.response(401, 'Incorrect credentials')
+    @ns_incident.response(403, 'Missing incident access')
+    @ns_incident.response(404, 'Incident doesn\'t exist')
+    def post(self, incident):
+        """
+                Flag's to a supervisor.
+        """
+        current_user = User.query.filter_by(id=get_jwt_identity()).first()
+        ns_incident.has_incident_access(current_user, incident)
+        if flag_to_supervisor(incident, api.payload['reason'], current_user) is False:
+            ns_incident.abort(400, 'Reason is empty')
+        return 'Success', 200
 
 
 @ns_incident.route('/<int:id>/allocation')

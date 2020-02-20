@@ -281,12 +281,12 @@ class Incident(db.Model):
                       'Private Water Supply': 'water', 'Telecoms Outage': 'phone-slash',
                       'Blackstart': '', 'Pandemic': '', 'Food Contamination': 'utensils',
                       'Exotic Notification Disease': '', 'Terrorism': '', 'Cyber Attack': '', 'Public Disorder': '',
-                      'Protest': '', 'Fatalities': '', 'Casualties': 'first-aid', 'Missing Person(s)': '',
+                      'Protest': '', 'Fatalities': '', 'Casualties': 'first-aid', 'Missing Person(s)': 'user',
                       'Rescue Required': '', 'Evacuation': '', 'Rest Centre Activation': '',
                       'Survivor Reception Centre Activation': '', 'Friends & Family Reception Centre Activation': '',
                       'Humanitarian Assistance Centre Activation': '', 'Casualty Bureau Activation': '',
                       'General Welfare Provision': '', 'Vaccination': '', 'Press Release': 'newspaper',
-                      'SitRep Required': '', 'Social Media': '', 'DGVOST Activation': '', 'Control Zones': '',
+                      'SitRep Required': 'file', 'Social Media': 'hashtag', 'DGVOST Activation': '', 'Control Zones': '',
                       'Surveillance Zones': 'video',
                       'Movement Restrictions': '', 'Cull': '', 'Disposal': '', 'Disinfection': '', 'Animal Welfare': '',
                       'Plume': '', 'Radiation Pollution': 'radiation-alt', 'Hazardous Chemical Pollution': '',
@@ -344,32 +344,17 @@ class Incident(db.Model):
     def get_coordinates(self):
         return [self.longitude, self.latitude]
 
-    def generate_geojson(self):
-        if not self.longitude or not self.latitude:
-            return
-        return {
-            'type': 'Feature',
-            'properties': {
-                'name': self.name,
-                'description': self.description,
-                'priority': self.priority,
-                'created_at': self.created_at.timestamp(),
-                'last_update': self.last_updated.timestamp(),
-                'location': self.location,
-                'tasks': self.task_string(),
-                'comments': len(self.comments),
-                'colour': self.priority_colours[self.priority],
-                'type': self.incident_type,
-                'animate': (datetime.utcnow().timestamp() - self.last_updated.timestamp()) <= 300,
-                'icon': self.get_icon(),
-                'url': url_for('view_incident', deployment_name=self.deployment, deployment_id=self.deployment.id,
-                               incident_name=self.name, incident_id=self.id)
-            },
-            'geometry': {
-                'type': 'Point',
-                'coordinates': [self.longitude, self.latitude]
-            }
-        }
+    def get_last_public_updated_at(self):
+        last_public_update = 0
+        for x in self.comments:
+            if x.public:
+                if x.edited_at and x.edited_at.timestamp() > last_public_update:
+                    last_public_update = x.edited_at.timestamp()
+                elif x.sent_at.timestamp() > last_public_update:
+                    last_public_update = x.sent_at.timestamp()
+        if last_public_update > 0:
+            return last_public_update
+        return None
 
 
 class IncidentTask(db.Model):
@@ -470,9 +455,6 @@ class SupervisorActions(db.Model):
     requested_by = db.relationship('User', backref='actions_requested')
     action_type = db.Column(db.String(64))
     reason = db.Column(db.String(1024))
-    completed = db.Column(db.Boolean(), default=False)
-    completed_by_id = db.Column(db.Integer)
-    completed_by = db.relationship('User', backref='completed_actions')
     requested_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
@@ -506,7 +488,8 @@ class IncidentLog(db.Model):
                      'marked_complete': 10, 'marked_incomplete': 11, 'changed_priority': 12,
                      'changed_task_description': 13, 'assigned_user_task': 14,
                      'removed_user_task': 15, 'marked_public': 16, 'marked_not_public': 17, 'complete_subtask': 18, 'incomplete_subtask': 19, 'create_subtask': 20, 'add_subtask_comment': 21,
-                     'marked_comment_public': 22, 'marked_comment_not_public': 23, 'edit_comment': 24, 'edit_subtask': 25, 'edit_incident': 26, 'changed_task_tags': 27, 'edit_task_comment': 28,  'delete_task_comment': 29, 'delete_subtask': 30, 'change_incident_location': 31}  ##TODO RE-ORDER ONCE DONE
+                     'marked_comment_public': 22, 'marked_comment_not_public': 23, 'edit_comment': 24, 'edit_subtask': 25, 'edit_incident': 26, 'changed_task_tags': 27, 'edit_task_comment': 28,
+                     'delete_task_comment': 29, 'delete_subtask': 30, 'change_incident_location': 31, 'flag_supervisor': 32, 'request_mark_complete': 33, 'request_mark_incomplete': 34}  ##TODO RE-ORDER ONCE DONE
     action_strings = {1: 'created incident', 2: 'created task $task', 3: 'marked $task as complete',
                       4: 'deleted task $task',
                       5: 'added an update', 6: 'deleted an update', 7: 'marked $task as incomplete',
@@ -516,7 +499,7 @@ class IncidentLog(db.Model):
                       13: 'changed $task description to "$extra"', 14: 'added $target_users to $task',
                       15: 'removed $target_users from $task', 16: 'set the incident to publicly viewable', 17: 'set the incident to private', 18: 'marked $extra as complete', 19: 'marked $extra as incomplete', 20: 'created sub-task $extra', 21: 'added comment to $task',
                       22: 'marked comment as publicly viewable', 23: 'marked comment as not publicly viewable', 24: 'edited update', 25: 'edited subtask $extra', 26: 'edited incident details', 27: 'changed tags for $task', 28: 'edited comment in $task', 29: 'deleted comment in $task', 30: 'deleted sub-task in $task',
-                      31: 'changed the incident location'}
+                      31: 'changed the incident location', 32: 'flagged the incident to a supervisor', 33: 'requested the incident be marked as complete', 34: 'requested the incident be marked as incomplete'}
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))

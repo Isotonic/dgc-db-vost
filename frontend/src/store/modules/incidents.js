@@ -3,13 +3,18 @@ import router from '@/router'
 
 const state = {
   loaded: false,
+  actionsRequiredLoaded: false,
   deploymentId: null,
-  incidents: []
+  incidents: [],
+  actionsRequired: []
 }
 
 const getters = {
   hasLoaded: (state) => {
     return state.loaded
+  },
+  hasActionsRequiredLoaded: (state) => {
+    return state.actionsRequiredLoaded
   },
   getDeploymentId: (state) => {
     return state.deploymentId
@@ -23,6 +28,12 @@ const getters = {
   getAssignedIncidents: (state, getters, rootState, rootGetters) => {
     const user = rootGetters['user/getUser']
     return state.incidents.filter(incident => incident.assignedTo.some(assignedTo => assignedTo.id === user.id))
+  },
+  getActionsRequired: (state) => {
+    return state.actionsRequired
+  },
+  getActionsRequiredAmount: (state) => {
+    return state.actionsRequired.length
   }
 }
 
@@ -32,8 +43,8 @@ const actions = {
       dispatch('storeDestroy')
     }
     if (!state.loaded) {
+      commit('setDeployment', deploymentId)
       dispatch('fetchAll', deploymentId)
-      commit('setLoaded', true)
     }
   },
   fetchAll ({ commit }, deploymentId) {
@@ -42,12 +53,24 @@ const actions = {
       .get(`deployments/${deploymentId}/incidents`)
       .then(r => r.data)
       .then(incidents => {
-        commit('setDeployment', deploymentId)
         commit('setIncidents', incidents)
+        commit('setLoaded', true)
       })
       .catch(error => {
         console.log(error.response.data.message)
         router.push({ name: 'pageNotFound' })
+      })
+  },
+  getActionsRequired ({ state, commit }) {
+    Vue.prototype.$api
+      .get(`deployments/${state.deploymentId}/actions-required`)
+      .then(r => r.data)
+      .then(actionsRequired => {
+        commit('setActionsRequired', actionsRequired)
+        commit('setActionsRequiredLoaded', true)
+      })
+      .catch(error => {
+        console.log(error.response.data.message)
       })
   },
   storeDestroy ({ commit }) {
@@ -59,11 +82,17 @@ const mutations = {
   setLoaded (state, value) {
     state.loaded = value
   },
+  setActionsRequiredLoaded (state, value) {
+    state.actionsRequiredLoaded = value
+  },
   setDeployment (state, id) {
     state.deploymentId = id
   },
   setIncidents (state, incidents) {
     state.incidents = incidents
+  },
+  setActionsRequired (state, actionsRequired) {
+    state.actionsRequired = actionsRequired
   },
   SOCKET_INCIDENT_ACTIVITY (state, data) {
     console.log('Recieved incident activity event')
@@ -71,10 +100,6 @@ const mutations = {
     if (incident) {
       incident.activity.push(data.activity)
     }
-  },
-  SOCKET_NEW_INCIDENT (state, data) {
-    console.log('Recieved incident event')
-    state.incidents.push(data.incident)
   },
   SOCKET_TASK_ACTIVITY (state, data) {
     console.log('Recieved task activity event')
@@ -85,6 +110,10 @@ const mutations = {
         task.activity.push(data.activity)
       }
     }
+  },
+  SOCKET_NEW_INCIDENT (state, data) {
+    console.log('Recieved incident event')
+    state.incidents.push(data.incident)
   },
   SOCKET_NEW_COMMENT (state, data) {
     console.log('Recieved comment event')
@@ -119,6 +148,10 @@ const mutations = {
         task.subtasks.push(data.subtask)
       }
     }
+  },
+  SOCKET_NEW_ACTION_REQUIRED (state, data) {
+    console.log('Recieved action required event')
+    state.actionsRequired.push(data.action)
   },
   SOCKET_CHANGE_PIN (state, data) {
     console.log('Recieved pin event')
@@ -315,6 +348,10 @@ const mutations = {
         task.subtasks = task.subtasks.filter(task => task.id !== data.id)
       }
     }
+  },
+  SOCKET_DELETE_ACTION_REQUIRED (state, data) {
+    console.log('Recieved action delete event')
+    state.actionsRequired = state.actionsRequired.filter(action => action.id !== data.id)
   },
   destroy (state) {
     state.loaded = false

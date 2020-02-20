@@ -83,6 +83,7 @@ from .comment import ns_comment
 from .task import ns_task
 from .task_comment import ns_task_comment
 from .subtask import ns_subtask
+from .actions_required import ns_actions_required
 from .public import ns_public
 
 api.add_namespace(ns_auth)
@@ -94,4 +95,5 @@ api.add_namespace(ns_comment)
 api.add_namespace(ns_task)
 api.add_namespace(ns_task_comment)
 api.add_namespace(ns_subtask)
+api.add_namespace(ns_actions_required)
 api.add_namespace(ns_public)

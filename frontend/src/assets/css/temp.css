@@ -83,6 +83,7 @@
 
 .task:hover,
 .incident-card:hover,
+#ActionsRequiredTable > .table-responsive > table > tbody > tr:hover,
 #IncidentsTable > .table-responsive > table > tbody > tr:hover {
   cursor: pointer;
   color: #858796;
@@ -293,10 +294,18 @@ li.update-log > .update-log-avatar {
   box-shadow: 0 0 0 1px rgba(185,187,190,.3), 0 2px 10px 0 rgba(0,0,0,.1);
 }
 
+.update-log-text.public {
+  max-width: calc(100% - 20px) !important;
+}
+
 li.update-log > .update-log-text {
   text-align: left;
   left: 16px;
   margin-left: 60px;
+}
+
+li.update-log > .update-log-text.public {
+  margin-left: 10px !important;
 }
 
 .update-log-text:before {
@@ -946,6 +955,7 @@ li[data-done=false] {
   margin-top: 15px;
 }
 
+.fas.fa-check-double.hover:hover,
 .fas.fa-check.hover:hover:not(.comment-empty) {
   cursor: pointer;
   color: #02df90 !important;
@@ -1058,6 +1068,16 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
   -webkit-animation: active 2s infinite linear;
   -moz-animation: active 2s infinite linear;
   animation: active 2s infinite linear;
+}
+
+.beacon-open.beacon::before,
+.beacon-open.beacon::after {
+  box-shadow: 0 0 0 3px #02df90;
+}
+
+.beacon-closed.beacon::before,
+.beacon-closed.beacon::after {
+  box-shadow: 0 0 0 3px #95a5a6;
 }
 
 .beacon-Standard.beacon::before,
@@ -1268,4 +1288,9 @@ div .marker {
   width: 100% !important;
   overflow: visible !important;
   height: 70vh;
+}
+
+.public-heading {
+  padding-bottom: 120px;
+  margin-bottom: -120px;
 }

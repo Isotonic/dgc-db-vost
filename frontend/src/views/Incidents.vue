@@ -226,7 +226,7 @@ export default {
           lastUpdated: function (ascending) {
             return function (a, b) {
               let lastA = a.lastUpdatedAt
-              let lastB = b.lastUpdated
+              let lastB = b.lastUpdatedAt
 
               lastA = isNaN(lastA) ? -1 : lastA
               lastB = isNaN(lastB) ? -1 : lastB
@@ -409,7 +409,7 @@ export default {
     if (localStorage.showingStatus) {
       this.showingStatus = localStorage.showingStatus
     }
-    this.checkUserLoaded()
+    this.checkUserLoaded(true)
     this.checkDeploymentsLoaded()
     this.checkIncidentsLoaded(this.deploymentId)
     this.checkSocketsConnected(this.deploymentId)
@@ -417,7 +417,8 @@ export default {
   mounted () {
     let self = this
     Event.$on('vue-tables.row-click', function (data) {
-      if (data.event.target.className.includes('fa-bookmark')) {
+      const sel = getSelection().toString()
+      if (data.event.target.className.includes('fa-bookmark') || sel) {
         return
       }
       router.push({ name: 'incident', params: { deploymentName: self.deploymentNameApi.replace(/ /g, '-'), deploymentId: self.deploymentId, incidentName: data.row.name.replace(/ /g, '-'), incidentId: data.row.id } })

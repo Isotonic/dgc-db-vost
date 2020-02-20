@@ -7,7 +7,7 @@ from ..utils.change import change_task_comment_text
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from .utils.models import task_comment_model, text_model, comment_edited_model
 
-ns_task_comment = Namespace('Task Comment', description='Used to carry out actions related to comments.', path='/task-comments', decorators=[jwt_required])
+ns_task_comment = Namespace('Task Comment', description='Used to carry out actions related to task comments.', path='/task-comments', decorators=[jwt_required])
 
 @ns_task_comment.route('/<int:id>')
 @ns_task_comment.doc(params={'id': 'Task Comment ID.'})

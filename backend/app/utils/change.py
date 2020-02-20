@@ -1,11 +1,12 @@
 import re
 from app import db
+from . import supervisor
 from datetime import datetime
 from flask_restx import marshal
 from flask_socketio import emit
 from .actions import audit_action, incident_action, task_action
-from app.models import User, Group, AuditLog, IncidentLog, TaskLog
-from ..api.utils.models import user_model_without_group, point_feature_model
+from app.models import User, Group, AuditLog, IncidentLog, TaskLog, SupervisorActions
+from ..api.utils.models import user_model_without_group, group_model, point_feature_model
 
 
 def complete_registration(email_link, firstname, surname, password):
@@ -46,7 +47,9 @@ def edit_deployment(deployment, name, description, open_status, group_ids, user_
     deployment.open_status = open_status
     deployment.groups = groups
     deployment.users = users
-    #emit('create_deployment', {'html': render_template('deployment_card.html', deployment=deployment), 'code': 200}, room='deployments')
+    users_marshalled = marshal(deployment.users, user_model_without_group)
+    groups_marshalled = marshal(deployment.groups, group_model)
+    emit('CHANGE_DEPLOYMENT_EDIT', {'id': deployment.id, 'name': name, 'description': description, 'open': open_status, 'groups': groups_marshalled, 'users': users_marshalled, 'code': 200}, namespace='', room='deployments')
     audit_action(changed_by, action_type=AuditLog.action_values['edit_deployment'], target_id=deployment.id)
     return deployment
 
@@ -76,6 +79,9 @@ def change_incident_status(incident, status, changed_by):
         action_type = 'marked_complete'
     emit('CHANGE_INCIDENT_STATUS', {'id': incident.id, 'open': status, 'code': 200}, namespace='', room=f'{incident.deployment_id}-all')
     incident_action(user=changed_by, action_type=IncidentLog.action_values[action_type], incident=incident)
+    actions_required = SupervisorActions.query.filter_by(incident_id=incident.id, action_type='Mark As Complete' if status else 'Mark As Incomplete').all()
+    for x in actions_required:
+        supervisor.mark_request_complete(x, False, changed_by)
 
 
 def change_incident_allocation(incident, allocated_to, changed_by):
@@ -84,14 +90,19 @@ def change_incident_allocation(incident, allocated_to, changed_by):
     added = list(set(allocated_to) - set(incident.assigned_to))
     removed = list(set(incident.assigned_to) - set(allocated_to))
     incident.assigned_to = allocated_to
-    users = marshal(incident.assigned_to, user_model_without_group)
-    emit('CHANGE_INCIDENT_ALLOCATION', {'id': incident.id, 'assignedTo': users, 'code': 200}, namespace='', room=f'{incident.deployment_id}-all')
+    users_marshalled = marshal(incident.assigned_to, user_model_without_group)
+    emit('CHANGE_INCIDENT_ALLOCATION', {'id': incident.id, 'assignedTo': users_marshalled, 'code': 200}, namespace='', room=f'{incident.deployment_id}-all')
     if removed:
         incident_action(user=changed_by, action_type=IncidentLog.action_values['removed_user'],
                         incident=incident, target_users=removed)
     if added:
         incident_action(user=changed_by, action_type=IncidentLog.action_values['assigned_user'],
                         incident=incident, target_users=added)
+    if not incident.supervisor_approved:
+        incident.supervisor_approved = True
+        action_required = SupervisorActions.query.filter_by(incident_id=incident.id, action_type='New Incident').first()
+        if action_required:
+            supervisor.mark_request_complete(action_required, False, changed_by)
 
 
 def change_incident_priority(incident, priority, changed_by):
@@ -190,8 +201,8 @@ def change_task_assigned(task, assigned_to, changed_by):
     task.assigned_to = assigned_to
     if any([m for m in assigned_to if m not in task.incident.assigned_to]):
         change_incident_allocation(task.incident, assigned_to + task.incident.assigned_to, changed_by)
-    users = marshal(task.assigned_to, user_model_without_group)
-    emit('CHANGE_TASK_ASSIGNED', {'id': task.id, 'incidentId': task.incident.id, 'assignedTo': users, 'code': 200}, namespace='', room=f'{task.incident.deployment_id}-all')
+    users_marshalled = marshal(task.assigned_to, user_model_without_group)
+    emit('CHANGE_TASK_ASSIGNED', {'id': task.id, 'incidentId': task.incident.id, 'assignedTo': users_marshalled, 'code': 200}, namespace='', room=f'{task.incident.deployment_id}-all')
     if removed:
         task_action(user=changed_by, action_type=TaskLog.action_values['removed_user'], task=task,
                     target_users=removed)
@@ -244,8 +255,8 @@ def change_subtask(subtask, name, assigned_to, changed_by):
         change_incident_allocation(task.incident, assigned_to + task.incident.assigned_to, changed_by)
     if any([m for m in assigned_to if m not in task.assigned_to]):
         change_task_assigned(task, assigned_to + task.assigned_to, changed_by)
-    users = marshal(subtask.assigned_to, user_model_without_group)
-    emit('CHANGE_SUBTASK_EDIT', {'id': subtask.id, 'taskId': task.id, 'incidentId': task.incident.id, 'name': name, 'assignedTo': users, 'code': 200}, namespace='', room=f'{task.incident.deployment_id}-all')
+    users_marshalled = marshal(subtask.assigned_to, user_model_without_group)
+    emit('CHANGE_SUBTASK_EDIT', {'id': subtask.id, 'taskId': task.id, 'incidentId': task.incident.id, 'name': name, 'assignedTo': users_marshalled, 'code': 200}, namespace='', room=f'{task.incident.deployment_id}-all')
     task_action(user=changed_by, action_type=TaskLog.action_values['edit_subtask'], task=task, subtask=subtask)
     incident_action(user=changed_by, action_type=IncidentLog.action_values['edit_subtask'], incident=task.incident, task=task,
                     extra=subtask.name)
