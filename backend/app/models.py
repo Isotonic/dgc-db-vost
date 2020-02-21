@@ -575,21 +575,3 @@ class RevokedToken(db.Model):
     def is_jti_blacklisted(cls, jti):
         query = cls.query.filter_by(jti=jti).first()
         return bool(query)
-
-
-admin = Admin(app, name='DGVOST', template_mode='bootstrap3')
-admin.add_view(ModelView(User, db.session))
-admin.add_view(ModelView(Group, db.session))
-admin.add_view(ModelView(Deployment, db.session))
-admin.add_view(ModelView(Incident, db.session))
-admin.add_view(ModelView(IncidentTask, db.session))
-admin.add_view(ModelView(IncidentSubTask, db.session))
-admin.add_view(ModelView(TaskComment, db.session))
-admin.add_view(ModelView(IncidentComment, db.session))
-admin.add_view(ModelView(IncidentMedia, db.session))
-admin.add_view(ModelView(SupervisorActions, db.session))
-admin.add_view(ModelView(EmailLink, db.session))
-admin.add_view(ModelView(AuditLog, db.session))
-admin.add_view(ModelView(IncidentLog, db.session))
-admin.add_view(ModelView(TaskLog, db.session))
-admin.add_view(ModelView(RevokedToken, db.session))

@@ -170,6 +170,23 @@ task_model = api.model('Task',
                          'comments': fields.List(fields.Nested(task_comment_model), description='Comments in the task, can be empty.'),
                          'activity': fields.List(fields.Nested(activity_model), attribute='logs', description='Actions the occured in the task.')}) ##TODO Change to actions
 
+
+task_model_with_incident = api.model('Task With Incident',
+                        {'id': fields.Integer(description='ID of the task.'),
+                         'name': fields.String(description='Name of the task.'),
+                         'description': fields.String(description='Description of the task.'),
+                         'incidentId': fields.Integer(attribue=lambda x: x.incident_id, description='ID of the incident it belongs to'),
+                         'deploymentId': fields.Integer(attribue=lambda x: x.incident.deployment.id, description='ID of the deployment it belongs to'),
+                         'tags': fields.List(fields.String, attribute=lambda x: x.tags if x.tags else [], description='Tags given to a task, can be empty.'),
+                         'completed': fields.Boolean(description='If the task is marked as complete or not.'),
+                         'createdAt': fields.Integer(attribute=lambda x: int(x.created_at.timestamp()), description='UTC timestamp of the task\'s creation.'),
+                         'completedAt': fields.Integer(attribute=lambda x: int(x.completed_at.timestamp()) if x.completed_at else None, description='UTC timestamp of the task\'s completion, will be null if it isn\'t completed.'),
+                         'assignedTo': fields.List(fields.Nested(user_model_without_group), attribute='assigned_to', description='User\'s the task is assigned to, can be empty.'),
+                         'subtasks': fields.List(fields.Nested(subtask_model), description='Tasks within the task, can be empty.'),
+                         'comments': fields.List(fields.Nested(task_comment_model), description='Comments in the task, can be empty.'),
+                         'activity': fields.List(fields.Nested(activity_model), attribute='logs', description='Actions the occured in the task.')}) ##TODO Change to actions
+
+
 incident_model = api.model('Incident',
                             {'id': fields.Integer(description='ID of the incident.'),
                              'name': fields.String(description='Name of the incident.'),

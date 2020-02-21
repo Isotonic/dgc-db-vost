@@ -93,7 +93,7 @@ export default {
   },
   async created () {
     if (localStorage.minimiseSidebar) {
-      this.minimised = localStorage.minimiseSidebar
+      this.minimised = JSON.parse(localStorage.minimiseSidebar)
     }
   }
 }

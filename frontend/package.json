@@ -18,7 +18,7 @@
     "html-to-text": "^5.1.1",
     "leaflet": "^1.6.0",
     "leaflet.heat": "^0.2.0",
-    "mapbox-gl": "^1.7.0",
+    "mapbox-gl": "^1.8.0",
     "socket.io-client": "^2.3.0",
     "tiptap": "^1.26.6",
     "tiptap-extensions": "^1.28.6",
