@@ -153,7 +153,7 @@ export default {
       hasCentered: false,
       mapSettings: {
         url: 'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
-        attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors | <a href="https://foundation.wikimedia.org/wiki/Maps_Terms_of_Use">Wikimedia Maps</a>',
+        attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors',
         zoom: 15
       }
     }
@@ -329,7 +329,7 @@ export default {
     }
   },
   async created () {
-    this.checkUserLoaded()
+    this.checkUserLoaded(null)
     this.getIncidentsData()
     this.getDeploymentsData()
   }

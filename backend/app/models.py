@@ -113,7 +113,7 @@ class User(db.Model, UserMixin):
         avatar.generate().save(f'./app/static/img/avatars/{self.id}_{self.firstname}_{self.surname}.png')
 
     def get_avatar(self, static=True):
-        return 'https://i.imgur.com/m4Klh5p.png'
+        return f'https://eu.ui-avatars.com/api/?name={self.firstname}+{self.surname}&background={avatar_colours[self.id % len(avatar_colours)][1:]}&color=fff&font-size=0.5'
         try:
             avatar_path = f'{"/static/" if static else ""}img/avatars/{self.id}_{self.firstname}_{self.surname}.png'
             if path.exists(f'./app{avatar_path}'):
@@ -472,7 +472,7 @@ class EmailLink(db.Model):
 
 class AuditLog(db.Model):
     action_values = {'create_user': 1, 'verify_user': 2, 'edit_user_group': 3, 'edit_user_status': 4, 'delete_user': 5, 'create_group': 6,
-                     'edit_group': 7, 'delete_group': 8, 'create_deployment': 9, 'edit_deployment': 10}
+                     'edit_group': 7, 'delete_group': 8, 'create_deployment': 9, 'edit_deployment': 10, 'activate_user': 11, 'deactivate_user': 12}
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))

@@ -1,6 +1,6 @@
 <template>
   <nav :class="['navbar', 'navbar-expand', 'navbar-light', 'bg-white', 'topbar', 'static-top shadow', noMargin ? '' : 'mb-4']">
-    <router-link v-if="nosidebar || noSearchBar" :to="{ name: 'publicMap' }" class="deployments_brand_img">
+    <router-link v-if="nosidebar || noSearchBar" :to="{ name: goToDeployments ? 'deployments' : 'publicMap' }" class="deployments_brand_img">
       <img class="deployments_brand_img" src="@/assets/img/Logos/Default.png">
     </router-link>
     <button v-else class="btn btn-link d-md-none rounded-circle mr-3" @click="$emit('toggleSidebar')">
@@ -89,6 +89,10 @@ export default {
       default: false
     },
     noMargin: {
+      type: Boolean,
+      default: false
+    },
+    goToDeployments: {
       type: Boolean,
       default: false
     }

@@ -19,7 +19,7 @@
                 <p class="card-text"><b>Description:</b> {{ incident.description }}</p>
               </div>
             </div>
-            <div class="card shadow mb-4">
+            <div v-if="incident.comments.length" class="card shadow mb-4">
               <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 font-weight-bold text-primary">Updates</h6>
               </div>
@@ -76,7 +76,7 @@ export default {
       incidentData: null,
       mapSettings: {
         url: 'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
-        attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors | <a href="https://foundation.wikimedia.org/wiki/Maps_Terms_of_Use">Wikimedia Maps</a>',
+        attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors',
         zoom: 15
       }
     }

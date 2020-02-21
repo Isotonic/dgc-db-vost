@@ -38,27 +38,27 @@ const getters = {
 }
 
 const actions = {
-  checkLoaded ({ state, commit, dispatch }, deployment) {
+  checkLoaded ({ state, commit, dispatch }, deploymentId) {
     if (!state.user && localStorage.getItem('accessToken') !== null) {
       Vue.prototype.$api
         .get('users/me')
         .then(r => r.data)
         .then(user => {
           commit('setUser', user)
-          if (deployment) {
-            dispatch('checkActionsRequired')
+          if (deploymentId !== null) {
+            dispatch('checkActionsRequired', deploymentId)
           }
         })
         .catch(error => {
           console.log(error.response.data.message)
         })
-    } else if (deployment) {
-      dispatch('checkActionsRequired')
+    } else if (deploymentId !== null) {
+      dispatch('checkActionsRequired', deploymentId)
     }
   },
-  checkActionsRequired ({ dispatch, getters }) {
+  checkActionsRequired ({ dispatch, getters }, deploymentId) {
     if (getters['hasPermission']('supervisor') && !getters['incidents/hasActionsRequiredLoaded']) {
-      dispatch('incidents/getActionsRequired', null, { root: true })
+      dispatch('incidents/fetchActionsRequired', deploymentId, { root: true })
     }
   },
   login ({ commit, dispatch }, [email, password]) {
@@ -86,7 +86,7 @@ const actions = {
         })
     })
   },
-  authRefresh ({ state, commit, dispatch }) {
+  authRefresh ({ state, commit, dispatch, rootGetters }) {
     return new Promise((resolve, reject) => {
       Vue.prototype.$http
         .get('auth/refresh-access', { headers: { 'Authorization': `Bearer ${state.refreshToken}` } })
@@ -96,6 +96,10 @@ const actions = {
           commit('setAccessToken', tokens.access_token)
           commit('setRefreshToken', tokens.refresh_token)
           dispatch('checkLoaded')
+          if (!rootGetters['sockets/isConnected']) {
+            console.log('Retrying websocket')
+            dispatch('sockets/connect', null, { root: true })
+          }
           resolve()
         })
         .catch((error) => {

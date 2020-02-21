@@ -1,7 +1,7 @@
 <template>
   <div id="wrapper">
     <div id="content-wrapper" class="d-flex flex-column">
-      <topbar :nosidebar="true" />
+      <topbar :nosidebar="true" :goToDeployments="true" />
       <div class="container-fluid">
         <div class="d-sm-flex align-items-center justify-content-between mb-4">
           <h1 class="font-weight-bold mb-0">Admin Settings</h1>
@@ -64,8 +64,8 @@
                       </span>
                     </div>
                     <div slot="settings" slot-scope="{row}">
-                      <i class="fas fa-cogs text-primary pl-2" @click="editGroup(row)"></i>
-                      <i class="fas fa-trash-alt text-danger pl-3" @click="confirmDeleteGroup(row)"></i>
+                      <i class="fas fa-cogs hover text-primary pl-2" @click="editGroup(row)"></i>
+                      <i class="fas fa-trash-alt hover text-danger pl-3" @click="confirmDeleteGroup(row)"></i>
                     </div>
                   </v-client-table>
                   <group-modal v-if="isEditGroupModalVisible" v-show="isEditGroupModalVisible" :visible="isEditGroupModalVisible" :edit="true" :group="editGroupObj" @close="isEditGroupModalVisible = false" />
@@ -89,7 +89,7 @@
 <script>
 import Vue from 'vue'
 import Vue2Filters from 'vue2-filters'
-import { mapActions } from 'vuex'
+import { mapActions, mapGetters } from 'vuex'
 
 import Topbar from '@/components/Topbar'
 import QuestionModal from '@/components/modals/Question'
@@ -122,7 +122,7 @@ export default {
   },
   data () {
     return {
-      showingUsers: true,
+      showingUsers: false,
       users: [],
       groups: [],
       deleteGroupObj: null,
@@ -233,6 +233,46 @@ export default {
       }
     }
   },
+  sockets: {
+    new_user: function (data) {
+      console.log('Recieved new user event')
+      this.users.push(data.user)
+    },
+    new_group: function (data) {
+      console.log('Recieved new group event')
+      this.groups.push(data.group)
+    },
+    change_user_group: function (data) {
+      console.log('Recieved change user group event')
+      const user = this.users.find(user => user.id === data.id)
+      if (user) {
+        user.group = data.group
+      }
+    },
+    change_user_status: function (data) {
+      console.log('Recieved change user status event')
+      const user = this.users.find(user => user.id === data.id)
+      if (user) {
+        user.status = data.status
+      }
+    },
+    edit_group: function (data) {
+      console.log('Recieved group edit event')
+      const group = this.groups.find(group => group.id === data.id)
+      if (group) {
+        group.name = data.name
+        group.permissions = data.permissions
+      }
+    },
+    delete_user: function (data) {
+      console.log('Recieved delete user event')
+      this.users = this.users.filter(user => user.id !== data.id)
+    },
+    delete_group: function (data) {
+      console.log('Recieved delete group event')
+      this.groups = this.groups.filter(group => group.id !== data.id)
+    }
+  },
   methods: {
     membersInGroup (group) {
       return this.users.filter(user => user.group && user.group.id === group.id).length
@@ -268,6 +308,10 @@ export default {
           .then(() => Vue.noty.success(`Successfully revoked email.`))
       }
     },
+    changeUserStatus (userId, status) {
+      this.ApiPut(`/users/${userId}/status`, { status: status })
+        .then(() => Vue.noty.success(`Successfully changed user's status.`))
+    },
     confirmDeleteGroup (group) {
       this.deleteGroupObj = group
       this.isDeleteGroupModalVisible = true
@@ -302,14 +346,38 @@ export default {
           console.log(error)
         })
     },
+    ...mapActions('sockets', {
+      checkSocketsConnected: 'checkConnected'
+    }),
     ...mapActions('user', {
       checkUserLoaded: 'checkLoaded'
     })
   },
+  computed: {
+    ...mapGetters('sockets', {
+      isSocketConnected: 'isConnected'
+    }),
+    ...mapGetters('user', {
+      accessToken: 'getAccessToken'
+    })
+  },
+  watch: {
+    isSocketConnected (value) {
+      if (value) {
+        this.$socket.client.emit('join_admin')
+      }
+    }
+  },
   async created () {
-    this.checkUserLoaded(false)
-    this.getGroups()
+    this.checkUserLoaded(null)
     this.getUsers()
+    this.getGroups()
+    if (this.isSocketConnected) {
+      this.$socket.client.emit('join_admin')
+    } else {
+      this.checkSocketsConnected(null)
+      this.$socket.client.emit('join_admin')
+    }
   }
 }
 </script>

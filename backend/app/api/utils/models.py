@@ -281,3 +281,5 @@ public_deployment_model = api.model('Public Deployment',
                             {'id': fields.Integer(description='ID of the deployment.'),
                              'name': fields.String(description='Name of the deployment.'),
                              'description': fields.String(description='Description of the deployment.')})
+
+user_status_model = api.model('User Status', {'status': fields.Integer(description='Status of the user. 0 = Sent email, 1 = Active account, 2 = Disabled account', required=True)})

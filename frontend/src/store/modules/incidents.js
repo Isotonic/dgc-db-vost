@@ -61,9 +61,9 @@ const actions = {
         router.push({ name: 'pageNotFound' })
       })
   },
-  getActionsRequired ({ state, commit }) {
+  fetchActionsRequired ({ state, commit }, deploymentId) {
     Vue.prototype.$api
-      .get(`deployments/${state.deploymentId}/actions-required`)
+      .get(`deployments/${deploymentId}/actions-required`)
       .then(r => r.data)
       .then(actionsRequired => {
         commit('setActionsRequired', actionsRequired)
@@ -357,6 +357,8 @@ const mutations = {
     state.loaded = false
     state.deploymentId = null
     state.incidents = []
+    state.hasActionsRequiredLoaded = false
+    state.actionsRequired = []
   }
 }
 

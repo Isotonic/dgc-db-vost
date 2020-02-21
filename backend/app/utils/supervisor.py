@@ -2,13 +2,14 @@ from app import db, moment
 from flask_restx import marshal
 from flask_socketio import emit
 from .actions import incident_action
+from .websocket import emit_incident
 from .change import change_incident_status
 from app.models import SupervisorActions, IncidentLog
 from ..api.utils.models import incident_model, action_required_model
 
 def new_action(action, incident):
     action_marshalled = marshal(action, action_required_model)
-    emit('NEW_ACTION_REQUIRED', {'action': action_marshalled, 'code': 200}, namespace='', room=f'{incident.deployment_id}-all')
+    emit_incident('NEW_ACTION_REQUIRED', {'action': action_marshalled, 'code': 200}, incident)
 
 
 def request_incident_status_change(incident, reason, request_by):
@@ -28,16 +29,16 @@ def flag_to_supervisor(incident, reason, request_by):
 
 
 def new_incident(incident, created_by):
+    incident_marshalled = marshal(incident, incident_model)
+    incident_marshalled['pinned'] = False
     if created_by.has_permission('supervisor'):
-        incident_marshalled = marshal(incident, incident_model)
-        incident_marshalled['pinned'] = False
-        emit('NEW_INCIDENT', {'incident': incident_marshalled, 'code': 200}, namespace='', room=f'{incident.deployment_id}-all')
+        emit('NEW_INCIDENT', {'incident': incident_marshalled, 'code': 200}, namespace='/', room=f'{incident.deployment_id}-all')
         return
     action = SupervisorActions(deployment_id=incident.deployment_id, incident=incident, action_type='New Incident', requested_by=created_by)
     db.session.add(action)
     db.session.commit()
-    #emit('action_required_count', {'count': incident.deployment.calculate_actions_required(), 'code': 200}, room=f'{incident.deployment_id}-actions-count')
-    #emit('new_action_request', {'id': action.id, 'name': incident.name, 'requested_by': str(created_by), 'action_type': action.action_type, 'reason': 'None', 'requested_at': moment.create(action.requested_at).fromNow(refresh=True), 'requested_at_timestamp': action.requested_at.timestamp(), 'code': 200}, room=f'{incident.deployment_id}-actions')
+    emit('NEW_INCIDENT', {'incident': incident_marshalled, 'code': 200}, namespace='/', room=f'{incident.deployment_id}-supervisor')
+    new_action(action, incident)
 
 
 def mark_request_complete(requested_action, change, completed_by):
@@ -48,7 +49,7 @@ def mark_request_complete(requested_action, change, completed_by):
         incident.supervisor_approved = True
         incident_marshalled = marshal(incident, incident_model)
         incident_marshalled['pinned'] = False
-        emit('NEW_INCIDENT', {'incident': incident_marshalled, 'code': 200}, namespace='', room=f'{incident.deployment_id}-all')
+        emit('NEW_INCIDENT', {'incident': incident_marshalled, 'code': 200}, namespace='/', room=f'{incident.deployment_id}-all')
     db.session.delete(requested_action)
     db.session.commit()
-    emit('DELETE_ACTION_REQUIRED', {'id': requested_action.id, 'code': 200}, namespace='', room=f'{incident.deployment_id}-all')
+    emit('DELETE_ACTION_REQUIRED', {'id': requested_action.id, 'code': 200}, namespace='/', room=f'{incident.deployment_id}-all')

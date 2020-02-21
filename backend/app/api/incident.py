@@ -125,7 +125,7 @@ class PinnedEndpoint(Resource):
             incident.users_pinned += [current_user]
         else:
             incident.users_pinned.remove(current_user)
-        emit('CHANGE_PIN', {'id': incident.id, 'pinned': api.payload['pinned'], 'code': 200}, namespace='', room=f'{current_user.id}')
+        emit('CHANGE_PIN', {'id': incident.id, 'pinned': api.payload['pinned'], 'code': 200}, namespace='/', room=f'{current_user.id}')
         db.session.commit()
         return api.payload, 200
 

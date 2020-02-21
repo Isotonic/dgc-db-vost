@@ -8,6 +8,7 @@ frontend/dist/
 
 # File extensions
 .env
+.env.local
 *.pyc
 .DS_Store
 

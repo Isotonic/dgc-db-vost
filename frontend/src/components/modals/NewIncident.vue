@@ -112,6 +112,7 @@
 import Vue from 'vue'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css'
+import { mapGetters } from 'vuex'
 import { MglMap, MglMarker } from 'vue-mapbox'
 import MglGeocoderControl from '@/utils/geocoderControl'
 
@@ -164,7 +165,11 @@ export default {
           this.address = ''
           this.location = []
           e.target.reset()
-          router.push({ name: 'incident', params: { deploymentName: this.deploymentName.replace(/ /g, '-'), deploymentId: this.deploymentId, incidentName: data.name.replace(/ /g, '-'), incidentId: data.id } })
+          if (this.hasPermission('supervisor')) {
+            router.push({ name: 'incident', params: { deploymentName: this.deploymentName.replace(/ /g, '-'), deploymentId: this.deploymentId, incidentName: data.name.replace(/ /g, '-'), incidentId: data.id } })
+          } else {
+            Vue.noty.success(`Incident has successfully been sent to the supervisor's.`)
+          }
         })
     },
     handleResult (event) {
@@ -183,6 +188,11 @@ export default {
         this.location[1] = event.mapboxEvent.lngLat.lat
       }
     }
+  },
+  computed: {
+    ...mapGetters('user', {
+      hasPermission: 'hasPermission'
+    })
   }
 }
 </script>

@@ -16,7 +16,7 @@ def incident_action(user, action_type, incident, comment=None, task=None, subtas
     incident.last_updated = datetime.utcnow()
     action = IncidentLog(user=user, action_type=action_type, incident_id=incident.id, comment=comment, task=task, subtask=subtask, target_users=target_users, extra=extra, occurred_at=datetime.utcnow())
     action_marshalled = marshal(action, activity_model)
-    emit('INCIDENT_ACTIVITY', {'id': incident.id, 'activity': action_marshalled, 'code': 200}, namespace='', room=f'{incident.deployment_id}-all')
+    emit('INCIDENT_ACTIVITY', {'id': incident.id, 'activity': action_marshalled, 'code': 200}, namespace='/', room=f'{incident.deployment_id}-all')
     db.session.add(action)
     db.session.commit()
 
@@ -25,6 +25,6 @@ def task_action(user, action_type, task, subtask=None, target_users=None, extra=
         target_users = []
     action = TaskLog(user=user, action_type=action_type, task=task, subtask=subtask, target_users=target_users, extra=extra, occurred_at=datetime.utcnow())
     action_marshalled = marshal(action, activity_model)
-    emit('TASK_ACTIVITY', {'id': task.id, 'incidentId': task.incident.id, 'activity': action_marshalled, 'code': 200}, namespace='', room=f'{task.incident.deployment_id}-all')
+    emit('TASK_ACTIVITY', {'id': task.id, 'incidentId': task.incident.id, 'activity': action_marshalled, 'code': 200}, namespace='/', room=f'{task.incident.deployment_id}-all')
     db.session.add(action)
     db.session.commit()

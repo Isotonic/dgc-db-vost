@@ -409,7 +409,7 @@ export default {
     if (localStorage.showingStatus) {
       this.showingStatus = localStorage.showingStatus
     }
-    this.checkUserLoaded(true)
+    this.checkUserLoaded(this.deploymentId)
     this.checkDeploymentsLoaded()
     this.checkIncidentsLoaded(this.deploymentId)
     this.checkSocketsConnected(this.deploymentId)

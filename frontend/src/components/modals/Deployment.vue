@@ -103,7 +103,6 @@ export default {
           document.body.classList.remove('modal-open')
         } else {
           deploymentData.open = this.open
-          console.log(deploymentData)
           this.ApiPut(`deployments/${this.deployment.id}`, deploymentData)
             .then(() => {
               this.$emit('close')

@@ -7,8 +7,8 @@ from ..utils.create import create_user
 from ..utils.delete import delete_user
 from ..models import User, Group, EmailLink
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from ..utils.change import change_user_group, complete_registration
-from .utils.models import id_model, create_user_modal, full_user_model, user_model, group_model, email_model, registration_model, task_model, task_model_with_incident
+from ..utils.change import change_user_group, complete_registration, change_user_status
+from .utils.models import id_model, create_user_modal, full_user_model, user_model, group_model, email_model, registration_model, task_model, task_model_with_incident, user_status_model
 
 ns_user = Namespace('User', description='Used to carry out actions related to users.', path='/users')
 
@@ -178,6 +178,49 @@ class RegistrationEndpoint(Resource):
         return 'Success', 200
 
 
+@ns_user.route('/<int:id>/status')
+@ns_user.doc(params={'id': 'User ID.'})
+@ns_user.resolve_object('user', lambda kwargs: User.query.get_or_error(kwargs.pop('id')))
+class UserStatusEndpoint(Resource):
+    @jwt_required
+    @ns_user.doc(security='access_token')
+    @ns_user.response(200, 'Success', user_status_model)
+    @ns_user.response(401, 'Incorrect credentials')
+    @ns_user.response(404, 'User doesn\'t exist')
+    @api.marshal_with(user_status_model)
+    def get(self, user):
+        """
+                Returns user's' info.
+        """
+        return user.status, 200
+
+
+    @jwt_required
+    @ns_user.doc(security='access_token')
+    @ns_user.expect(id_model, validate=True)
+    @ns_user.response(200, 'Success', user_status_model)
+    @ns_user.response(400, 'User already had this status')
+    @ns_user.response(401, 'Incorrect credentials')
+    @ns_user.response(403, 'Missing supervisor permission')
+    @ns_user.response(403, 'Can\'t change your own status')
+    @ns_user.response(404, 'User doesn\'t exist')
+    @api.marshal_with(user_status_model)
+    def put(self, user):
+        """
+                Changes a user's status, requires the supervisor permission.
+        """
+        payload = api.payload
+        current_user = User.query.filter_by(id=get_jwt_identity()).first()
+
+        ns_user.has_permission(current_user, 'supervisor')
+        if current_user == user:
+            ns_user.abort(403, 'Can\'t change your own status')
+
+        if change_user_status(user, payload['status'], current_user) is False:
+            ns_user.abort(400, 'User already has this status')
+        return user.status, 200
+
+
 @ns_user.route('/<int:id>/group')
 @ns_user.doc(params={'id': 'User ID.'})
 @ns_user.resolve_object('user', lambda kwargs: User.query.get_or_error(kwargs.pop('id')))
@@ -207,7 +250,7 @@ class UserGroupEndpoint(Resource):
     @api.marshal_with(group_model)
     def put(self, user):
         """
-                Changes a user's, requires the supervisor permission. Supply a group ID, can be omitted.
+                Changes a user's group, requires the supervisor permission. Supply a group ID, can be omitted.
         """
         payload = api.payload
         current_user = User.query.filter_by(id=get_jwt_identity()).first()

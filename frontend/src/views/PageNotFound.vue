@@ -34,7 +34,7 @@ export default {
     })
   },
   async created () {
-    this.checkUserLoaded(false)
+    this.checkUserLoaded(null)
   }
 }
 </script>

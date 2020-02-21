@@ -48,8 +48,7 @@ const actions = {
     })
   },
   storeDestroy ({ commit }) {
-    commit('deleteUsers')
-    commit('setUnloaded')
+    commit('destroy')
   }
 }
 
@@ -60,10 +59,8 @@ const mutations = {
   setLoaded (state) {
     state.loaded = true
   },
-  deleteUsers (state) {
+  destroy (state) {
     state.users = []
-  },
-  setUnloaded (state) {
     state.loaded = false
   }
 }

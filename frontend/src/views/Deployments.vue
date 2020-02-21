@@ -104,6 +104,9 @@ export default {
           console.log(error)
         })
     },
+    ...mapActions('sockets', {
+      checkSocketsConnected: 'checkConnected'
+    }),
     ...mapActions('user', {
       checkUserLoaded: 'checkLoaded'
     }),
@@ -112,13 +115,17 @@ export default {
     })
   },
   computed: {
+    ...mapGetters('sockets', {
+      isSocketConnected: 'isConnected'
+    }),
     ...mapGetters('deployments', {
       deployments: 'getAll'
     })
   },
   async created () {
-    this.checkUserLoaded(false)
+    this.checkUserLoaded(null)
     this.checkDeploymentsLoaded()
+    this.checkSocketsConnected(null)
   }
 }
 </script>
