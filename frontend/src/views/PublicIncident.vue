@@ -126,7 +126,7 @@ export default {
     },
     fontAwesomeIcon: function (feature) {
       return divIcon({
-        html: `<div class="marker bg-${this.incident.priority}"><i class="fas fa-${this.incident.icon} fa-fw text-white fa-2x"></i></div>`,
+        html: `<div class="marker bg-${this.incident.open ? 'success' : 'closed'}"><i class="fas fa-${this.incident.icon} fa-fw text-white fa-2x"></i></div>`,
         iconSize: [2, 2]
       })
     }

@@ -254,8 +254,9 @@ registration_model = api.model('Registration', {'firstname': fields.String(descr
                                                 'surname': fields.String(description='Surname of the user.'),
                                                 'password': fields.String(description='Password, must be at least 8 characters, contain a lowercase and uppercase letter and contain a number.')})
 
-coordinates_model = api.model('Coordinates',
-                            {'longitude': fields.Float(required=True),
+change_location_model = api.model('Change location',
+                            {'address': fields.String(required=True),
+                             'longitude': fields.Float(required=True),
                              'latitude': fields.Float(required=True)})
 
 incident_model_name = api.model('Incident Name',

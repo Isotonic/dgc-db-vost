@@ -215,11 +215,11 @@
             <div class="card shadow mb-4">
               <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 font-weight-bold text-primary">Map</h6>
-                <a role="button" @click="isIncidentMapModalVisible = true">
+                <a role="button" @click="isIncidentLocationModalVisible = true">
                   <i class="fas fa-cog" v-tooltip="'Edit Location'"></i>
                 </a>
               </div>
-              <incident-map-modal v-if="isIncidentMapModalVisible" v-show="isIncidentMapModalVisible" :visible="isIncidentMapModalVisible" :incidentId="incidentId" :currentLocation="incident.location.geometry.coordinates" @close="isIncidentMapModalVisible = false" />
+              <incident-location-modal v-if="isIncidentLocationModalVisible" v-show="isIncidentLocationModalVisible" :visible="isIncidentLocationModalVisible" :incidentId="incidentId" :currentLocation="incident.location.geometry.coordinates" :currentAddress="incident.location.properties.address" @close="isIncidentLocationModalVisible = false" />
               <div class="card-body">
                 <div v-if="!incident">
                   <vcl-square />
@@ -291,7 +291,7 @@ import RequestStatusChangeModal from '@/components/modals/RequestStatusChange'
 import FlagToSupervisorModal from '@/components/modals/FlagToSupervisor'
 import IncidentPublicModal from '@/components/modals/IncidentPublic'
 import IncidentDetailsModal from '@/components/modals/IncidentDetails'
-import IncidentMapModal from '@/components/modals/IncidentMap'
+import IncidentLocationModal from '@/components/modals/IncidentLocation'
 import NewTaskModal from '@/components/modals/NewTask'
 import TaskModal from '@/components/modals/Task'
 import FileUploaderModal from '@/components/modals/FileUploader'
@@ -316,7 +316,7 @@ export default {
     FileUploaderModal,
     IncidentPublicModal,
     IncidentDetailsModal,
-    IncidentMapModal,
+    IncidentLocationModal,
     QuestionModal,
     LMap,
     LTileLayer,
@@ -352,7 +352,7 @@ export default {
       isFlagToSupervisorModalVisible: false,
       isIncidentPublicModalVisible: false,
       isIncidentDetailsModalVisible: false,
-      isIncidentMapModalVisible: false,
+      isIncidentLocationModalVisible: false,
       isNewTaskModalVisible: false,
       isTaskModalVisible: false,
       isFileUploaderModalVisible: false,

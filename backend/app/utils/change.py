@@ -142,9 +142,10 @@ def change_incident_public(incident, public, name, description, changed_by):
                     incident=incident)
 
 
-def change_incident_location(incident, longitude, latitude, changed_by):
-    if incident.longitude == longitude and incident.latitude == latitude:
+def change_incident_location(incident, address, longitude, latitude, changed_by):
+    if incident.location == address and incident.longitude == longitude and incident.latitude == latitude:
         return False
+    incident.location = address
     incident.longitude = longitude
     incident.latitude = latitude
     location_marshalled = marshal(incident, point_feature_model)

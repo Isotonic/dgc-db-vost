@@ -9,7 +9,7 @@ from ..utils.create import create_comment, create_task
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from ..utils.supervisor import flag_to_supervisor, request_incident_status_change
 from ..utils.change import edit_incident, change_incident_status, change_incident_allocation, change_incident_priority, change_incident_public, change_incident_location
-from .utils.models import id_model, incident_model, pinned_model, status_model, user_model, priority_model, public_model, comment_model, new_comment_model, task_model, new_task_model, edit_incident_model, point_feature_model, coordinates_model, flag_reason_model, status_change_reason_model
+from .utils.models import id_model, incident_model, pinned_model, status_model, user_model, priority_model, public_model, comment_model, new_comment_model, task_model, new_task_model, edit_incident_model, point_feature_model, change_location_model, flag_reason_model, status_change_reason_model
 
 ns_incident = Namespace('Incident', description='Used to carry out actions related to incidents.', path='/incidents', decorators=[jwt_required])
 
@@ -377,7 +377,7 @@ class LocationEndpoint(Resource):
 
 
     @ns_incident.doc(security='access_token')
-    @ns_incident.expect(coordinates_model, validate=True)
+    @ns_incident.expect(change_location_model, validate=True)
     @ns_incident.response(200, 'Success', point_feature_model)
     @ns_incident.response(400, 'Input payload validation failed')
     @ns_incident.response(400, 'Text is empty')
@@ -392,7 +392,7 @@ class LocationEndpoint(Resource):
         current_user = User.query.filter_by(id=get_jwt_identity()).first()
         ns_incident.has_incident_access(current_user, incident)
 
-        if change_incident_location(incident, api.payload['longitude'], api.payload['latitude'], current_user) is False:
+        if change_incident_location(incident, api.payload['address'], api.payload['longitude'], api.payload['latitude'], current_user) is False:
             ns_incident.abort(400, 'Incident already had this location')
 
         return incident, 200

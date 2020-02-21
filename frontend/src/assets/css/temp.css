@@ -1294,3 +1294,13 @@ div .marker {
   padding-bottom: 120px;
   margin-bottom: -120px;
 }
+
+.VueTables > .row {
+  margin-right: 0;
+  margin-left: 0;
+}
+
+.VueTables > .row > .col-md-12 {
+  padding-left: 0;
+  padding-right: 0;
+}

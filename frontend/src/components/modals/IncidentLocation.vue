@@ -1,10 +1,13 @@
 <template>
   <modal :title="'New Incident'" @close="close">
-    <form @submit.prevent="handleSubmit" aria-label="Add a new incident">
+    <form @submit.prevent="handleSubmit" aria-label="Edit incident location">
+      <div class="form-group mb-3">
+        <input v-model="address" class="form-control" placeholder="Address" type="text">
+      </div>
       <div id="Map" class="map-container">
-        <MglMap :accessToken="accessToken" :mapStyle="mapStyle" @click="onClickMap" ref="map">
+        <MglMap :accessToken="accessToken" :mapStyle="mapStyle" @click="onClickMap" :center="this.currentLocation" :zoom="15" ref="map">
           <MglGeocoderControl :accessToken="accessToken" :input="searchResult" @result="handleResult" :draggable="true" />
-          <MglMarker :coordinates="location" :draggable="true" color="blue" ref="marker" />
+          <MglMarker v-if="markerSet" :coordinates="location" :draggable="true" color="blue" />
         </MglMap>
       </div>
       <div class="text-center">
@@ -24,7 +27,7 @@ import MglGeocoderControl from '@/utils/geocoderControl'
 import { ModalMixin } from '@/utils/mixins'
 
 export default {
-  name: 'IncidetMap',
+  name: 'IncidetLocationModal',
   mixins: [ModalMixin],
   components: {
     MglMap,
@@ -33,11 +36,13 @@ export default {
   },
   props: {
     incidentId: Number,
+    currentAddress: String,
     currentLocation: Array
   },
   data () {
     return {
-      markerSet: false,
+      markerSet: true,
+      address: this.currentAddress,
       location: JSON.parse(JSON.stringify(this.currentLocation)),
       accessToken: Vue.prototype.$mapBoxApiKey,
       mapStyle: 'mapbox://styles/mapbox/streets-v11',
@@ -46,12 +51,12 @@ export default {
   },
   methods: {
     handleSubmit () {
-      if (!this.location === this.currentLocation) {
+      if (this.location[0] === this.currentLocation[0] && this.location[1] === this.currentLocation[1] && this.address === this.currentAddress) {
         this.$emit('close')
         document.body.classList.remove('modal-open')
         return
       }
-      this.ApiPut(`incidents/${this.incidentId}/location`, { longitude: this.location[0], latitude: this.location[1] })
+      this.ApiPut(`incidents/${this.incidentId}/location`, { address: this.address, longitude: this.location[0], latitude: this.location[1] })
         .then(() => {
           this.$emit('close')
           document.body.classList.remove('modal-open')
@@ -64,9 +69,12 @@ export default {
     },
     onClickMap (event) {
       if (this.markerSet) {
+        this.markerSet = false
         this.location[0] = event.mapboxEvent.lngLat.lng
         this.location[1] = event.mapboxEvent.lngLat.lat
-        this.$refs.marker.coordinates = this.location
+        this.$nextTick(() => {
+          this.markerSet = true
+        })
       } else {
         this.markerSet = true
         this.location[0] = event.mapboxEvent.lngLat.lng

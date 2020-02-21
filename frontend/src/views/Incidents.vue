@@ -133,7 +133,7 @@ export default {
   },
   data () {
     return {
-      showingIncidents: 'assigned',
+      showingIncidents: 'all',
       showingStatus: 'open',
       columns: ['pinned', 'name', 'location', 'priority', 'assignedTo', 'taskPercentage', 'lastUpdated'],
       options: {

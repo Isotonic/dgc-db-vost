@@ -94,11 +94,11 @@
       <div class="form-group mb-3">
         <input v-model="address" class="form-control" placeholder="Address" type="text">
       </div>
-      <span id="LocationNotChosen" class="text-danger d-none">Please select the location of the incident.</span>
+      <span v-if="locationNotSet" class="text-danger">Please select the location of the incident.</span>
       <div id="Map" class="map-container">
         <MglMap :accessToken="accessToken" :mapStyle="mapStyle" @click="onClickMap" :center="[-4.003661, 56.584255]">
           <MglGeocoderControl :accessToken="accessToken" :input="searchResult" @result="handleResult" :draggable="true" />
-          <MglMarker v-if="markerSet" :coordinates="location" :draggable="true" color="blue" ref="marker" />
+          <MglMarker v-if="markerSet" :coordinates="location" :draggable="true" color="blue" />
         </MglMap>
       </div>
       <div class="text-center">
@@ -139,6 +139,7 @@ export default {
       reportedVia: '',
       reference: '',
       address: '',
+      locationNotSet: false,
       markerSet: false,
       location: [0, 0],
       accessToken: Vue.prototype.$mapBoxApiKey,
@@ -150,7 +151,11 @@ export default {
     handleSubmit (e) {
       if (!this.name.length || !this.description.length || !this.type) {
         return
+      } else if (this.location[0] === 0 && this.location[1] === 0) {
+        this.locationNotSet = true
+        return
       }
+      console.log(this.location)
       Vue.prototype.$api
         .post(`deployments/${this.deploymentId}`, { name: this.name, description: this.description, type: this.type, reportedVia: this.reportedVia, reference: this.reference, address: this.address, longitude: this.location[0], latitude: this.location[1] })
         .then(r => r.data)
@@ -179,9 +184,12 @@ export default {
     },
     onClickMap (event) {
       if (this.markerSet) {
+        this.markerSet = false
         this.location[0] = event.mapboxEvent.lngLat.lng
         this.location[1] = event.mapboxEvent.lngLat.lat
-        this.$refs.marker.coordinates = this.location
+        this.$nextTick(() => {
+          this.markerSet = true
+        })
       } else {
         this.markerSet = true
         this.location[0] = event.mapboxEvent.lngLat.lng
