@@ -182,7 +182,7 @@ def change_task_status(task, status, changed_by):
     else:
         task.completed_at = None
         action_type = 'incomplete_task'
-    emit_incident('CHANGE_TASK_STATUS', {'id': task.id, 'incidentId': task.incident.id, 'completed': status, 'timestamp': task.completed_at.timestamp() if task.completed else None, 'code': 200}, task.inciden)
+    emit_incident('CHANGE_TASK_STATUS', {'id': task.id, 'incidentId': task.incident.id, 'completed': status, 'timestamp': task.completed_at.timestamp() if task.completed else None, 'code': 200}, task.incident)
     incident_action(user=changed_by, action_type=IncidentLog.action_values[action_type],
                     incident=task.incident, task=task)
 

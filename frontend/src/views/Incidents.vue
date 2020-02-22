@@ -426,3 +426,18 @@ export default {
   }
 }
 </script>
+
+<style>
+/* Preventing PurgeCSS from purging these. */
+.bg-Standard {
+  background-color: #f9ce2f !important;
+}
+
+.bg-Prompt {
+  background-color: #ff8300 !important;
+}
+
+.bg-Immediate {
+  background-color: #f44336 !important;
+}
+</style>

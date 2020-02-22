@@ -43,7 +43,7 @@
                 </div>
               </div>
               <div class="row map-height">
-                <vcl-square v-if="!hasLoaded" />
+                <vcl-square v-if="!hasLoaded" class="px-3 py-1" />
                 <div v-else class="col-sm-3 overflow-auto pr-0 map-height">
                   <ul class="mb-4 pl-0">
                     <div class="input-group">
@@ -95,6 +95,8 @@ import IncidentCard from '@/components/IncidentCard'
 import MapPopup from '@/components/MapPopup'
 import VclSquare from '@/components/utils/VclSquare'
 
+import 'leaflet/dist/leaflet.css'
+
 function fontAwesomeIcon (feature) {
   return divIcon({
     html: `<div class="marker bg-${feature.properties.priority}"><i class="fas fa-${feature.properties.icon} fa-fw text-white fa-2x"></i></div>`,
@@ -117,26 +119,6 @@ function onEachFeature (feature, layer) {
     })
     layer.bindPopup(popup.$mount().$el)
   }
-}
-
-function tasksStatus (tasks) {
-  if (!tasks.length) {
-    return null
-  }
-  let completedCounter = 0
-  for (let value of tasks) {
-    if (value.completedAt) {
-      completedCounter += 1
-    }
-  }
-  return `${Math.round((completedCounter / tasks.length) * 100)}% (${completedCounter}/${tasks.length})`
-}
-
-function commentsStatus (comments) {
-  if (!comments.length) {
-    return null
-  }
-  return comments.length.toString()
 }
 
 export default {
@@ -299,8 +281,8 @@ export default {
           type: incident.type,
           icon: incident.icon,
           open: incident.open,
-          tasks: tasksStatus(incident.tasks),
-          comments: commentsStatus(incident.comments),
+          tasks: incident.tasks,
+          comments: incident.comments,
           deploymentId: this.deploymentId,
           deploymentName: this.deploymentNameApi
         }
@@ -420,3 +402,33 @@ export default {
   }
 }
 </script>
+
+<style>
+/* Preventing PurgeCSS from purging these. */
+.bg-Standard {
+  background-color: #f9ce2f !important;
+}
+
+.bg-Prompt {
+  background-color: #ff8300 !important;
+}
+
+.bg-Immediate {
+  background-color: #f44336 !important;
+}
+
+.beacon-Standard.beacon::before,
+.beacon-Standard.beacon::after {
+  box-shadow: 0 0 0 3px #f9ce2f;
+}
+
+.beacon-Prompt.beacon::before,
+.beacon-Prompt.beacon::after {
+  box-shadow: 0 0 0 3px #ff8300;
+}
+
+.beacon-Immediate.beacon::before,
+.beacon-Immediate.beacon::after {
+  box-shadow: 0 0 0 3px #f44336;
+}
+</style>

@@ -14,8 +14,18 @@
         <p class="card-text my-0"><b>Created:</b> {{ properties.createdAt | moment("Do MMMM YYYY, h:mm A") }}</p>
         <p class="card-text my-1"><b>Description:</b> {{ properties.description }}</p>
         <p class="card-text my-1"><b>Location:</b> {{ properties.address }}</p>
-        <p v-if="properties.tasks" class="card-text my-1"><b>Tasks:</b> {{ properties.tasks }}</p>
-        <p v-if="properties.comments" class="card-text my-1"><b>Updates:</b> {{ properties.comments }}</p>
+        <ol v-if="properties.comments.length || (!publicPage && properties.tasks.length)" class="incident-card-actions-list list-unstyled mt-2">
+          <li class="incident-card-actions">
+            <div v-if="!publicPage && properties.tasks.length" class="mr-1">
+              <i class="fas fa-tasks" v-tooltip="'Tasks'"></i>
+              <span class="incident-card-actions-text">{{ taskText }}</span>
+            </div>
+            <div v-if="properties.comments.length">
+              <i class="far fa-comment" v-tooltip="'Updates'"></i>
+              <span class="incident-card-actions-text">{{ properties.comments.length }}</span>
+            </div>
+          </li>
+        </ol>
         <div class="text-center mt-3">
           <router-link v-if="!publicPage" :to="{ name: 'incident', params: { deploymentName: properties.deploymentName.replace(/ /g, '-'), deploymentId: properties.deploymentId, incidentName: properties.name.replace(/ /g, '-'), incidentId: properties.id }}">
             <a :class="btnClass">Go To Incident</a>
@@ -40,16 +50,19 @@ export default {
   },
   computed: {
     updated: function () {
-      return this.properties.lastUpdatedAt !== this.properties.createdAt
+      return this.properties.lastUpdatedAt && this.properties.lastUpdatedAt !== this.properties.createdAt
     },
     cardHeaderClass: function () {
-      return `card-header bg-${this.properties.open ? 'success' : 'closed'} align-items-center justify-content-between`
+      return `card-header ${this.properties.open ? 'bg-success' : 'bg-closed'} align-items-center justify-content-between`
     },
     iconClass: function () {
       return `fas fa-${this.properties.icon} float-right text-white fa-stack-1x fa-inverse`
     },
     btnClass: function () {
-      return `btn btn-${this.properties.open ? 'success' : 'closed'} text-light`
+      return `btn ${this.properties.open ? 'btn-success' : 'btn-closed'} text-light`
+    },
+    taskText: function () {
+      return `${this.properties.tasks.filter(task => task.completedAt).length}/${this.properties.tasks.length}`
     }
   }
 }

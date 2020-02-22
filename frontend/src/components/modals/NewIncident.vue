@@ -96,7 +96,7 @@
       </div>
       <span v-if="locationNotSet" class="text-danger">Please select the location of the incident.</span>
       <div id="Map" class="map-container">
-        <MglMap :accessToken="accessToken" :mapStyle="mapStyle" @click="onClickMap" :center="[-4.003661, 56.584255]">
+        <MglMap :accessToken="accessToken" :mapStyle="mapStyle" @click="onClickMap" :center="[-4.003661, 56.584255]" :zoom="3">
           <MglGeocoderControl :accessToken="accessToken" :input="searchResult" @result="handleResult" :draggable="true" />
           <MglMarker v-if="markerSet" :coordinates="location" :draggable="true" color="blue" />
         </MglMap>

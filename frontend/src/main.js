@@ -18,7 +18,6 @@ import { DropdownPlugin } from 'bootstrap-vue'
 import { ClientTable } from 'vue-tables-2'
 
 import '@/assets/css/sb-admin-2.css'
-import '@/assets/css/temp.css'
 import 'vuejs-noty/dist/vuejs-noty.css'
 
 Vue.config.productionTip = false

@@ -95,9 +95,11 @@ import Topbar from '@/components/Topbar'
 import IncidentCard from '@/components/IncidentCard'
 import MapPopup from '@/components/MapPopup'
 
+import 'leaflet/dist/leaflet.css'
+
 function fontAwesomeIcon (feature) {
   return divIcon({
-    html: `<div class="marker bg-${feature.properties.open ? 'success' : 'closed'}"><i class="fas fa-${feature.properties.icon} fa-fw text-white fa-2x"></i></div>`,
+    html: `<div class="marker ${feature.properties.open ? 'bg-success' : 'bg-closed'}"><i class="fas fa-${feature.properties.icon} fa-fw text-white fa-2x"></i></div>`,
     iconSize: [2, 2]
   })
 }
@@ -118,13 +120,6 @@ function onEachFeature (feature, layer) {
     })
     layer.bindPopup(popup.$mount().$el)
   }
-}
-
-function commentsStatus (comments) {
-  if (!comments.length) {
-    return null
-  }
-  return comments.length.toString()
 }
 
 export default {
@@ -279,7 +274,7 @@ export default {
           type: incident.type,
           icon: incident.icon,
           open: incident.open,
-          comments: commentsStatus(incident.comments)
+          comments: incident.comments
         }
         const propertiesData = { ...incident.location.properties, ...incidentData }
         incident.location.properties = propertiesData
@@ -335,3 +330,15 @@ export default {
   }
 }
 </script>
+
+<style>
+.beacon-open.beacon::before,
+.beacon-open.beacon::after {
+  box-shadow: 0 0 0 3px #02df90;
+}
+
+.beacon-closed.beacon::before,
+.beacon-closed.beacon::after {
+  box-shadow: 0 0 0 3px #95a5a6;
+}
+</style>

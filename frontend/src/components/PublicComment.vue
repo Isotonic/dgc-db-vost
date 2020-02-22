@@ -1,5 +1,5 @@
 <template>
-  <li class="update-log">
+  <li :class="['update-log', comment.editedAt ? 'update-edited-margin' : 'update-margin']">
     <div class="update-log-text public">
       <editor-content class="editor__content" :editor="editor" />
       <div class="update-body">

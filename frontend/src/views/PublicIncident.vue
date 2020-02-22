@@ -58,6 +58,8 @@ import { LMap, LTileLayer, LMarker } from 'vue2-leaflet'
 import Topbar from '@/components/Topbar'
 import PublicComment from '@/components/PublicComment'
 
+import 'leaflet/dist/leaflet.css'
+
 export default {
   name: 'publicIncident',
   components: {
@@ -126,7 +128,7 @@ export default {
     },
     fontAwesomeIcon: function (feature) {
       return divIcon({
-        html: `<div class="marker bg-${this.incident.open ? 'success' : 'closed'}"><i class="fas fa-${this.incident.icon} fa-fw text-white fa-2x"></i></div>`,
+        html: `<div class="marker ${this.incident.open ? 'bg-success' : 'bg-closed'}"><i class="fas fa-${this.incident.icon} fa-fw text-white fa-2x"></i></div>`,
         iconSize: [2, 2]
       })
     }

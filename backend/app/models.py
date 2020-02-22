@@ -63,13 +63,6 @@ def list_of_names(names):
         return str(names[0])
     return f'{", ".join([str(m) for m in names[:-1]])} and {str(names[-1])}'
 
-
-def task_string(tasks):
-    if not tasks:
-        return
-    completed = [m for m in tasks if m.completed]
-    return f'{len(completed)}/{len(tasks)}'
-
 def async_decorator(f):
     def wrapper(*args, **kwargs):
         thr = Thread(target=f, args=args, kwargs=kwargs)
@@ -243,27 +236,6 @@ class Deployment(db.Model):
     users = db.relationship('User', secondary=deployment_user_junction, backref='deployments')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    def name_check(self, deployment_name):
-        return self.name.lower() == deployment_name.lower()
-
-    def calculate_actions_required(self):
-        return len(SupervisorActions.query.filter_by(deployment_id=self.id, completed=False).all())
-
-    def calculate_incidents_stat(self, user=None):
-        if user:
-            incidents = user.get_incidents(self)
-        else:
-            incidents = self.incidents
-        two_hours = len([m for m in incidents if (datetime.utcnow() - timedelta(hours=2)) <= m.created_at < (
-                datetime.utcnow() - timedelta(hours=1))])
-        one_hour = len([m for m in incidents if m.created_at >= (datetime.utcnow() - timedelta(hours=1))])
-        if two_hours == one_hour:
-            return ['primary', None, 0]
-        elif one_hour > two_hours:
-            return ['danger', 'plus', one_hour - two_hours]
-        else:
-            return ['success', 'minus', two_hours - one_hour]
-
     def __repr__(self):
         return f'{self.name}'
 
@@ -322,17 +294,6 @@ class Incident(db.Model):
     medias = db.relationship('IncidentMedia', backref='incident', lazy='selectin')
     actions = db.relationship('IncidentLog', backref='incident', lazy='selectin')
 
-    def name_check(self, deployment_name, incident_name):
-        return self.deployment.name.lower() == deployment_name.lower() and self.name.lower() == incident_name.lower()
-
-    def calculate_task_percentage(self):
-        if not self.tasks:
-            return
-        return int((sum([1 for m in self.tasks if m.completed]) / len(self.tasks)) * 100)
-
-    def task_string(self):
-        return task_string(self.tasks)
-
     def get_icon(self):
         if self.incident_type in self.incident_types and self.incident_types[self.incident_type] != '':
             return self.incident_types[self.incident_type]
@@ -370,27 +331,6 @@ class IncidentTask(db.Model):
     completed_at = db.Column(db.DateTime)
     assigned_to = db.relationship('User', secondary=incidenttask_user_junction, lazy='selectin', backref='tasks')
 
-    def get_assigned(self):
-        return list_of_names(self.assigned_to)
-
-    def get_subtasks(self):
-        return sorted([{'id': m.id, 'name': m.name, 'completed': m.completed, 'assigned_to': m.get_assigned(),
-                        'timestamp': moment.create(m.completed_at if m.completed else m.created_at).fromNow(
-                            refresh=True)} for m in self.subtasks], key=lambda k: k['id'])
-
-    def get_comments(self):
-        return sorted([{'user': str(m.user), 'user_avatar': m.user.get_avatar(), 'text': str(m),
-                        'timestamp': moment.create(m.sent_at).fromNow(refresh=True)} for m in self.comments],
-                      key=lambda k: k['timestamp'], reverse=True)
-
-    def get_actions(self):
-        return sorted([{'user': str(m.user), 'user_avatar': m.user.get_avatar(), 'text': str(m),
-                        'timestamp': moment.create(m.occurred_at).fromNow(refresh=True)} for m in self.task_logs],
-                      key=lambda k: k['timestamp'], reverse=True)
-
-    def subtask_string(self):
-        return task_string(self.subtasks)
-
     def __repr__(self):
         return f'{self.name}'
 
@@ -403,9 +343,6 @@ class IncidentSubTask(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     completed_at = db.Column(db.DateTime)
     assigned_to = db.relationship('User', secondary=incidentsubtask_user_junction, lazy='selectin', backref='subtasks')
-
-    def get_assigned(self):
-        return list_of_names(self.assigned_to)
 
     def __repr__(self):
         return f'{self.name}'

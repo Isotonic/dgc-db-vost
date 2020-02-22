@@ -79,13 +79,7 @@ export default {
       return `${this.task.assignedTo.slice(0, -1).map(user => `${user.firstname} ${user.surname}`).join(', ')} and ${this.task.assignedTo.slice(-1)[0].firstname} ${this.task.assignedTo.slice(-1)[0].surname}`
     },
     subtaskText: function () {
-      let completedCounter = 0
-      for (let value of this.task.subtasks) {
-        if (value.completedAt) {
-          completedCounter += 1
-        }
-      }
-      return `${completedCounter}/${this.task.subtasks.length}`
+      return `${this.task.subtasks.filter(subtask => subtask.completedAt).length}/${this.task.subtasks.length}`
     }
   }
 }

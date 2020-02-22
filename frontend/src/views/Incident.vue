@@ -59,7 +59,7 @@
             <div v-else class="card border-left-primary shadow h-100 py-2">
               <b-dropdown id="ChangeAllocationDropdown" v-if="hasPermission('change_allocation')" size="xs" right menu-class="mt-3 width-110" variant="link" toggle-tag="div" @shown="openedAllocationDropdown" @hidden="closedAllocationDropdown">
                 <template slot="button-content">
-                  <a class="fas fa-cog incident-cog float-right" aria-haspopup="true" v-tooltip="'Change Priority'"></a>
+                  <a class="fas fa-cog incident-cog float-right" aria-haspopup="true" v-tooltip="'Change Allocation'"></a>
                 </template>
                 <h6 class="text-primary text-center font-weight-bold">Change Allocation</h6>
                 <b-dropdown-divider />
@@ -298,6 +298,8 @@ import FileUploaderModal from '@/components/modals/FileUploader'
 import QuestionModal from '@/components/modals/Question'
 import VclSquare from '@/components/utils/VclSquare'
 import VclBulletListReversed from '@/components/utils/VclBulletListReversed'
+
+import 'leaflet/dist/leaflet.css'
 
 export default {
   name: 'incident',
@@ -567,3 +569,42 @@ export default {
 </script>
 
 <style src="vue-multiselect/dist/vue-multiselect.min.css"></style>
+
+<style>
+/* Preventing PurgeCSS from purging these. */
+.text-Standard {
+  color: #f9ce2f !important;
+}
+
+.text-Prompt {
+  color: #ff8300 !important;
+}
+
+.text-Immediate {
+  color: #f44336 !important;
+}
+
+.bg-Standard {
+  background-color: #f9ce2f !important;
+}
+
+.bg-Prompt {
+  background-color: #ff8300 !important;
+}
+
+.bg-Immediate {
+  background-color: #f44336 !important;
+}
+
+.border-left-Standard {
+  border-left: 0.25rem solid #f9ce2f !important;
+}
+
+.border-left-Prompt {
+  border-left: 0.25rem solid #ff8300 !important;
+}
+
+.border-left-Immediate {
+  border-left: 0.25rem solid #f44336 !important;
+}
+</style>

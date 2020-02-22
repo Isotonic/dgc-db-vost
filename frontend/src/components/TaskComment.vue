@@ -1,6 +1,6 @@
 <template>
   <comment-box v-if="this.editor.options.editable" :editing="true" :existingContent="parseText" @cancelEdit="cancelEdit" @editComment="editComment" />
-  <li v-else class="update-log">
+  <li v-else :class="['update-log', comment.editedAt ? 'update-edited-margin' : 'update-margin']">
     <div class="update-log-avatar">
       <i>
         <img class="media-object rounded-circle" :src="comment.user.avatarUrl" alt="Avatar">

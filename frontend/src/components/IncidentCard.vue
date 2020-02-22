@@ -59,14 +59,23 @@ export default {
       return `fas fa-circle ml-1 font-size-75 text-${this.incident.priority}`
     },
     taskText: function () {
-      let completedCounter = 0
-      for (let value of this.incident.tasks) {
-        if (value.completedAt) {
-          completedCounter += 1
-        }
-      }
-      return `${completedCounter}/${this.incident.tasks.length}`
+      return `${this.incident.tasks.filter(task => task.completedAt).length}/${this.incident.tasks.length}`
     }
   }
 }
 </script>
+
+<style>
+/* Preventing PurgeCSS from purging these. */
+.text-Standard {
+  color: #f9ce2f !important;
+}
+
+.text-Prompt {
+  color: #ff8300 !important;
+}
+
+.text-Immediate {
+  color: #f44336 !important;
+}
+</style>
