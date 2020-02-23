@@ -1,8 +1,8 @@
 <template>
   <div id="wrapper">
-    <sidebar :deploymentId="this.deploymentId" :deploymentName="deploymentNameApi" />
+    <sidebar :deploymentId="this.deploymentId" :deploymentName="deploymentNameApi" ref="sidebar" />
     <div id="content-wrapper" class="d-flex flex-column">
-      <topbar :deploymentId="deploymentId" :deploymentName="deploymentNameApi" />
+      <topbar :deploymentId="deploymentId" :deploymentName="deploymentNameApi" @toggleSidebar="toggleSidebar" />
       <div class="container-fluid">
         <div class="d-sm-flex align-items-center justify-content-between mb-4">
           <h1 v-if="this.deployment" class="font-weight-bold mb-0">{{ this.deployment.name }}</h1>
@@ -119,6 +119,9 @@ export default {
     },
     markDealtWith: function (row, carryOutAction) {
       this.ApiPut(`actions-required/${row.id}`, { carryOutAction: carryOutAction })
+    },
+    toggleSidebar: function () {
+      this.$refs.sidebar.toggleSidebar()
     },
     ...mapActions('sockets', {
       checkSocketsConnected: 'checkConnected'

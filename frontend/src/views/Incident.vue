@@ -1,13 +1,13 @@
 <template>
   <div id="wrapper">
-    <sidebar :deploymentId="deploymentId" :deploymentName="deploymentNameApi"/>
+    <sidebar :deploymentId="deploymentId" :deploymentName="deploymentNameApi" ref="sidebar" />
     <div id="content-wrapper" class="d-flex flex-column">
-      <topbar :deploymentId="deploymentId" :deploymentName="deploymentNameApi" />
+      <topbar :deploymentId="deploymentId" :deploymentName="deploymentNameApi" @toggleSidebar="toggleSidebar" />
       <div class="container-fluid">
         <div class="d-sm-flex align-items-center justify-content-between mb-4">
           <h1 class="font-weight-bold mb-0">{{ deploymentNameApi }} - {{ incidentId }}</h1>
           <div class="d-flex mb-1 mt-2">
-            <button v-if="incident" :class="['btn', 'btn-icon-split', 'mr-2', incident.open ? 'btn-success' : 'btn-info']" @click="markAsComplete">
+            <button v-if="incident" :class="['btn', 'btn-icon-split', 'btn-group-incidents', 'mr-2', incident.open ? 'btn-success' : 'btn-info']" @click="markAsComplete">
                 <span class="btn-icon">
                     <i class="fas fa-check"></i>
                 </span>
@@ -15,7 +15,7 @@
                 <span v-else-if="incident" class="text">{{ incident.open ? 'Request Mark As Complete' : 'Request Mark As Incomplete' }}</span>
             </button>
             <request-status-change-modal v-if="isRequestStatusChangeModalVisible" v-show="isRequestStatusChangeModalVisible" :visible="isRequestStatusChangeModalVisible" :incidentId="incidentId" @close="isRequestStatusChangeModalVisible = false" />
-            <button v-if="incident && !incident.public && hasPermission('mark_as_public')" class="btn btn-icon-split mr-2 btn-success" @click="isIncidentPublicModalVisible = true">
+            <button v-if="incident && !incident.public && hasPermission('mark_as_public')" class="btn btn-icon-split btn-group-incidents mr-2 btn-success" @click="isIncidentPublicModalVisible = true">
                 <span class="btn-icon">
                     <i class="fas fa-eye"></i>
                 </span>
@@ -38,7 +38,7 @@
               <b-dropdown-item @click="changePublic(false)">Hide from public</b-dropdown-item>
             </b-dropdown>
             <incident-public-modal v-if="isIncidentPublicModalVisible" v-show="isIncidentPublicModalVisible" :visible="isIncidentPublicModalVisible" :incident="incident" :edit="incident.public" @close="isIncidentPublicModalVisible = false" />
-            <b-dropdown id="FlagDropdown" toggle-class="btn-icon-split btn-warning dropdown-toggle text-white">
+            <b-dropdown id="FlagDropdown" toggle-class="btn-icon-split btn-group-incidents btn-warning dropdown-toggle text-white">
               <template slot="button-content">
                   <span class="btn-icon">
                     <i class="fas fa-flag"></i>
@@ -173,7 +173,7 @@
             <div class="card shadow mb-4">
               <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 font-weight-bold text-primary">Incident Overview</h6>
-                <a role="button" @click="isIncidentDetailsModalVisible = true">
+                <a v-if="incident" role="button" @click="isIncidentDetailsModalVisible = true">
                   <i class="fas fa-cog" v-tooltip="'Edit Incident Overview'"></i>
                 </a>
               </div>
@@ -187,6 +187,19 @@
                 <p class="card-text"><b>Description:</b> {{ incident.description }}</p>
                 <p class="card-text"><b>Reported Via:</b> {{ incident.reportedVia ? incident.reportedVia : 'N/A' }}</p>
                 <p class="card-text"><b>Logged by:</b> <span class="text-primary">{{ incident.loggedBy.firstname }} {{ incident.loggedBy.surname }}</span></p>
+                <p v-if="incident.linkedIncidents.length" class="card-text"><b>Linked Incidents: </b>
+                  <span v-for="(linkedIncident, index) in incident.linkedIncidents" :key="linkedIncident.id">
+                    <span v-if="incident.linkedIncidents.length > 1 && index === incident.linkedIncidents.length-1"> and </span>
+                    <router-link v-if="getIncident(linkedIncident.id)" :to="{ name: 'incident', params: {deploymentName: deploymentNameApi.replace(/ /g, '-'), deploymentId: deploymentId, incidentName: linkedIncident.name.replace(/ /g, '-'), incidentId: linkedIncident.id } }">
+                      <span class="text-primary hover" v-tooltip="linkedIncident.name">#{{ linkedIncident.id }}</span>
+                    </router-link>
+                    <span v-else v-tooltip="`${linkedIncident.name} (No permission to view)`">
+                      #{{ linkedIncident.id }}
+                    </span>
+                    <span v-if="incident.linkedIncidents.length > 1 && index < incident.linkedIncidents.length-2">, </span>
+                  </span>
+                </p>
+                <p v-else class="card-text"><b>Linked Incidents:</b> <span>None</span></p>
                 <p class="card-text"><b>Reference Number (If Provided):</b> {{ incident.reference ? incident.reference : 'N/A' }}</p>
               </div>
               <incident-details-modal v-if="isIncidentDetailsModalVisible" v-show="isIncidentDetailsModalVisible" :visible="isIncidentDetailsModalVisible" :incident="incident" @close="isIncidentDetailsModalVisible = false" />
@@ -194,7 +207,7 @@
             <div class="card shadow mb-4">
               <div class="card-header py-3 d-flex align-items-center justify-content-between">
                 <h6 class="m-0 font-weight-bold text-primary">Tasks</h6>
-                <a class="text-success" role="button" @click="isNewTaskModalVisible = true">
+                <a v-if="incident" class="text-success" role="button" @click="isNewTaskModalVisible = true">
                   <i class="fas fa-plus" v-tooltip="'Add Task'"></i>
                 </a>
               </div>
@@ -215,7 +228,7 @@
             <div class="card shadow mb-4">
               <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 font-weight-bold text-primary">Map</h6>
-                <a role="button" @click="isIncidentLocationModalVisible = true">
+                <a v-if="incident" role="button" @click="isIncidentLocationModalVisible = true">
                   <i class="fas fa-cog" v-tooltip="'Edit Location'"></i>
                 </a>
               </div>
@@ -446,11 +459,14 @@ export default {
       const map = this.$refs.map
       if (map) {
         const flyToLatLng = latLng(this.mapCoords)
-        map.mapObject.flyTo(flyToLatLng, 12, {
+        map.mapObject.flyTo(flyToLatLng, this.mapSettings.zoom, {
           animate: true,
           duration: 0.5
         })
       }
+    },
+    toggleSidebar: function () {
+      this.$refs.sidebar.toggleSidebar()
     },
     ...mapActions('sockets', {
       checkSocketsConnected: 'checkConnected'
@@ -569,42 +585,3 @@ export default {
 </script>
 
 <style src="vue-multiselect/dist/vue-multiselect.min.css"></style>
-
-<style>
-/* Preventing PurgeCSS from purging these. */
-.text-Standard {
-  color: #f9ce2f !important;
-}
-
-.text-Prompt {
-  color: #ff8300 !important;
-}
-
-.text-Immediate {
-  color: #f44336 !important;
-}
-
-.bg-Standard {
-  background-color: #f9ce2f !important;
-}
-
-.bg-Prompt {
-  background-color: #ff8300 !important;
-}
-
-.bg-Immediate {
-  background-color: #f44336 !important;
-}
-
-.border-left-Standard {
-  border-left: 0.25rem solid #f9ce2f !important;
-}
-
-.border-left-Prompt {
-  border-left: 0.25rem solid #ff8300 !important;
-}
-
-.border-left-Immediate {
-  border-left: 0.25rem solid #f44336 !important;
-}
-</style>

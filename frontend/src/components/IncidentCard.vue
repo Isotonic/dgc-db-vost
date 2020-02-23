@@ -1,7 +1,7 @@
 <template>
   <li class="list-group-item list-group-flush incident-card" @click="goTo">
     <div class="row align-items-center no-gutters">
-      <div :class="['col', 'mr-2', !publicPage && (incident.tasks.length || incident.comments.length) ?  'mb-2' : '']">
+      <div :class="['col', 'mr-2', (!publicPage && incident.tasks.length) || incident.comments.length ?  'mb-2' : '']">
         <h6>
           <strong><text-highlight :queries="query">{{ incident.name }}</text-highlight></strong>
           <i v-if="!publicPage" :class="priorityCircle" v-tooltip="`${incident.priority} Priority`" />
@@ -64,18 +64,3 @@ export default {
   }
 }
 </script>
-
-<style>
-/* Preventing PurgeCSS from purging these. */
-.text-Standard {
-  color: #f9ce2f !important;
-}
-
-.text-Prompt {
-  color: #ff8300 !important;
-}
-
-.text-Immediate {
-  color: #f44336 !important;
-}
-</style>

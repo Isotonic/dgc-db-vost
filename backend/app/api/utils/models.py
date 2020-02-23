@@ -60,6 +60,7 @@ edit_incident_model = api.model('Edit Incident',
                                        'description': fields.String(),
                                        'type': fields.String(required=True),
                                        'reportedVia': fields.String(),
+                                       'linkedIncidents': fields.List(fields.Integer),
                                        'reference': fields.String()})
 
 
@@ -187,6 +188,11 @@ task_model_with_incident = api.model('Task With Incident',
                          'activity': fields.List(fields.Nested(activity_model), attribute='logs', description='Actions the occured in the task.')}) ##TODO Change to actions
 
 
+incident_model_name = api.model('Incident Name',
+                            {'id': fields.Integer(description='ID of the incident.'),
+                             'name': fields.String(description='Name of the incident.')})
+
+
 incident_model = api.model('Incident',
                             {'id': fields.Integer(description='ID of the incident.'),
                              'name': fields.String(description='Name of the incident.'),
@@ -203,6 +209,7 @@ incident_model = api.model('Incident',
                              'loggedBy': fields.Nested(user_model, attribute='created_by_user', description='The user the incident was created by.'),
                              'referenceNo': fields.String(attribute='reference', description='Reference number, can be null too.'),
                              'pinned': fields.Boolean(description='If the user has this pinned or not.'),
+                             'linkedIncidents': fields.List(fields.Nested(incident_model_name), attribute='linked', description='Incidents linked to this one.'),
                              'createdAt': fields.Integer(attribute=lambda x: int(x.created_at.timestamp()), description='UTC timestamp of the incident\'s creation.'),
                              'closedAt': fields.Integer(attribute=lambda x: int(x.closed_at.timestamp()) if x.closed_at else None, description='UTC timestamp of the incident\'s closure, can be null.'),
                              'lastUpdatedAt': fields.Integer(attribute=lambda x: int(x.last_updated.timestamp()), description='UTC timestamp of the incident\'s last update.'),
@@ -258,10 +265,6 @@ change_location_model = api.model('Change location',
                             {'address': fields.String(required=True),
                              'longitude': fields.Float(required=True),
                              'latitude': fields.Float(required=True)})
-
-incident_model_name = api.model('Incident Name',
-                            {'id': fields.Integer(description='ID of the incident.'),
-                             'name': fields.String(description='Name of the incident.')})
 
 
 action_required_model = api.model('Actions Required',

@@ -1,5 +1,6 @@
 import re
 from app import db
+from copy import copy
 from . import supervisor
 from datetime import datetime
 from flask_restx import marshal
@@ -7,7 +8,7 @@ from flask_socketio import emit
 from .websocket import emit_incident
 from .actions import audit_action, incident_action, task_action
 from app.models import User, Group, AuditLog, IncidentLog, TaskLog, SupervisorActions
-from ..api.utils.models import user_model_without_group, group_model, group_model_without_users, incident_model, point_feature_model
+from ..api.utils.models import user_model_without_group, group_model, group_model_without_users, incident_model, incident_model_name, point_feature_model
 
 
 def complete_registration(email_link, firstname, surname, password):
@@ -65,17 +66,44 @@ def edit_deployment(deployment, name, description, open_status, group_ids, user_
     return deployment
 
 
-def edit_incident(incident, name, description, incident_type, reported_via, reference, changed_by):
-    if incident.name == name and incident.description == description and incident.incident_type == type and incident.reported_via == reported_via and incident.reference == reference:
+def edit_incident(incident, name, description, incident_type, reported_via, linked_incidents, reference, changed_by):
+    if incident.name == name and incident.description == description and incident.incident_type == type and incident.reported_via == reported_via and incident.reference == reference and set(incident.linked_incidents) == set(linked_incidents):
         return False
+    added = list(set(linked_incidents) - set(incident.linked))
+    removed = list(set(incident.linked) - set(linked_incidents))
+    incidentObj = copy(incident)
     incident.name = name
     incident.description = description
     incident.incident_type = incident_type
     incident.reported_via = reported_via
+    incident.linked = linked_incidents
     incident.reference = reference
-    emit_incident('CHANGE_INCIDENT_DETAILS', {'id': incident.id, 'name': name, 'description': description, 'type': incident_type, 'reportedVia': reported_via, 'reference': reference, 'code': 200}, incident)
-    incident_action(changed_by, IncidentLog.action_values['edit_incident'], incident=incident)
-    return incident
+    linked_incidents_marshalled = marshal(incident.linked, incident_model_name)
+    emit_incident('CHANGE_INCIDENT_DETAILS', {'id': incident.id, 'name': name, 'description': description, 'type': incident_type, 'reportedVia': reported_via, 'linkedIncidents': linked_incidents_marshalled, 'reference': reference, 'icon': incident.get_icon(), 'code': 200}, incident)
+    if incidentObj.name != name:
+        incident_action(changed_by, IncidentLog.action_values['edit_incident_name'], incident=incident, extra=name)
+    if incidentObj.description != description:
+        incident_action(changed_by, IncidentLog.action_values['edit_incident_description'], incident=incident, extra=description)
+    if incidentObj.incident_type != incident_type:
+        incident_action(changed_by, IncidentLog.action_values['edit_incident_type'], incident=incident, extra=incident_type)
+    if incidentObj.reported_via != reported_via:
+        incident_action(changed_by, IncidentLog.action_values['edit_incident_reported_via'], incident=incident, extra=reported_via)
+    if incidentObj.reference != reference:
+        incident_action(changed_by, IncidentLog.action_values['edit_incident_reference'], incident=incident, extra=reference)
+    for x in added:
+        if incident not in x.linked:
+            x.linked.append(incident)
+            linked_incidents_marshalled = marshal(x.linked, incident_model_name)
+            incident_action(changed_by, IncidentLog.action_values['edit_incident_linked'], incident=incident, extra=f'{x.name} (#{x.id})')
+            emit_incident('CHANGE_INCIDENT_DETAILS', {'id': x.id, 'name': x.name, 'description': x.description, 'type': x.incident_type, 'reportedVia': x.reported_via, 'linkedIncidents': linked_incidents_marshalled, 'reference': x.reference, 'code': 200}, x)
+            incident_action(changed_by, IncidentLog.action_values['edit_incident_linked'], incident=x, extra=f'{incident.name} (#{incident.id})')
+    for x in removed:
+        if incident in x.linked:
+            x.linked.remove(incident)
+            linked_incidents_marshalled = marshal(x.linked, incident_model_name)
+            incident_action(changed_by, IncidentLog.action_values['edit_incident_unlinked'], incident=incident, extra=f'{x.name} (#{x.id})')
+            emit_incident('CHANGE_INCIDENT_DETAILS', {'id': x.id, 'name': x.name, 'description': x.description, 'type': x.incident_type, 'reportedVia': x.reported_via, 'linkedIncidents': linked_incidents_marshalled, 'reference': x.reference, 'code': 200}, x)
+            incident_action(changed_by, IncidentLog.action_values['edit_incident_unlinked'], incident=x, extra=f'{incident.name} (#{incident.id})')
 
 
 def change_incident_status(incident, status, changed_by):

@@ -168,7 +168,9 @@ const mutations = {
       incident.description = data.description
       incident.type = data.type
       incident.reportedVia = data.reportedVia
+      incident.linkedIncidents = data.linkedIncidents
       incident.reference = data.reference
+      incident.icon = data.icon
     }
   },
   SOCKET_CHANGE_INCIDENT_STATUS (state, data) {

@@ -100,7 +100,7 @@ export default {
       const map = this.$refs.map
       if (map) {
         const flyToLatLng = latLng(this.mapCoords)
-        map.mapObject.flyTo(flyToLatLng, 12, {
+        map.mapObject.flyTo(flyToLatLng, this.mapSettings.zoom, {
           animate: true,
           duration: 0.5
         })

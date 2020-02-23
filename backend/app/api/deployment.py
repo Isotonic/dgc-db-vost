@@ -5,7 +5,7 @@ from .utils.namespace import Namespace
 from ..utils.change import edit_deployment
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from ..utils.create import create_deployment, create_incident
-from ..models import User, Group, Deployment, SupervisorActions
+from ..models import User, Group, Deployment, Incident, SupervisorActions
 from .utils.models import new_deployment_model, deployment_model, edit_deployment_model, new_incident_model, incident_model, user_model, group_model, action_required_model
 
 ns_deployment = Namespace('Deployment', description='Used to carry out actions related to deployments.', path='/deployments', decorators=[jwt_required])
@@ -91,6 +91,7 @@ class DeploymentEndpoint(Resource):
     @ns_deployment.response(200, 'Success')
     @ns_deployment.response(200, 'Success', incident_model)
     @ns_deployment.response(400, 'Name is empty')
+    @ns_deployment.response(400, 'Invalid incident type')
     @ns_deployment.response(401, 'Incorrect credentials')
     @ns_deployment.response(403, 'Missing deployment access')
     @ns_deployment.response(404, 'Deployment doesn\'t exist')
@@ -100,6 +101,9 @@ class DeploymentEndpoint(Resource):
         """
         payload = api.payload
         current_user = User.query.filter_by(id=get_jwt_identity()).first()
+
+        if payload['type'] not in Incident.incident_types.keys():
+            ns_deployment.abort(400, 'Invalid incident type')
 
         created_incident = create_incident(deployment, payload['name'], payload['description'], payload['type'], payload['reportedVia'], payload['reference'], payload['address'], payload['longitude'], payload['latitude'], current_user)
         if created_incident is False:

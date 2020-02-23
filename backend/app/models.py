@@ -1,15 +1,11 @@
 import pyavagen
-from flask import url_for
 from string import Template
 from threading import Thread
 from os import path, makedirs
-from flask_admin import Admin  ##TODO Remove
+from datetime import datetime
 from flask_mail import Message
-from mailjet_rest import Client
 from flask import render_template
 from flask_login import UserMixin
-from datetime import datetime, timedelta
-from flask_admin.contrib.sqla import ModelView
 from app import app, db, login, argon2, moment, mail
 
 avatar_colours = ['#26de81', '#3867d6', '#eb3b5a', '#0fb9b1', '#f7b731', '#a55eea', '#fed330', '#45aaf2', '#fa8231',
@@ -33,6 +29,11 @@ incident_user_junction = db.Table('incident_users',
 incident_pinned_junction = db.Table('incident_pins',
                                     db.Column('user_id', db.Integer, db.ForeignKey('user.id')),
                                     db.Column('incident_id', db.Integer, db.ForeignKey('incident.id')),
+                                    )
+
+incident_linked_junction = db.Table('incident_linked',
+                                    db.Column('incident_id_one', db.Integer, db.ForeignKey('incident.id')),
+                                    db.Column('incident_id_two', db.Integer, db.ForeignKey('incident.id')),
                                     )
 
 incidenttask_user_junction = db.Table('task_users',
@@ -244,10 +245,10 @@ class Incident(db.Model):
     priority_colours = {'Standard': 'yellow', 'Prompt': 'orange', 'Immediate': 'orange-dark'}
     ##TODO Should really load these from a file.
     incident_types = {'Road Incident': 'car', 'Rail Incident': 'subway', 'Aviation Incident': 'plane',
-                      'Maritane Incident': 'ship', 'Snow/Ice': 'snowflake',
+                      'Maritane Incident': 'ship', 'Snow / Ice': 'snowflake',
                       'Severe Wind': 'wind', 'Rain / Flooding': 'cloud-showers-heavy', 'Industrial': 'industry',
                       'Major Accident Hazard Pipeline': '',
-                      'Nuclear Incident': 'radiation', 'Fire/Explosion': 'fire', 'Building Collapse': 'building',
+                      'Nuclear Incident': 'radiation', 'Fire / Explosion': 'fire', 'Building Collapse': 'building',
                       'Reservoir': '', 'Fuel Disruption': 'gas-pump',
                       'Power Outage': 'plug', 'Gas Supply Interruption': '', 'Public Water Supply': 'water',
                       'Private Water Supply': 'water', 'Telecoms Outage': 'phone-slash',
@@ -287,6 +288,7 @@ class Incident(db.Model):
     priority = db.Column(db.String(10))
     longitude = db.Column(db.Float())
     latitude = db.Column(db.Float())
+    linked = db.relationship('Incident', secondary=incident_linked_junction, primaryjoin=(incident_linked_junction.c.incident_id_one == id), secondaryjoin=(incident_linked_junction.c.incident_id_two == id), lazy='selectin')
     assigned_to = db.relationship('User', secondary=incident_user_junction, lazy='selectin', backref='incidents')
     users_pinned = db.relationship('User', secondary=incident_pinned_junction, lazy='selectin', backref='pinned')
     tasks = db.relationship('IncidentTask', backref='incident', lazy='selectin')
@@ -419,14 +421,15 @@ class AuditLog(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
-class IncidentLog(db.Model):
+class IncidentLog(db.Model): ##TODO LOAD THIS FROM A FILE
     action_values = {'create_incident': 1, 'create_task': 2, 'complete_task': 3, 'delete_task': 4, 'add_comment': 5,
                      'delete_comment': 6, 'incomplete_task': 7, 'assigned_user': 8, 'removed_user': 9,
                      'marked_complete': 10, 'marked_incomplete': 11, 'changed_priority': 12,
                      'changed_task_description': 13, 'assigned_user_task': 14,
                      'removed_user_task': 15, 'marked_public': 16, 'marked_not_public': 17, 'complete_subtask': 18, 'incomplete_subtask': 19, 'create_subtask': 20, 'add_subtask_comment': 21,
                      'marked_comment_public': 22, 'marked_comment_not_public': 23, 'edit_comment': 24, 'edit_subtask': 25, 'edit_incident': 26, 'changed_task_tags': 27, 'edit_task_comment': 28,
-                     'delete_task_comment': 29, 'delete_subtask': 30, 'change_incident_location': 31, 'flag_supervisor': 32, 'request_mark_complete': 33, 'request_mark_incomplete': 34}  ##TODO RE-ORDER ONCE DONE
+                     'delete_task_comment': 29, 'delete_subtask': 30, 'change_incident_location': 31, 'flag_supervisor': 32, 'request_mark_complete': 33, 'request_mark_incomplete': 34, 'edit_incident_name': 35,
+                     'edit_incident_description': 36, 'edit_incident_type': 37, 'edit_incident_reported_via': 38, 'edit_incident_linked': 39, 'edit_incident_unlinked': 40, 'edit_incident_reference': 41}  ##TODO RE-ORDER ONCE DONE
     action_strings = {1: 'created incident', 2: 'created task $task', 3: 'marked $task as complete',
                       4: 'deleted task $task',
                       5: 'added an update', 6: 'deleted an update', 7: 'marked $task as incomplete',
@@ -436,7 +439,8 @@ class IncidentLog(db.Model):
                       13: 'changed $task description to "$extra"', 14: 'added $target_users to $task',
                       15: 'removed $target_users from $task', 16: 'set the incident to publicly viewable', 17: 'set the incident to private', 18: 'marked $extra as complete', 19: 'marked $extra as incomplete', 20: 'created sub-task $extra', 21: 'added comment to $task',
                       22: 'marked comment as publicly viewable', 23: 'marked comment as not publicly viewable', 24: 'edited update', 25: 'edited subtask $extra', 26: 'edited incident details', 27: 'changed tags for $task', 28: 'edited comment in $task', 29: 'deleted comment in $task', 30: 'deleted sub-task in $task',
-                      31: 'changed the incident location', 32: 'flagged the incident to a supervisor', 33: 'requested the incident be marked as complete', 34: 'requested the incident be marked as incomplete'}
+                      31: 'changed the incident location', 32: 'flagged the incident to a supervisor', 33: 'requested the incident be marked as complete', 34: 'requested the incident be marked as incomplete', 35: 'edited incident name to $extra', 36: 'edited incident description to $extra',
+                      37: 'changed incident type to $extra', 38: 'edited incident reported via to $extra', 39: 'linked this incident to $extra', 40: 'unlinked this incident from $extra', 41: 'edited incident reference to $extra'}
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))

@@ -1,8 +1,8 @@
 <template>
   <div id="wrapper">
-    <sidebar :deploymentId="this.deploymentId" :deploymentName="deploymentNameApi" />
+    <sidebar :deploymentId="this.deploymentId" :deploymentName="deploymentNameApi" ref="sidebar" />
     <div id="content-wrapper" class="d-flex flex-column">
-      <topbar :deploymentId="deploymentId" :deploymentName="deploymentNameApi" />
+      <topbar :deploymentId="deploymentId" :deploymentName="deploymentNameApi" @toggleSidebar="toggleSidebar" />
       <div class="container-fluid">
         <div class="d-sm-flex align-items-center justify-content-between mb-4">
           <h1 v-if="this.deployment" class="font-weight-bold mb-0">{{ this.deployment.name }}</h1>
@@ -211,6 +211,9 @@ export default {
         ]
       }, bounds)
     },
+    toggleSidebar: function () {
+      this.$refs.sidebar.toggleSidebar()
+    },
     ...mapActions('sockets', {
       checkSocketsConnected: 'checkConnected'
     }),
@@ -402,33 +405,3 @@ export default {
   }
 }
 </script>
-
-<style>
-/* Preventing PurgeCSS from purging these. */
-.bg-Standard {
-  background-color: #f9ce2f !important;
-}
-
-.bg-Prompt {
-  background-color: #ff8300 !important;
-}
-
-.bg-Immediate {
-  background-color: #f44336 !important;
-}
-
-.beacon-Standard.beacon::before,
-.beacon-Standard.beacon::after {
-  box-shadow: 0 0 0 3px #f9ce2f;
-}
-
-.beacon-Prompt.beacon::before,
-.beacon-Prompt.beacon::after {
-  box-shadow: 0 0 0 3px #ff8300;
-}
-
-.beacon-Immediate.beacon::before,
-.beacon-Immediate.beacon::after {
-  box-shadow: 0 0 0 3px #f44336;
-}
-</style>

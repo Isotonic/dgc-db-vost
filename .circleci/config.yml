@@ -15,11 +15,10 @@ jobs:
           command: |
             docker build --tag registry.heroku.com/$HEROKU_APP_NAME/web --file ./Dockerfile "."
       - run:
-          name: Push the images
+          name: Push the image
           command: |
             docker login -u _ -p $HEROKU_AUTH_TOKEN registry.heroku.com
-            docker push registry.heroku.com/$HEROKU_APP_NAME_PRODUCTION/web
-            docker push registry.heroku.com/$HEROKU_APP_NAME_STAGING/web
+            docker push registry.heroku.com/$HEROKU_APP_NAME/web
       - run:
           name: Deploy to Heroku
           command: |

@@ -44,8 +44,8 @@ class IncidentEndpoint(Resource):
     @ns_incident.response(200, 'Success', incident_model)
     @ns_incident.response(400, 'Name is empty')
     @ns_incident.response(400, 'Incident already has these details')
+    @ns_incident.response(400, 'Invalid incident type')
     @ns_incident.response(401, 'Incorrect credentials')
-    @ns_incident.response(401, 'Invalid incident type')
     def put(self, incident):
         """
                 Edits incident. Supplying a description, reportedVia and referece are optional and can be omitted.
@@ -69,12 +69,17 @@ class IncidentEndpoint(Resource):
         else:
             reported_via = None
 
+        if 'linkedIncidents' in payload.keys():
+            linked_incidents = [m for m in Incident.query.filter(Incident.id.in_(payload['linkedIncidents'])).all() if m.deployment_id == incident.deployment_id]
+        else:
+            linked_incidents = []
+
         if 'reference' in payload.keys():
             reference = payload['reference']
         else:
             reference = None
 
-        if edit_incident(incident, payload['name'],description, payload['type'], reported_via, reference, current_user) is False:
+        if edit_incident(incident, payload['name'], description, payload['type'], reported_via, linked_incidents, reference, current_user) is False:
             ns_incident.abort(400, 'Incident already has these details')
         return format_incident(incident, current_user), 200
 

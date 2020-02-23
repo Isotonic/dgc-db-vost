@@ -89,6 +89,12 @@
       <div class="form-group mb-4">
         <input v-model="reportedVia" class="form-control" placeholder="Reported Via" type="text">
       </div>
+      <multiselect v-model="linkedIncidents" class="mb-4" :options="filteredLinkedIncidents" :multiple="true" placeholder="Type to search incidents to link" track-by="id" :custom-label="formatSelect" :closeOnSelect="false" openDirection="bottom" :limit="0" :limitText="count => count > 1 ? `${count} incidents are linked.` : `${count} incident is linked.`" :blockKeys="['Delete']" selectedLabel="Linked">
+        <template v-if="didLinkedChange" slot="clear">
+          <div class="multiselect__clear" v-tooltip.right="'Reset changes'" @mousedown.prevent.stop="setLinkedSelecter"></div>
+        </template>
+        <span slot="noResult">Oops! No incidents found.</span>
+      </multiselect>
       <div class="form-group mb-4">
         <input v-model="reference" class="form-control" placeholder="Reference Number (If Provided)" type="text">
       </div>
@@ -100,11 +106,17 @@
 </template>
 
 <script>
+import Multiselect from 'vue-multiselect'
+import { mapGetters } from 'vuex'
+
 import { ModalMixin } from '@/utils/mixins'
 
 export default {
   name: 'IncidentDetailsModal',
   mixins: [ModalMixin],
+  components: {
+    Multiselect
+  },
   props: {
     title: String,
     visible: Boolean,
@@ -116,6 +128,7 @@ export default {
       description: this.incident.description,
       type: this.incident.type,
       reportedVia: this.incident.reportedVia,
+      linkedIncidents: this.incident.linkedIncidents,
       reference: this.incident.reference
     }
   },
@@ -129,12 +142,16 @@ export default {
       }
       let incidentData = { name: this.name, type: this.type }
 
-      if (this.description && this.description.length) {
+      if (this.description.length) {
         incidentData.description = this.description
       }
 
       if (this.reportedVia && this.reportedVia.length) {
         incidentData.reportedVia = this.reportedVia
+      }
+
+      if (this.linkedIncidents.length) {
+        incidentData.linkedIncidents = this.linkedIncidents.map(incident => incident.id)
       }
 
       if (this.reference && this.reference.length) {
@@ -146,12 +163,31 @@ export default {
           this.$emit('close')
           document.body.classList.remove('modal-open')
         })
+    },
+    formatSelect: function ({ name, id }) {
+      return `${name} - ${id}`
+    },
+    setLinkedSelecter () {
+      this.linkedIncidents = this.incident.linkedIncidents
     }
   },
   computed: {
+    filteredLinkedIncidents: function () {
+      return this.incidents.filter(incident => incident.id !== this.incident.id)
+    },
     hasntChanged: function () {
-      return this.name === this.incident.name && this.description === this.incident.description && this.reportedVia === this.incident.reportedVia && this.reference === this.incident.reference
-    }
+      return this.name === this.incident.name && this.description === this.incident.description && this.reportedVia === this.incident.reportedVia && this.reference === this.incident.reference && !this.didLinkedChange
+    },
+    didLinkedChange: function () {
+      return this.linkedIncidents.length !== this.incident.linkedIncidents.length ||
+      !this.linkedIncidents.every(e => this.incident.linkedIncidents.includes(e))
+    },
+    ...mapGetters('incidents', {
+      incidents: 'getIncidents'
+    })
+  },
+  created () {
+    console.log(this.incident.linkedIncidents)
   }
 }
 </script>
