@@ -1,6 +1,5 @@
 from ..api import api
 from sqlalchemy import func
-from flask_restx import marshal
 from .utils.resource import Resource
 from .utils.namespace import Namespace
 from ..utils.create import create_user
@@ -8,7 +7,7 @@ from ..utils.delete import delete_user
 from ..models import User, Group, EmailLink
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from ..utils.change import change_user_group, complete_registration, change_user_status
-from .utils.models import id_model, create_user_modal, full_user_model, user_model, group_model, email_model, registration_model, task_model, task_model_with_incident, user_status_model
+from .utils.models import id_model, create_user_modal, full_user_model, user_model, group_model, email_model, registration_model, task_model_with_incident, user_status_model
 
 ns_user = Namespace('User', description='Used to carry out actions related to users.', path='/users')
 
@@ -274,16 +273,10 @@ class UserTasksEndpoint(Resource):
     @ns_user.doc(security='access_token')
     @ns_user.response(200, 'Success', [task_model_with_incident])
     @ns_user.response(401, 'Incorrect credentials')
+    @api.marshal_with(task_model_with_incident)
     def get(self):
         """
-                Returns user's tasks.
+                Returns user's assigned tasks.
         """
         current_user = User.query.filter_by(id=get_jwt_identity()).first()
-        tasks_marshalled = []
-        for x in current_user.tasks:
-            marshalled = marshal(x, task_model)
-            marshalled['incidentId'] = x.incident_id
-            marshalled['deploymentId'] = x.incident.deployment_id
-            tasks_marshalled.append(marshalled)
-
-        return tasks_marshalled, 200
+        return current_user.tasks, 200

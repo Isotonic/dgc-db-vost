@@ -39,11 +39,11 @@ const getters = {
 
 const actions = {
   checkLoaded ({ state, commit, dispatch }, deploymentId) {
-    if ((state.deploymentId && state.deploymentId !== deploymentId) || (state.loaded && !state.deploymentId)) {
+    if ((state.deploymentId && state.deploymentId !== deploymentId) || (state.loaded && state.deploymentId === null)) {
       dispatch('storeDestroy')
     }
     if (!state.loaded) {
-      commit('setDeployment', deploymentId)
+      commit('setDeploymentId', deploymentId)
       dispatch('fetchAll', deploymentId)
     }
   },
@@ -61,7 +61,7 @@ const actions = {
         router.push({ name: 'pageNotFound' })
       })
   },
-  fetchActionsRequired ({ state, commit }, deploymentId) {
+  fetchActionsRequired ({ commit }, deploymentId) {
     Vue.prototype.$api
       .get(`deployments/${deploymentId}/actions-required`)
       .then(r => r.data)
@@ -72,6 +72,30 @@ const actions = {
       .catch(error => {
         console.log(error.response.data.message)
       })
+  },
+  refetch ({ state, commit, rootGetters }) {
+    Vue.prototype.$api
+      .get(`deployments/${state.deploymentId}/incidents`)
+      .then(r => r.data)
+      .then(incidents => {
+        commit('setIncidents', incidents)
+        console.log('Refected incidents')
+      })
+      .catch(error => {
+        console.log(error.response.data.message)
+      })
+    if (rootGetters['user/hasPermission']('supervisor')) {
+      Vue.prototype.$api
+        .get(`deployments/${state.deploymentId}/actions-required`)
+        .then(r => r.data)
+        .then(actionsRequired => {
+          commit('setActionsRequired', actionsRequired)
+          console.log('Refected required actions')
+        })
+        .catch(error => {
+          console.log(error.response.data.message)
+        })
+    }
   },
   storeDestroy ({ commit }) {
     commit('destroy')
@@ -85,7 +109,7 @@ const mutations = {
   setActionsRequiredLoaded (state, value) {
     state.actionsRequiredLoaded = value
   },
-  setDeployment (state, id) {
+  setDeploymentId (state, id) {
     state.deploymentId = id
   },
   setIncidents (state, incidents) {

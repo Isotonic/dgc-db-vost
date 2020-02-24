@@ -291,7 +291,6 @@ class Incident(db.Model):
     linked = db.relationship('Incident', secondary=incident_linked_junction, primaryjoin=(incident_linked_junction.c.incident_id_one == id), secondaryjoin=(incident_linked_junction.c.incident_id_two == id), lazy='selectin')
     assigned_to = db.relationship('User', secondary=incident_user_junction, lazy='selectin', backref='incidents')
     users_pinned = db.relationship('User', secondary=incident_pinned_junction, lazy='selectin', backref='pinned')
-    tasks = db.relationship('IncidentTask', backref='incident', lazy='selectin')
     comments = db.relationship('IncidentComment', backref='incident', lazy='selectin')
     medias = db.relationship('IncidentMedia', backref='incident', lazy='selectin')
     actions = db.relationship('IncidentLog', backref='incident', lazy='selectin')
@@ -323,6 +322,7 @@ class Incident(db.Model):
 class IncidentTask(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     incident_id = db.Column(db.Integer, db.ForeignKey('incident.id'))
+    incident = db.relationship('Incident', backref='tasks', lazy='selectin')
     name = db.Column(db.String(64))
     description = db.Column(db.String(1024))
     tags = db.Column(db.ARRAY(db.String(64)))

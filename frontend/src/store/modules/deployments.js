@@ -35,6 +35,18 @@ const actions = {
         console.log(error.response.data.message)
       })
   },
+  refetch ({ commit }) {
+    Vue.prototype.$api
+      .get('deployments')
+      .then(r => r.data)
+      .then(deployments => {
+        commit('setDeployments', deployments)
+        console.log('Refetched deployments')
+      })
+      .catch(error => {
+        console.log(error.response.data.message)
+      })
+  },
   storeDestroy ({ commit }) {
     commit('destroy')
   }

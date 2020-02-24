@@ -56,10 +56,22 @@ const actions = {
       dispatch('checkActionsRequired', deploymentId)
     }
   },
-  checkActionsRequired ({ dispatch, getters }, deploymentId) {
-    if (getters['hasPermission']('supervisor') && !getters['incidents/hasActionsRequiredLoaded']) {
+  checkActionsRequired ({ dispatch, getters, rootGetters }, deploymentId) {
+    if (getters['hasPermission']('supervisor') && !rootGetters['incidents/hasActionsRequiredLoaded']) {
       dispatch('incidents/fetchActionsRequired', deploymentId, { root: true })
     }
+  },
+  refetch ({ commit }) {
+    Vue.prototype.$api
+      .get('users/me')
+      .then(r => r.data)
+      .then(user => {
+        commit('setUser', user)
+        console.log('Refetched user')
+      })
+      .catch(error => {
+        console.log(error.response.data.message)
+      })
   },
   login ({ commit, dispatch }, [email, password]) {
     return new Promise((resolve, reject) => {

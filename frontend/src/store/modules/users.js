@@ -2,6 +2,7 @@ import Vue from 'vue'
 
 const state = {
   users: [],
+  deploymentId: null,
   loaded: false
 }
 
@@ -31,21 +32,43 @@ const getters = {
 }
 
 const actions = {
-  fetchUsers ({ commit }, deploymentId) {
+  fetchUsers ({ state, commit, dispatch }, deploymentId) {
     return new Promise((resolve, reject) => {
+      if ((state.deploymentId && state.deploymentId !== deploymentId) || (state.loaded && state.deploymentId === null)) {
+        dispatch('storeDestroy')
+      }
+      if (!state.loaded) {
+        commit('setDeploymentId', deploymentId)
+        Vue.prototype.$api
+          .get(`/deployments/${deploymentId}/users`)
+          .then(r => r.data)
+          .then(users => {
+            commit('setUsers', users)
+            commit('setLoaded', true)
+            resolve()
+          })
+          .catch((error) => {
+            console.log(error)
+            reject(error)
+          })
+      } else {
+        resolve()
+      }
+    })
+  },
+  refetch ({ state, commit }) {
+    if (state.loaded) {
       Vue.prototype.$api
-        .get(`/deployments/${deploymentId}/users`)
+        .get(`/deployments/${state.deploymentId}/users`)
         .then(r => r.data)
         .then(users => {
           commit('setUsers', users)
-          commit('setLoaded')
-          resolve()
+          console.log('Refetched users')
         })
         .catch((error) => {
           console.log(error)
-          reject(error)
         })
-    })
+    }
   },
   storeDestroy ({ commit }) {
     commit('destroy')
@@ -56,11 +79,15 @@ const mutations = {
   setUsers (state, value) {
     state.users = value
   },
-  setLoaded (state) {
-    state.loaded = true
+  setDeploymentId (state, value) {
+    state.deploymentId = value
+  },
+  setLoaded (state, value) {
+    state.loaded = value
   },
   destroy (state) {
     state.users = []
+    state.deploymentId = null
     state.loaded = false
   }
 }

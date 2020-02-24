@@ -4215,7 +4215,8 @@ li.update-log>.update-log-avatar {
 
 .update-log-name {
   font-size: .6em;
-  text-align: center
+  text-align: center;
+  overflow-wrap: normal;
 }
 
 .update-log-text {

@@ -1,5 +1,6 @@
 const state = {
   isConnected: false,
+  needsRefetching: false,
   deploymentId: null
 }
 
@@ -29,8 +30,19 @@ const actions = {
     console.log(2)
     this._vm.$socket.client.emit('join', { accessToken: rootGetters['user/getAccessToken'], deploymentId: state.deploymentId })
   },
-  socket_reconnect ({ state, commit, dispatch }) {
-    commit('connected', false)
+  socket_connected ({ state, commit, dispatch }) {
+    if (state.needsRefetching) {
+      dispatch('user/refetch', null, { root: true })
+      dispatch('deployments/refetch', null, { root: true })
+      dispatch('incidents/refetch', null, { root: true })
+      dispatch('users/refetch', null, { root: true })
+      commit('setNeedsRefetching', false)
+    }
+  },
+  socket_reconnect ({ commit, dispatch }) {
+    commit('setConnected', false)
+    console.log('Reconnecting')
+    commit('setNeedsRefetching', true)
     dispatch('connect')
   },
   storeDestroy ({ commit }) {
@@ -39,8 +51,11 @@ const actions = {
 }
 
 const mutations = {
-  connected (state, value) {
+  setConnected (state, value) {
     state.isConnected = value
+  },
+  setNeedsRefetching (state, value) {
+    state.needsRefetching = value
   },
   setDeploymentId (state, value) {
     state.deploymentId = value
@@ -52,6 +67,7 @@ const mutations = {
   destroy (state) {
     state.isConnected = false
     state.deploymentId = false
+    state.needsRefetching = false
   }
 }
 
