@@ -45,6 +45,11 @@ const actions = {
     commit('setNeedsRefetching', true)
     dispatch('connect')
   },
+  // eslint-disable-next-line no-empty-pattern
+  socket_ignoringRoom ({}, data) {
+    console.log('Recieved closing room event')
+    this._vm.$socket.client.emit('unignore_room', { room: data.room })
+  },
   storeDestroy ({ commit }) {
     commit('destroy')
   }

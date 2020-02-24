@@ -7,48 +7,58 @@
         <div class="d-sm-flex align-items-center justify-content-between mb-4">
           <h1 class="font-weight-bold mb-0">{{ deploymentNameApi }} - {{ incidentId }}</h1>
           <div class="d-flex mb-1 mt-2">
-            <button v-if="incident" :class="['btn', 'btn-icon-split', 'btn-group-incidents', 'mr-2', incident.open ? 'btn-success' : 'btn-info']" @click="markAsComplete">
-                <span class="btn-icon">
-                    <i class="fas fa-check"></i>
-                </span>
-                <span v-if="incident && hasPermission('change_status')" class="text">{{ incident.open ? 'Mark As Complete' : 'Mark As Incomplete' }}</span>
-                <span v-else-if="incident" class="text">{{ incident.open ? 'Request Mark As Complete' : 'Request Mark As Incomplete' }}</span>
-            </button>
-            <request-status-change-modal v-if="isRequestStatusChangeModalVisible" v-show="isRequestStatusChangeModalVisible" :visible="isRequestStatusChangeModalVisible" :incidentId="incidentId" @close="isRequestStatusChangeModalVisible = false" />
-            <button v-if="incident && !incident.public && hasPermission('mark_as_public')" class="btn btn-icon-split btn-group-incidents mr-2 btn-success" @click="isIncidentPublicModalVisible = true">
-                <span class="btn-icon">
-                    <i class="fas fa-eye"></i>
-                </span>
-                <span class="text">Show To Public</span>
-            </button>
-            <b-dropdown v-if="incident && incident.public && hasPermission('mark_as_public')" id="FlagDropdown" toggle-class="btn-icon-split btn-info dropdown-toggle text-white mr-2">
-              <template slot="button-content">
+            <div v-if="viewingIncident.length" class="mr-3 current-viewing">
+              <span class="font-weight-bold">Currently viewing: </span>
+              <div class="avatar-group mr-2">
+                <i v-for="user in viewingIncident" :key="user.name" class="avatar avatar-sm" v-tooltip="`${user.firstname} ${user.surname}`">
+                  <img alt="Avatar" :src="user.avatarUrl" class="rounded-circle avatar-sm">
+                </i>
+              </div>
+            </div>
+            <div>
+              <button v-if="incident" :class="['btn', 'btn-icon-split', 'btn-group-incidents', 'mr-2', incident.open ? 'btn-success' : 'btn-info']" @click="markAsComplete">
                   <span class="btn-icon">
-                    <i class="fas fa-eye"></i>
+                      <i class="fas fa-check"></i>
                   </span>
-                  <span class="text">Public View</span>
-              </template>
-              <b-dropdown-item :to="{ name: 'publicIncident', params: { incidentName: this.incidentName.replace(/ /g, '-'), incidentId: this.incidentId }}">View public page</b-dropdown-item>
-              <b-dropdown-item @click="isIncidentPublicModalVisible = true">Edit public page</b-dropdown-item>
-              <social-sharing url="" :title="`[System Generated] ${getName}\n${getDescription}\n${getUrl}`" inline-template>
-                <network network="twitter">
-                  <b-dropdown-item>Tweet incident</b-dropdown-item>
-                </network>
-              </social-sharing>
-              <b-dropdown-item @click="changePublic(false)">Hide from public</b-dropdown-item>
-            </b-dropdown>
-            <incident-public-modal v-if="isIncidentPublicModalVisible" v-show="isIncidentPublicModalVisible" :visible="isIncidentPublicModalVisible" :incident="incident" :edit="incident.public" @close="isIncidentPublicModalVisible = false" />
-            <b-dropdown id="FlagDropdown" toggle-class="btn-icon-split btn-group-incidents btn-warning dropdown-toggle text-white">
-              <template slot="button-content">
+                  <span v-if="incident && hasPermission('change_status')" class="text">{{ incident.open ? 'Mark As Complete' : 'Mark As Incomplete' }}</span>
+                  <span v-else-if="incident" class="text">{{ incident.open ? 'Request Mark As Complete' : 'Request Mark As Incomplete' }}</span>
+              </button>
+              <request-status-change-modal v-if="isRequestStatusChangeModalVisible" v-show="isRequestStatusChangeModalVisible" :visible="isRequestStatusChangeModalVisible" :incidentId="incidentId" @close="isRequestStatusChangeModalVisible = false" />
+              <button v-if="incident && !incident.public && hasPermission('mark_as_public')" class="btn btn-icon-split btn-group-incidents mr-2 btn-success" @click="isIncidentPublicModalVisible = true">
                   <span class="btn-icon">
-                    <i class="fas fa-flag"></i>
+                      <i class="fas fa-eye"></i>
                   </span>
-                  <span class="text">Flag</span>
-              </template>
-              <b-dropdown-item>User</b-dropdown-item>
-              <b-dropdown-item @click="isFlagToSupervisorModalVisible = true">Supervisor</b-dropdown-item>
-            </b-dropdown>
-            <flag-to-supervisor-modal v-if="isFlagToSupervisorModalVisible" v-show="isFlagToSupervisorModalVisible" :visible="isFlagToSupervisorModalVisible" :incidentId="incidentId" @close="isFlagToSupervisorModalVisible = false" />
+                  <span class="text">Show To Public</span>
+              </button>
+              <b-dropdown v-if="incident && incident.public && hasPermission('mark_as_public')" id="FlagDropdown" toggle-class="btn-icon-split btn-info dropdown-toggle text-white mr-2">
+                <template slot="button-content">
+                    <span class="btn-icon">
+                      <i class="fas fa-eye"></i>
+                    </span>
+                    <span class="text">Public View</span>
+                </template>
+                <b-dropdown-item :to="{ name: 'publicIncident', params: { incidentName: this.incidentName.replace(/ /g, '-'), incidentId: this.incidentId }}">View public page</b-dropdown-item>
+                <b-dropdown-item @click="isIncidentPublicModalVisible = true">Edit public page</b-dropdown-item>
+                <social-sharing url="" :title="`[System Generated] ${getName}\n${getDescription}\n${getUrl}`" inline-template>
+                  <network network="twitter">
+                    <b-dropdown-item>Tweet incident</b-dropdown-item>
+                  </network>
+                </social-sharing>
+                <b-dropdown-item @click="changePublic(false)">Hide from public</b-dropdown-item>
+              </b-dropdown>
+              <incident-public-modal v-if="isIncidentPublicModalVisible" v-show="isIncidentPublicModalVisible" :visible="isIncidentPublicModalVisible" :incident="incident" :edit="incident.public" @close="isIncidentPublicModalVisible = false" />
+              <b-dropdown id="FlagDropdown" toggle-class="btn-icon-split btn-group-incidents btn-warning dropdown-toggle text-white">
+                <template slot="button-content">
+                    <span class="btn-icon">
+                      <i class="fas fa-flag"></i>
+                    </span>
+                    <span class="text">Flag</span>
+                </template>
+                <b-dropdown-item>User</b-dropdown-item>
+                <b-dropdown-item @click="isFlagToSupervisorModalVisible = true">Supervisor</b-dropdown-item>
+              </b-dropdown>
+              <flag-to-supervisor-modal v-if="isFlagToSupervisorModalVisible" v-show="isFlagToSupervisorModalVisible" :visible="isFlagToSupervisorModalVisible" :incidentId="incidentId" @close="isFlagToSupervisorModalVisible = false" />
+            </div>
           </div>
         </div>
         <div class="row">
@@ -357,6 +367,8 @@ export default {
         zoom: 15
       },
       task: null,
+      viewingIncident: [],
+      viewingInterval: null,
       commentHtml: null,
       commentJson: null,
       selectOptions: [],
@@ -374,6 +386,15 @@ export default {
       isCommentQuestionModalVisible: false,
       commentBoxVisible: true,
       isHandlingAllocation: false
+    }
+  },
+  sockets: {
+    viewing_incident: function (data) {
+      console.log('Recieved viewing incident event')
+      this.viewingIncident = data.users
+      if (this.getUser !== null && !this.viewingIncident.filter(user => user.id === this.getUser.id).length) {
+        this.$socket.client.emit('viewing_incident', { incidentId: this.incidentId, sendChangesOnly: false })
+      }
     }
   },
   methods: {
@@ -542,7 +563,11 @@ export default {
     getUrl: function () {
       return window.location.origin + '/' + router.resolve({ name: 'publicIncident', params: { incidentName: this.incident.name.replace(/ /g, '-'), incidentId: this.incident.id } }).href
     },
+    ...mapGetters('sockets', {
+      isSocketConnected: 'isConnected'
+    }),
     ...mapGetters('user', {
+      getUser: 'getUser',
       hasPermission: 'hasPermission'
     }),
     ...mapGetters('users', {
@@ -573,13 +598,33 @@ export default {
           history.pushState(null, '', `/deployments/${this.deployment.name.replace(/ /g, '-')}-${this.deploymentId}/incidents/${this.incident.name.replace(/ /g, '-')}-${this.incidentId}`)
         }
       }
+    },
+    isSocketConnected (value) {
+      if (value) {
+        this.$socket.client.emit('viewing_incident', { incidentId: this.incidentId, sendChangesOnly: false })
+      }
     }
+  },
+  mounted: function () {
+    this.viewingInterval = window.setInterval(() => {
+      if (this.viewingIncident.length) {
+        this.$socket.client.emit('viewing_incident', { incidentId: this.incidentId, sendChangesOnly: true })
+      }
+    }, 60000)
   },
   async created () {
     this.checkUserLoaded(this.deploymentId)
     this.checkDeploymentsLoaded()
     this.checkIncidentsLoaded(this.deploymentId)
-    this.checkSocketsConnected(this.deploymentId)
+    if (this.isSocketConnected) {
+      this.$socket.client.emit('viewing_incident', { incidentId: this.incidentId, sendChangesOnly: false })
+    } else {
+      this.checkSocketsConnected(this.deploymentId)
+    }
+  },
+  beforeDestroy () {
+    clearInterval(this.viewingInterval)
+    this.$socket.client.emit('leave_viewing_incident', { incidentId: this.incidentId })
   }
 }
 </script>

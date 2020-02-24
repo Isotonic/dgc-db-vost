@@ -5261,3 +5261,8 @@ div .marker {
   position: relative;
   top: 1px;
 }
+
+.current-viewing {
+  position: relative;
+  bottom: 3px;
+}
