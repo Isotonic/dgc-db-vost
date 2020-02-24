@@ -494,3 +494,21 @@ class TasksEndpoint(Resource):
             ns_incident.abort(400, 'Name is empty')
         return task, 200
 
+
+@ns_incident.route('/<int:id>/tasks/me')
+@ns_incident.doc(params={'id': 'Incident ID.'})
+@ns_incident.resolve_object('incident', lambda kwargs: Incident.query.get_or_error(kwargs.pop('id')))
+class UserTasksEndpoint(Resource):
+    @jwt_required
+    @ns_incident.doc(security='access_token')
+    @ns_incident.response(200, 'Success', [task_model])
+    @ns_incident.response(401, 'Incorrect credentials')
+    @ns_incident.response(403, 'Missing incident access')
+    @ns_incident.response(404, 'Incident doesn\'t exist')
+    @api.marshal_with(task_model)
+    def get(self, incident):
+        """
+                Returns user's tasks.
+        """
+        current_user = User.query.filter_by(id=get_jwt_identity()).first()
+        return [m for m in incident.tasks if current_user in m.assigned_to], 200

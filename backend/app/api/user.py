@@ -278,9 +278,9 @@ class UserTasksEndpoint(Resource):
         """
                 Returns user's tasks.
         """
-        user = User.query.filter_by(id=get_jwt_identity()).first()
+        current_user = User.query.filter_by(id=get_jwt_identity()).first()
         tasks_marshalled = []
-        for x in user.tasks:
+        for x in current_user.tasks:
             marshalled = marshal(x, task_model)
             marshalled['incidentId'] = x.incident_id
             marshalled['deploymentId'] = x.incident.deployment_id

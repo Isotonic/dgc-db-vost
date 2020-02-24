@@ -5254,3 +5254,9 @@ div .marker {
   line-height: 1.5;
   border-radius: .2rem;
 }
+
+.fa-underline,
+.fa-comment {
+  position: relative;
+  top: 1px;
+}

@@ -17,7 +17,7 @@
         <ol v-if="properties.comments.length || (!publicPage && properties.tasks.length)" class="incident-card-actions-list list-unstyled mt-2">
           <li class="incident-card-actions">
             <div v-if="!publicPage && properties.tasks.length" class="mr-1">
-              <i class="fas fa-tasks" v-tooltip="'Tasks'"></i>
+              <i class="fas fa-tasks" v-tooltip="'Tasks Complete'"></i>
               <span class="incident-card-actions-text">{{ taskText }}</span>
             </div>
             <div v-if="properties.comments.length">
