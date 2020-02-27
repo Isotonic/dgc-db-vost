@@ -1,4 +1,4 @@
-from app import db, moment
+from app import db
 from flask_restx import marshal
 from flask_socketio import emit
 from .actions import incident_action

@@ -244,7 +244,7 @@ class DeploymentUsersEndpoint(Resource):
         current_user = User.query.filter_by(id=get_jwt_identity()).first()
         ns_deployment.has_deployment_access(current_user, deployment)
         if not deployment.groups and not deployment.users:
-            all_users = User.query.filter_by(status=1).all()
+            all_users = User.query.filter(User.status>=1).all()
             return all_users, 200
         users = []
         for x in deployment.groups:

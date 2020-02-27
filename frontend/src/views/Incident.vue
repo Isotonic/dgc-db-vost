@@ -95,7 +95,7 @@
                   </div>
                   <div class="col-auto">
                     <div class="icon icon-shape bg-primary text-white rounded-circle shadow">
-                      <i class="fas fa-users fa-1fourx"></i>
+                      <i class="fas fa-users fa-1fourx" v-tooltip="'Assigned To'" />
                     </div>
                   </div>
                 </div>
@@ -123,7 +123,7 @@
                   </div>
                   <div class="col-auto">
                     <div :class="['icon', 'icon-shape', 'text-white', 'rounded-circle', 'shadow', 'bg-' + incident.priority]">
-                      <i :class="['fas', 'fa-1fourx', 'fa-'  + incident.icon]"></i>
+                      <i :class="['fas', 'fa-1fourx', 'fa-'  + incident.icon]" v-tooltip="`${incident.type} Incident`" />
                     </div>
                   </div>
                 </div>
@@ -149,7 +149,7 @@
                   </div>
                   <div class="col-auto">
                     <div class="icon icon-shape bg-success text-white rounded-circle shadow">
-                      <i class="fas fa-tasks fa-1fourx"></i>
+                      <i class="fas fa-tasks fa-1fourx" v-tooltip="'Tasks'" />
                     </div>
                   </div>
                 </div>
@@ -170,7 +170,7 @@
                   </div>
                   <div class="col-auto">
                     <div class="icon icon-shape bg-info text-white rounded-circle shadow">
-                      <i class="far fa-clock fa-1fourx"></i>
+                      <i class="far fa-clock fa-1fourx" v-tooltip="'Last Updated'" />
                     </div>
                   </div>
                 </div>
@@ -296,6 +296,7 @@
 </template>
 
 <script>
+import Vue from 'vue'
 import Vue2Filters from 'vue2-filters'
 import Multiselect from 'vue-multiselect'
 import { divIcon, latLng } from 'leaflet'
@@ -362,8 +363,8 @@ export default {
     return {
       allocatedSelected: [],
       mapSettings: {
-        url: 'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
-        attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors',
+        url: Vue.prototype.$mapTileServerUrl,
+        attribution: `Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors | <a href="${Vue.prototype.$mapTileServerLink}">${Vue.prototype.$mapTileServerName}</a>`,
         zoom: 15
       },
       task: null,

@@ -68,6 +68,9 @@ Vue.prototype.$api = Vue.prototype.$http.create({
 Vue.prototype.$api.interceptors.response.use(undefined, authInterceptor(Vue.prototype.$api))
 
 Vue.prototype.$mapBoxApiKey = configuration.value('mapboxApiKey')
+Vue.prototype.$mapTileServerName = configuration.value('mapTileServerName')
+Vue.prototype.$mapTileServerUrl = configuration.value('mapTileServerUrl')
+Vue.prototype.$mapTileServerLink = configuration.value('mapTileServerLink')
 
 new Vue({
   router,

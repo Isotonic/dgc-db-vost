@@ -120,6 +120,7 @@ deployment_model = api.model('Deployment',
                              'description': fields.String(description='Description of the deployment.'),
                              'open': fields.Boolean(attribute='open_status', description='Open status of the deployment.'),
                              'createdAt': fields.Integer(attribute=lambda x: int(x.created_at.timestamp()), description='UTC timestamp of the deployment\'s creation.'),
+                             'closedAt': fields.Integer(attribute=lambda x: int(x.closed_at.timestamp()) if x.closed_at else None, description='UTC timestamp of the deployment\'s closure, can be null.'),
                              'groups': fields.List(fields.Nested(group_model), description='Whitelisted groups that are able to access this deployment, if both users and groups are empty then all users and groups have access to it.'),
                              'users': fields.List(fields.Nested(user_model_without_group), description='Whitelisted users that are able to access this deployment, if both users and groups are empty then all users and groups have access to it.')})
 
@@ -169,7 +170,7 @@ task_model = api.model('Task',
                          'assignedTo': fields.List(fields.Nested(user_model_without_group), attribute='assigned_to', description='User\'s the task is assigned to, can be empty.'),
                          'subtasks': fields.List(fields.Nested(subtask_model), description='Tasks within the task, can be empty.'),
                          'comments': fields.List(fields.Nested(task_comment_model), description='Comments in the task, can be empty.'),
-                         'activity': fields.List(fields.Nested(activity_model), attribute='logs', description='Actions the occured in the task.')}) ##TODO Change to actions
+                         'activity': fields.List(fields.Nested(activity_model), description='Actions the occured in the task.')}) ##TODO Change to actions
 
 
 task_model_with_incident = api.model('Task With Incident',
@@ -185,7 +186,7 @@ task_model_with_incident = api.model('Task With Incident',
                          'assignedTo': fields.List(fields.Nested(user_model_without_group), attribute='assigned_to', description='User\'s the task is assigned to, can be empty.'),
                          'subtasks': fields.List(fields.Nested(subtask_model), description='Tasks within the task, can be empty.'),
                          'comments': fields.List(fields.Nested(task_comment_model), description='Comments in the task, can be empty.'),
-                         'activity': fields.List(fields.Nested(activity_model), attribute='logs', description='Actions the occured in the task.')}) ##TODO Change to actions
+                         'activity': fields.List(fields.Nested(activity_model), description='Actions the occured in the task.')}) ##TODO Change to actions
 
 
 incident_model_name = api.model('Incident Name',

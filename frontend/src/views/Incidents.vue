@@ -25,7 +25,7 @@
                   </div>
                   <div class="col-auto">
                     <div class="icon icon-shape bg-primary text-white rounded-circle shadow">
-                      <i class="fas fa-1fourx fa-clone"></i>
+                      <i class="fas fa-1fourx fa-clone" v-tooltip="'Total Incidents'" />
                     </div>
                   </div>
                 </div>
@@ -46,13 +46,33 @@
                   </div>
                   <div class="col-auto">
                     <div class="icon icon-shape bg-warning text-white rounded-circle shadow">
-                      <i class="fas fa-1fourx fa-hourglass-end"></i>
+                      <i class="fas fa-1fourx fa-hourglass-end" v-tooltip="'Avg. Response Time'" />
                     </div>
                   </div>
                 </div>
                 <p class="mt-2 mb-0 text-muted">
                   <span :class="['mr-2', responseTimeBottomStat.class]"><i :class="['fa', 'fa-sm', responseTimeBottomStat.icon]"></i>{{ responseTimeBottomStat.stat }}%</span>
                   <span class="text-nowrap">since last hour</span>
+                </p>
+              </div>
+            </div>
+          </div>
+          <div v-if="deployment" class="col-xl-3 col-md-6 mb-4">
+            <div :class="['card', 'shadow', deployment.open ? 'border-left-success' : 'border-left-info']">
+              <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                  <div class="col mr-2">
+                    <div :class="['text-s', 'font-weight-bold', 'text-uppercase', 'mb-1', deployment.open ? 'text-success' : 'text-info']">Active For</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ activeTime }}</div>
+                  </div>
+                  <div class="col-auto">
+                    <div :class="['icon', 'icon-shape', 'text-white', 'rounded-circle', 'shadow' , deployment.open ? 'bg-success' : 'bg-info']">
+                      <i class="fas fa-1fourx fa-stopwatch" v-tooltip="'Active For'" />
+                    </div>
+                  </div>
+                </div>
+                <p class="mt-2 mb-0 text-muted">
+                  <span class="text-nowrap text-s">Created {{ deployment.createdAt | moment("Do MMMM YYYY, h:mm A") }}</span>
                 </p>
               </div>
             </div>
@@ -135,6 +155,8 @@ export default {
     return {
       showingIncidents: 'all',
       showingStatus: 'open',
+      activeTime: '',
+      activeInterval: null,
       columns: ['pinned', 'name', 'location', 'priority', 'assignedTo', 'taskPercentage', 'lastUpdated'],
       options: {
         headings: {
@@ -413,6 +435,20 @@ export default {
     this.checkDeploymentsLoaded()
     this.checkIncidentsLoaded(this.deploymentId)
     this.checkSocketsConnected(this.deploymentId)
+    this.activeInterval = window.setInterval(() => {
+      if (this.deployment && (this.deployment.open || !this.activeTime.length)) {
+        const activeTime = this.deployment.open ? (Date.now() / 1000) - this.deployment.createdAt : this.deployment.closedAt - this.deployment.createdAt
+        if (activeTime >= 86400) {
+          this.activeTime = `${Math.floor(activeTime / 86400)}d ${this.$moment.unix(activeTime).format('hh[h] mm[m] ss[s]')}`
+        } else if (activeTime >= 3600) {
+          this.activeTime = this.$moment.unix(activeTime).format('hh[h] mm[m] ss[s]')
+        } else if (activeTime >= 60) {
+          this.activeTime = this.$moment.unix(activeTime).format('mm[m] ss[s]')
+        } else {
+          this.activeTime = this.$moment.unix(activeTime).format('mm[m] ss[s]')
+        }
+      }
+    }, 1000)
   },
   mounted () {
     let self = this
@@ -423,6 +459,9 @@ export default {
       }
       router.push({ name: 'incident', params: { deploymentName: self.deploymentNameApi.replace(/ /g, '-'), deploymentId: self.deploymentId, incidentName: data.row.name.replace(/ /g, '-'), incidentId: data.row.id } })
     })
+  },
+  beforeDestroy () {
+    clearInterval(this.activeInterval)
   }
 }
 </script>

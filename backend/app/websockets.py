@@ -46,7 +46,7 @@ def on_join(data):
         token = decode_token(data['accessToken'])
     except (exceptions.ExpiredSignatureError, KeyError):
         return
-    user = User.query.filter_by(id=token['identity'], status=1).first()
+    user = User.query.filter(User.id==token['identity'], User.status>=1).first()
     if not user:
         return
     login_user(user)
@@ -123,7 +123,6 @@ def on_leave_viewing_incident(data):
         incident_id = data['incidentId']
     except KeyError:
         return
-    print('Recieved leaving viewing event')
     if incident_id in viewing_incidents.keys() and current_user.id in viewing_incidents[incident_id]:
         disconnect(f'{incident_id}-viewing')
         del viewing_incidents[incident_id][current_user.id]

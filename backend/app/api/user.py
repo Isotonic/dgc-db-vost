@@ -202,6 +202,7 @@ class UserStatusEndpoint(Resource):
     @ns_user.response(401, 'Incorrect credentials')
     @ns_user.response(403, 'Missing supervisor permission')
     @ns_user.response(403, 'Can\'t change your own status')
+    @ns_user.response(403, 'Can\'t change a superuser\'s status')
     @ns_user.response(404, 'User doesn\'t exist')
     @api.marshal_with(user_status_model)
     def put(self, user):
@@ -214,6 +215,9 @@ class UserStatusEndpoint(Resource):
         ns_user.has_permission(current_user, 'supervisor')
         if current_user == user:
             ns_user.abort(403, 'Can\'t change your own status')
+
+        if user.status == 2:
+            ns_user.abort(403, 'Can\'t change a superuser\'s status')
 
         if change_user_status(user, payload['status'], current_user) is False:
             ns_user.abort(400, 'User already has this status')
@@ -244,6 +248,7 @@ class UserGroupEndpoint(Resource):
     @ns_user.response(400, 'User already has this group')
     @ns_user.response(401, 'Incorrect credentials')
     @ns_user.response(403, 'Missing supervisor permission')
+    @ns_user.response(403, 'Can\'t change your own group')
     @ns_user.response(404, 'User doesn\'t exist')
     @ns_user.response(404, 'Group doesn\'t exist')
     @api.marshal_with(group_model)
@@ -255,6 +260,8 @@ class UserGroupEndpoint(Resource):
         current_user = User.query.filter_by(id=get_jwt_identity()).first()
 
         ns_user.has_permission(current_user, 'supervisor')
+        if current_user == user:
+            ns_user.abort(403, 'Can\'t change your own group')
         if 'id' in payload.keys():
             group = Group.query.filter_by(id=payload['id']).first()
             if not group:

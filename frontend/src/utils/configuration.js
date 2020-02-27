@@ -4,7 +4,11 @@ dotenv.config()
 export default class configuration {
   static get CONFIG () {
     return {
-      mapboxApiKey: '$VUE_APP_MAPBOX_API_KEY'
+      mapboxApiKey: '$VUE_APP_MAPBOX_API_KEY',
+      mapTileServerName: '$VUE_APP_MAP_TILE_SERVER_NAME',
+      mapTileServerUrl: '$VUE_APP_MAP_TILE_SERVER_Url',
+      mapTileServerLink: '$VUE_APP_MAP_TILE_SERVER_Link'
+
     }
   }
 

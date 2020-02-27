@@ -72,6 +72,7 @@ const mutations = {
       deployment.open = data.open
       deployment.reference = data.groups
       deployment.users = data.users
+      deployment.closedAt = data.closedAt
     }
   },
   destroy (state) {

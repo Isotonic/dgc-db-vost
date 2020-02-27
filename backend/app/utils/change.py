@@ -41,6 +41,7 @@ def change_user_group(user, group, changed_by):
     audit_action(changed_by, AuditLog.action_values['edit_user_group'])
     emit('change_user_group', {'id': user.id, 'group': group_marshalled, 'code': 200}, namespace='/', room='admin')
 
+
 def change_user_status(user, status, changed_by):
     if user.status == status:
         return False
@@ -56,12 +57,17 @@ def edit_deployment(deployment, name, description, open_status, group_ids, user_
         return False
     deployment.name = name
     deployment.description = description
+    if deployment.open_status != open_status:
+        if open_status:
+            deployment.closed_at = None
+        else:
+            deployment.closed_at = datetime.utcnow()
     deployment.open_status = open_status
     deployment.groups = groups
     deployment.users = users
     users_marshalled = marshal(deployment.users, user_model_without_group)
     groups_marshalled = marshal(deployment.groups, group_model)
-    emit('CHANGE_DEPLOYMENT_EDIT', {'id': deployment.id, 'name': name, 'description': description, 'open': open_status, 'groups': groups_marshalled, 'users': users_marshalled, 'code': 200}, namespace='/', room='deployments')
+    emit('CHANGE_DEPLOYMENT_EDIT', {'id': deployment.id, 'name': name, 'description': description, 'open': open_status, 'groups': groups_marshalled, 'users': users_marshalled, 'closedAt': deployment.closed_at.timestamp() if deployment.closed_at else None, 'code': 200}, namespace='/', room='deployments')
     audit_action(changed_by, action_type=AuditLog.action_values['edit_deployment'], target_id=deployment.id)
     return deployment
 

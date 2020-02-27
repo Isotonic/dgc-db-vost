@@ -18,7 +18,7 @@ def check_if_token_in_blacklist(decrypted_token):
     jti = decrypted_token['jti']
     iat = decrypted_token['iat']
     identity = int(decrypted_token['identity'])
-    user = User.query.filter_by(id=identity, status=1).first()
+    user = User.query.filter(User.id==identity, User.status>=1).first()
     return not user or (user.password_last_updated and user.password_last_updated.timestamp() > iat) or RevokedToken.is_jti_blacklisted(jti)
 
 api_blueprint = Blueprint('api', __name__)
@@ -53,22 +53,6 @@ def get_type_or_class_name(var) -> str:
         return var.__name__
     else:
         return type(var).__name__
-
-@api.errorhandler(Exception)
-def generic_exception_handler(e: Exception):
-    exc_type, exc_value, exc_traceback = sys.exc_info()
-
-    if exc_traceback:
-        traceback_details = {
-            'filename': exc_traceback.tb_frame.f_code.co_filename,
-            'lineno': exc_traceback.tb_lineno,
-            'name': exc_traceback.tb_frame.f_code.co_name,
-            'type': get_type_or_class_name(exc_type),
-            'message': str(exc_value),
-        }
-        return {'message': traceback_details['message']}, 500
-    else:
-        return {'message': 'Internal Server Error'}, 500
 
 @api.errorhandler(exceptions.ExpiredSignatureError)
 def handle_expired_token(error):

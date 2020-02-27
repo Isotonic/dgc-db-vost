@@ -28,13 +28,14 @@
                 <div class="table-responsive">
                   <v-client-table v-if="showingUsers" :data="users" :columns="usersColumns" :options="usersOptions">
                     <div slot="group" slot-scope="{row}">
-                      <span>
+                      <span v-if="user.id !== row.id">
                         <select :value="row.group ? row.group.id : null" @change="changeUserGroup(row.id, $event.target.value)" class="custom-select custom-select-sm text-primary font-weight-bold">
                           <option :value="null">None</option>
                           <option disabled>──────────</option>
                           <option v-for="group in orderBy(groups, 'id')" :key="group.id" :value="group.id">{{ group.name }}</option>
                         </select>
                       </span>
+                      <span v-else class="text-primary font-weight-bold ml-2">{{ row.group ? row.group.name : 'None' }}</span>
                     </div>
                     <div slot="status" slot-scope="{row}">
                       <span v-if="row.status == 0">
@@ -42,12 +43,13 @@
                         <i class="fas fa-redo-alt ml-3" @click="resendEmail(row)" v-tooltip="'Resend email'"></i>
                         <i class="fas fa-times ml-2" @click="confirmRevokeUser(row)" v-tooltip="'Revoke'"></i>
                       </span>
-                      <span v-else>
+                      <span v-else-if="user.id !== row.id">
                         <select :value="row.status" @change="changeUserStatus(row.id, $event.target.value)" class="custom-select custom-select-sm text-primary font-weight-bold">
                           <option :value="1">Active</option>
                           <option :value="2">Disabled</option>
                         </select>
                       </span>
+                      <span v-else class="text-primary font-weight-bold ml-2">Active</span>
                     </div>
                   </v-client-table>
                   <question-modal v-if="isRevokeUserModalVisible" v-show="isRevokeUserModalVisible" :visible="isRevokeUserModalVisible" :title="'Revoke Email'" @btnAction="revokeUser" @close="isRevokeUserModalVisible = false">
@@ -358,7 +360,8 @@ export default {
       isSocketConnected: 'isConnected'
     }),
     ...mapGetters('user', {
-      accessToken: 'getAccessToken'
+      accessToken: 'getAccessToken',
+      user: 'getUser'
     })
   },
   watch: {

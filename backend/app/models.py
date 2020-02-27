@@ -6,7 +6,7 @@ from datetime import datetime
 from flask_mail import Message
 from flask import render_template
 from flask_login import UserMixin
-from app import app, db, login, argon2, moment, mail
+from app import app, db, login, argon2, mail
 
 avatar_colours = ['#26de81', '#3867d6', '#eb3b5a', '#0fb9b1', '#f7b731', '#a55eea', '#fed330', '#45aaf2', '#fa8231',
                   '#2bcbba', '#fd9644', '#2d98da', '#8854d0', '#20bf6b', '#fc5c65', '#4b7bec']
@@ -145,15 +145,19 @@ class User(db.Model, UserMixin):
         return incidents
 
     def has_permission(self, permission):
-        if self.status != 1:
+        if self.status < 1:
             return False
+        elif self.status == 2:
+            return True
         if not self.group:
             return False
         return self.group.has_permission(permission)
 
     def has_deployment_access(self, deployment):
-        if self.status != 1:
+        if self.status < 1:
             return False
+        elif self.status == 2:
+            return True
         if not isinstance(deployment, Deployment):
             deployment = Deployment.query.filter_by(id=deployment).first()
         if not deployment:
@@ -165,8 +169,10 @@ class User(db.Model, UserMixin):
                 return True
 
     def has_incident_access(self, incident):
-        if self.status != 1:
+        if self.status < 1:
             return False
+        elif self.status == 2:
+            return True
         if not isinstance(incident, Incident):
             incident = Incident.query.filter_by(id=incident).first()
         if not incident:
@@ -188,10 +194,8 @@ def load_user(user_id):
 
 
 class Group(db.Model):
-    permission_values = {'view_all_incidents': 1, 'change_status': 2, 'change_allocation': 4,
-                         'mark_as_public': 8,
-                         'new_reports': 16, 'create_deployment': 32, 'decision_making_log': 64,
-                         'supervisor': 128, 'change_priority': 256}  ##TODO RE-DORDER ONCE DONE AND REMOVE NEW_REPORTS
+    permission_values = {'change_status': 1, 'change_allocation': 2, 'change_priority': 4, 'mark_as_public': 8,
+                         'view_all_incidents': 16, 'decision_making_log': 32, 'create_deployment': 64, 'supervisor': 128}
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64), index=True, unique=True)
@@ -236,6 +240,7 @@ class Deployment(db.Model):
     incidents = db.relationship('Incident', backref='deployment')
     users = db.relationship('User', secondary=deployment_user_junction, backref='deployments')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    closed_at = db.Column(db.DateTime)
 
     def __repr__(self):
         return f'{self.name}'
@@ -282,7 +287,6 @@ class Incident(db.Model):
     last_updated = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     public = db.Column(db.Boolean(), default=False)
     supervisor_approved = db.Column(db.Boolean(), default=False)
-    flagged = db.Column(db.Boolean(), default=False)
     open_status = db.Column(db.Boolean(), default=True)
     location = db.Column(db.String(128), index=True)
     priority = db.Column(db.String(10))
@@ -449,9 +453,9 @@ class IncidentLog(db.Model): ##TODO LOAD THIS FROM A FILE
     comment_id = db.Column(db.Integer, db.ForeignKey('incident_comment.id'))
     comment = db.relationship('IncidentComment', backref='action', lazy='selectin')
     task_id = db.Column(db.Integer, db.ForeignKey('incident_task.id'))
-    task = db.relationship('IncidentTask', backref='logs', lazy='selectin') ##TODO Change to actions
+    task = db.relationship('IncidentTask', backref='actions', lazy='selectin') ##TODO Change to actions
     subtask_id = db.Column(db.Integer, db.ForeignKey('incident_sub_task.id'))
-    subtask = db.relationship('IncidentSubTask', backref='logs', lazy='selectin') ##TODO Change to actions
+    subtask = db.relationship('IncidentSubTask', backref='actions', lazy='selectin') ##TODO Change to actions
     target_users = db.relationship('User', secondary=incidentlog_target_users_junction, lazy='selectin', backref='incident_log_target')
     action_type = db.Column(db.Integer())
     reason = db.Column(db.String(256))
