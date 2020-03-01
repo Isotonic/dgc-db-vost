@@ -17,10 +17,8 @@
                   <input v-model="password" type="password" class="form-control form-control-user" name="password" placeholder="Enter Password" aria-label="Password" required>
                 </div>
                 <div class="form-group">
-                  <div class="custom-control custom-checkbox small">
-                    <input type="checkbox" class="custom-control-input" name="remember_me" id="customCheckLogin">
-                    <label class="custom-control-label" for="customCheckLogin">Remember Me</label>
-                    </div>
+                    <input v-model="rememberMe" class="mx-1 checkbox-primary" type="checkbox" id="rememberMe">
+                    <label class="text-s" for="rememberMe">Remember Me</label>
                 </div>
                 <button type="submit" class="btn btn-primary btn-user btn-block">Sign in</button>
               </form>
@@ -43,17 +41,24 @@ export default {
     return {
       email: '',
       password: '',
+      rememberMe: false,
       error: false
     }
   },
   methods: {
     login () {
       this.$store.dispatch('user/login', [this.email, this.password])
-        .then(() => this.$router.push(this.$route.query.redirect || { name: 'deployments' }))
+        .then(() => {
+          if (this.rememberMe) {
+            localStorage.rememberMeEmail = this.email
+          } else {
+            localStorage.removeItem('rememberMeEmail')
+          }
+          this.$router.push(this.$route.query.redirect || { name: 'deployments' })
+        })
         .catch(() => this.loginFailed())
     },
     loginFailed () {
-      this.email = ''
       this.password = ''
       this.error = true
     }
@@ -65,6 +70,10 @@ export default {
   },
   created: function () {
     document.body.classList.add('bg-gradient-primary')
+    if (localStorage.rememberMeEmail) {
+      this.email = localStorage.rememberMeEmail
+      this.rememberMe = true
+    }
   },
   beforeDestroy () {
     document.body.classList.remove('bg-gradient-primary')

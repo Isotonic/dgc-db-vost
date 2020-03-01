@@ -4363,12 +4363,17 @@ input[type=checkbox]+span, input[type=radio]+span {
 
 input[type=checkbox]:not(.error):checked:after {
   content: "\f058";
-  color: #02df90!important
+  color: #02df90
+}
+
+input[type=checkbox].checkbox-primary:checked:after {
+  content: "\f058";
+  color: #0061f2 !important
 }
 
 input[type=checkbox].checkbox-error:checked:after {
   content: "\f057";
-  color: #f44336!important
+  color: #f44336 !important
 }
 
 input[type=radio]:checked:after {

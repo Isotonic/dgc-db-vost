@@ -109,7 +109,7 @@ full_user_model = api.model('User Full Details',
                          'surname': fields.String(description='Surname of the user.'),
                          'email': fields.String(description='Email of the user.'),
                          'createdAt': fields.Integer(attribute=lambda x: int(x.created_at.timestamp()), description='UTC timestamp of the user\'s creation.'),
-                         'status': fields.String(description='Status of the user. 0 = Sent email, 1 = Active account, 2 = Disabled account'),
+                         'status': fields.String(description='Status of the user. -1 = Disabled account, 0 = Sent email, 1 = Active account.'),
                          'avatarUrl': fields.String(attribute=lambda x: x.get_avatar(), description='URL for the user\'s avatar.'),
                          'group': fields.Nested(group_model_without_users, allow_null=True, description='Group the user belongs to, can be empty too.')})
 
@@ -287,4 +287,4 @@ public_deployment_model = api.model('Public Deployment',
                              'name': fields.String(description='Name of the deployment.'),
                              'description': fields.String(description='Description of the deployment.')})
 
-user_status_model = api.model('User Status', {'status': fields.Integer(description='Status of the user. 0 = Sent email, 1 = Active account, 2 = Disabled account', required=True)})
+user_status_model = api.model('User Status', {'status': fields.Integer(description='Status of the user. -1 = Disabled account, 0 = Sent email, 1 = Active account.', required=True)})

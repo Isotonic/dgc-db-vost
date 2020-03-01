@@ -200,6 +200,7 @@ class UserStatusEndpoint(Resource):
     @ns_user.response(200, 'Success', user_status_model)
     @ns_user.response(400, 'User already had this status')
     @ns_user.response(401, 'Incorrect credentials')
+    @ns_user.response(401, 'Invalid status')
     @ns_user.response(403, 'Missing supervisor permission')
     @ns_user.response(403, 'Can\'t change your own status')
     @ns_user.response(403, 'Can\'t change a superuser\'s status')
@@ -213,6 +214,9 @@ class UserStatusEndpoint(Resource):
         current_user = User.query.filter_by(id=get_jwt_identity()).first()
 
         ns_user.has_permission(current_user, 'supervisor')
+        if payload['status'] not in [1, -1]:
+            ns_user.abort(401, 'Invalid status')
+
         if current_user == user:
             ns_user.abort(403, 'Can\'t change your own status')
 

@@ -44,7 +44,7 @@ def handle_join_deployment(user, data):
 def on_join(data):
     try:
         token = decode_token(data['accessToken'])
-    except (exceptions.ExpiredSignatureError, KeyError):
+    except (exceptions.ExpiredSignatureError, exceptions.DecodeError, KeyError):
         return
     user = User.query.filter(User.id==token['identity'], User.status>=1).first()
     if not user:

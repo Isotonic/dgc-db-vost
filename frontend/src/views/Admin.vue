@@ -46,7 +46,7 @@
                       <span v-else-if="user.id !== row.id">
                         <select :value="row.status" @change="changeUserStatus(row.id, $event.target.value)" class="custom-select custom-select-sm text-primary font-weight-bold">
                           <option :value="1">Active</option>
-                          <option :value="2">Disabled</option>
+                          <option :value="-1">Disabled</option>
                         </select>
                       </span>
                       <span v-else class="text-primary font-weight-bold ml-2">Active</span>
