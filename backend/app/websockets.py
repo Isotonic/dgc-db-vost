@@ -37,7 +37,6 @@ def handle_join_deployment(user, data):
             join_room(f'{deploymentId}-{user.id}')
             if f'{deploymentId}-{user.id}' not in assigned_rooms:
                 assigned_rooms.append(f'{deploymentId}-{user.id}')
-            print(assigned_rooms)
 
 
 @socketio.on('join')
@@ -53,7 +52,6 @@ def on_join(data):
     join_room(f'{current_user.id}')
     join_room('deployments')
     handle_join_deployment(user, data)
-    print(f'Connected {user}')
     emit('CONNECTED', {'code': 200})
 
 
@@ -92,7 +90,6 @@ def on_viewing_incident(data):
         send_changes_only = data['sendChangesOnly']
     except KeyError:
         return
-    print('Recieved viewing event')
     if incident_id not in viewing_incidents.keys():
         viewing_incidents[incident_id] = {current_user.id: datetime.utcnow().timestamp()}
     elif incident_id in viewing_incidents.keys() and current_user.id not in viewing_incidents[incident_id]:
@@ -143,5 +140,4 @@ def on_join_deployment(data):
 @login_required_sockets
 def on_join_admin():
     if current_user.has_permission('supervisor'):
-        print('Joined admin')
         join_room('admin')

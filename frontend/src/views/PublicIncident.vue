@@ -15,8 +15,8 @@
               <div class="card-body">
                 <h3 class="font-weight-bold">{{ incident.name }}</h3>
                 <p class="card-text"><b>Created:</b> {{ incident.createdAt | moment("Do MMMM YYYY, h:mm A") }}</p>
-                <p class="card-text"><b>Location:</b> {{ incident.location.properties.address }}</p>
                 <p class="card-text"><b>Description:</b> {{ incident.description }}</p>
+                <p class="card-text"><b>Location:</b> {{ incident.location.properties.address }}</p>
               </div>
             </div>
             <div v-if="incident.comments.length" class="card shadow mb-4">

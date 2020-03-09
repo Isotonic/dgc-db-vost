@@ -115,7 +115,7 @@ const routes = [
   {
     path: '/deployments/:deploymentName-:deploymentId(\\d+)/live-feed',
     name: 'liveFeed',
-    component: () => import(/* webpackChunkName: "live feed" */ '../views/Incident.vue'),
+    component: () => import(/* webpackChunkName: "live feed" */ '../views/LiveFeed.vue'),
     props (route) {
       const props = { ...route.params }
       props.deploymentId = +props.deploymentId

@@ -126,9 +126,17 @@ deployment_model = api.model('Deployment',
 
 activity_model = api.model('Activity',
                            {'id': fields.Integer(),
-                            'user': fields.Nested(user_model_without_group),
-                            'text': fields.String(attribute=lambda x: str(x)),
-                            'occurredAt': fields.Integer(attribute=lambda x: int(x.occurred_at.timestamp()))})
+                            'user': fields.Nested(user_model),
+                            'comment': fields.String(description='Comment text, can be null.'),
+                            'commentId': fields.String(attribute='comment_id', description='Comment id, can be null.'),
+                            'task': fields.String(description='Task name, can be null.'),
+                            'taskId': fields.String(attribute='task_id', description='Task id, can be null.'),
+                            'subtask': fields.String(description='Subtask name, can be null.'),
+                            'subtaskId': fields.String(attribute='subtask_id', description='Subtask id, can be null.'),
+                            'targetUsers': fields.Nested(user_model, attribute='target_users', description='Affected users, can be null.'),
+                            'extra': fields.String(description='Extra text, can be null.'),
+                            'type': fields.String(attribute=lambda x: x.get_action_type(), description='Type of action taken.'),
+                            'occurredAt': fields.Integer(attribute=lambda x: int(x.occurred_at.timestamp()), description='UTC timestamp of when the activity occurred.')})
 
 comment_model = api.model('Comment',
                             {'id': fields.Integer(description='ID of the comment.'),

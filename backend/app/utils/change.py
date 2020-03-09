@@ -77,7 +77,7 @@ def edit_incident(incident, name, description, incident_type, reported_via, link
         return False
     added = list(set(linked_incidents) - set(incident.linked))
     removed = list(set(incident.linked) - set(linked_incidents))
-    incidentObj = copy(incident)
+    incident_obj = copy(incident)
     incident.name = name
     incident.description = description
     incident.incident_type = incident_type
@@ -86,16 +86,16 @@ def edit_incident(incident, name, description, incident_type, reported_via, link
     incident.reference = reference
     linked_incidents_marshalled = marshal(incident.linked, incident_model_name)
     emit_incident('CHANGE_INCIDENT_DETAILS', {'id': incident.id, 'name': name, 'description': description, 'type': incident_type, 'reportedVia': reported_via, 'linkedIncidents': linked_incidents_marshalled, 'reference': reference, 'icon': incident.get_icon(), 'code': 200}, incident)
-    if incidentObj.name != name:
-        incident_action(changed_by, IncidentLog.action_values['edit_incident_name'], incident=incident, extra=name)
-    if incidentObj.description != description:
-        incident_action(changed_by, IncidentLog.action_values['edit_incident_description'], incident=incident, extra=description)
-    if incidentObj.incident_type != incident_type:
-        incident_action(changed_by, IncidentLog.action_values['edit_incident_type'], incident=incident, extra=incident_type)
-    if incidentObj.reported_via != reported_via:
-        incident_action(changed_by, IncidentLog.action_values['edit_incident_reported_via'], incident=incident, extra=reported_via)
-    if incidentObj.reference != reference:
-        incident_action(changed_by, IncidentLog.action_values['edit_incident_reference'], incident=incident, extra=reference)
+    if incident_obj.name != name:
+        incident_action(changed_by, IncidentLog.action_values['edit_incident_name'], incident=incident, extra=f'{incident_obj.name} to {name}')
+    if incident_obj.description != description:
+        incident_action(changed_by, IncidentLog.action_values['edit_incident_description'], incident=incident, extra=f'{incident_obj.description} to {description}')
+    if incident_obj.incident_type != incident_type:
+        incident_action(changed_by, IncidentLog.action_values['edit_incident_type'], incident=incident, extra=f'{incident_obj.incident_type} to {incident_type}')
+    if incident_obj.reported_via != reported_via:
+        incident_action(changed_by, IncidentLog.action_values['edit_incident_reported_via'], incident=incident, extra=f'{incident_obj.reported_via} to {reported_via}')
+    if incident_obj.reference != reference:
+        incident_action(changed_by, IncidentLog.action_values['edit_incident_reference'], incident=incident, extra=f'{incident_obj.reference} to {reference}')
     for x in added:
         if incident not in x.linked:
             x.linked.append(incident)
@@ -138,7 +138,7 @@ def change_incident_allocation(incident, allocated_to, changed_by):
     users_marshalled = marshal(incident.assigned_to, user_model_without_group)
     emit_incident('CHANGE_INCIDENT_ALLOCATION', {'id': incident.id, 'assignedTo': users_marshalled, 'code': 200}, incident)
     if removed:
-        incident_action(user=changed_by, action_type=IncidentLog.action_values['removed_user'],
+        incident_action(user=changed_by, action_type=IncidentLog.action_values['unassigned_user'],
                         incident=incident, target_users=removed)
     if added:
         incident_action(user=changed_by, action_type=IncidentLog.action_values['assigned_user'],
@@ -253,9 +253,9 @@ def change_task_assigned(task, assigned_to, changed_by):
     users_marshalled = marshal(task.assigned_to, user_model_without_group)
     emit_incident('CHANGE_TASK_ASSIGNED', {'id': task.id, 'incidentId': task.incident.id, 'assignedTo': users_marshalled, 'code': 200}, task.incident)
     if removed:
-        task_action(user=changed_by, action_type=TaskLog.action_values['removed_user'], task=task,
+        task_action(user=changed_by, action_type=TaskLog.action_values['unassigned_user'], task=task,
                     target_users=removed)
-        incident_action(user=changed_by, action_type=IncidentLog.action_values['removed_user_task'],
+        incident_action(user=changed_by, action_type=IncidentLog.action_values['unassigned_user_task'],
                         incident=task.incident, task=task, target_users=removed)
     if added:
         task_action(user=changed_by, action_type=TaskLog.action_values['assigned_user'], task=task, target_users=added)

@@ -270,7 +270,6 @@ class Incident(db.Model):
                       'Plume': '', 'Radiation Pollution': 'radiation-alt', 'Hazardous Chemical Pollution': '',
                       'Oil Pollution': '', 'Sewage / Slurry': ''}
 
-    # TODO Add who has this pinned.
     id = db.Column(db.Integer, primary_key=True, index=True)
     deployment_id = db.Column(db.Integer, db.ForeignKey('deployment.id'))
     name = db.Column(db.String(64), index=True)
@@ -278,7 +277,7 @@ class Incident(db.Model):
     description = db.Column(db.String(256))
     public_description = db.Column(db.String(256))
     reported_via = db.Column(db.String(256))
-    reference = db.Column(db.String(128))  ##TODO MAYBE CHANGE TO INT
+    reference = db.Column(db.String(128))
     incident_type = db.Column(db.String(32))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
@@ -425,26 +424,16 @@ class AuditLog(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
-class IncidentLog(db.Model): ##TODO LOAD THIS FROM A FILE
+class IncidentLog(db.Model):
     action_values = {'create_incident': 1, 'create_task': 2, 'complete_task': 3, 'delete_task': 4, 'add_comment': 5,
-                     'delete_comment': 6, 'incomplete_task': 7, 'assigned_user': 8, 'removed_user': 9,
+                     'delete_comment': 6, 'incomplete_task': 7, 'assigned_user': 8, 'unassigned_user': 9,
                      'marked_complete': 10, 'marked_incomplete': 11, 'changed_priority': 12,
                      'changed_task_description': 13, 'assigned_user_task': 14,
-                     'removed_user_task': 15, 'marked_public': 16, 'marked_not_public': 17, 'complete_subtask': 18, 'incomplete_subtask': 19, 'create_subtask': 20, 'add_subtask_comment': 21,
+                     'unassigned_user_task': 15, 'marked_public': 16, 'marked_not_public': 17, 'complete_subtask': 18, 'incomplete_subtask': 19, 'create_subtask': 20, 'add_task_comment': 21,
                      'marked_comment_public': 22, 'marked_comment_not_public': 23, 'edit_comment': 24, 'edit_subtask': 25, 'edit_incident': 26, 'changed_task_tags': 27, 'edit_task_comment': 28,
                      'delete_task_comment': 29, 'delete_subtask': 30, 'change_incident_location': 31, 'flag_supervisor': 32, 'request_mark_complete': 33, 'request_mark_incomplete': 34, 'edit_incident_name': 35,
                      'edit_incident_description': 36, 'edit_incident_type': 37, 'edit_incident_reported_via': 38, 'edit_incident_linked': 39, 'edit_incident_unlinked': 40, 'edit_incident_reference': 41}  ##TODO RE-ORDER ONCE DONE
-    action_strings = {1: 'created incident', 2: 'created task $task', 3: 'marked $task as complete',
-                      4: 'deleted task $task',
-                      5: 'added an update', 6: 'deleted an update', 7: 'marked $task as incomplete',
-                      8: 'assigned $target_users to incident',
-                      9: 'removed $target_users from incident', 10: 'marked incident as complete',
-                      11: 'marked incident as incomplete', 12: 'changed priority to $extra',
-                      13: 'changed $task description to "$extra"', 14: 'added $target_users to $task',
-                      15: 'removed $target_users from $task', 16: 'set the incident to publicly viewable', 17: 'set the incident to private', 18: 'marked $extra as complete', 19: 'marked $extra as incomplete', 20: 'created sub-task $extra', 21: 'added comment to $task',
-                      22: 'marked comment as publicly viewable', 23: 'marked comment as not publicly viewable', 24: 'edited update', 25: 'edited subtask $extra', 26: 'edited incident details', 27: 'changed tags for $task', 28: 'edited comment in $task', 29: 'deleted comment in $task', 30: 'deleted sub-task in $task',
-                      31: 'changed the incident location', 32: 'flagged the incident to a supervisor', 33: 'requested the incident be marked as complete', 34: 'requested the incident be marked as incomplete', 35: 'edited incident name to $extra', 36: 'edited incident description to $extra',
-                      37: 'changed incident type to $extra', 38: 'edited incident reported via to $extra', 39: 'linked this incident to $extra', 40: 'unlinked this incident from $extra', 41: 'edited incident reference to $extra'}
+
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
@@ -453,25 +442,16 @@ class IncidentLog(db.Model): ##TODO LOAD THIS FROM A FILE
     comment_id = db.Column(db.Integer, db.ForeignKey('incident_comment.id'))
     comment = db.relationship('IncidentComment', backref='action', lazy='selectin')
     task_id = db.Column(db.Integer, db.ForeignKey('incident_task.id'))
-    task = db.relationship('IncidentTask', backref='actions', lazy='selectin') ##TODO Change to actions
+    task = db.relationship('IncidentTask', backref='actions', lazy='selectin')
     subtask_id = db.Column(db.Integer, db.ForeignKey('incident_sub_task.id'))
-    subtask = db.relationship('IncidentSubTask', backref='actions', lazy='selectin') ##TODO Change to actions
+    subtask = db.relationship('IncidentSubTask', backref='actions', lazy='selectin')
     target_users = db.relationship('User', secondary=incidentlog_target_users_junction, lazy='selectin', backref='incident_log_target')
     action_type = db.Column(db.Integer())
-    reason = db.Column(db.String(256))
     extra = db.Column(db.String())
     occurred_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    def __repr__(self):
-        target_users = None
-        if self.target_users:
-            if len(self.target_users) > 1:
-                target_users = list_of_names(self.target_users)
-            else:
-                target_users = self.target_users[0]
-        msg = Template(self.action_strings[self.action_type]).substitute(target_users=target_users, task=self.task,
-                                                                         extra=self.extra)
-        return f'{msg}.'
+    def get_action_type(self):
+        return list(self.action_values.keys())[list(self.action_values.values()).index(self.action_type)]
 
 
 class TaskLog(db.Model):

@@ -193,8 +193,8 @@
               <div v-else class="card-body">
                 <h3 class="font-weight-bold">{{ incident.name }}</h3>
                 <p class="card-text"><b>Created:</b> {{ incident.createdAt | moment("Do MMMM YYYY, h:mm A") }}</p>
-                <p class="card-text"><b>Location:</b> {{ incident.location.properties.address }}</p>
                 <p class="card-text"><b>Description:</b> {{ incident.description }}</p>
+                <p class="card-text"><b>Location:</b> {{ incident.location.properties.address }}</p>
                 <p class="card-text"><b>Reported Via:</b> {{ incident.reportedVia ? incident.reportedVia : 'N/A' }}</p>
                 <p class="card-text"><b>Logged by:</b> <span class="text-primary">{{ incident.loggedBy.firstname }} {{ incident.loggedBy.surname }}</span></p>
                 <p v-if="incident.linkedIncidents.length" class="card-text"><b>Linked Incidents: </b>
@@ -230,7 +230,7 @@
               </ul>
               <task-modal v-if="isTaskModalVisible" v-show="isTaskModalVisible" :visible="isTaskModalVisible" :deploymentId="this.deploymentId" @close="isTaskModalVisible = false" :task="task" />
               <div v-if="incident && !incident.tasks.length" class="card-body">
-                <p class="card-text text-center">No tasks currently.</p>
+                <p class="card-text font-weight-bold text-center">No tasks currently.</p>
               </div>
             </div>
           </div>
@@ -259,7 +259,7 @@
               </div>
               <div class="card-body bg-light">
                 <vcl-bullet-list v-if="!incident" :rows="3" />
-                <p v-else-if="incident && !incident.comments.length" class="card-text text-center mb-3">No updates currently.</p>
+                <p v-else-if="incident && !incident.comments.length" class="card-text font-weight-bold text-center mb-3">No updates currently.</p>
                 <ul v-else class="list-unstyled">
                   <comment v-for="comment in orderBy(incident.comments, 'sentAt')" :key="comment.id" :comment="comment" :incident="incident" @showCommentBox="showCommentBox"></comment>
                 </ul>
@@ -279,12 +279,19 @@
             <div class="card shadow mb-4">
               <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 font-weight-bold text-primary">Recent Activity</h6>
+                <div v-if="incident">
+                  <activity-filter @changeFilter="changeFilter" />
+                </div>
               </div>
               <div class="card-body bg-light">
                 <vcl-bullet-list v-if="!incident" :rows="3" />
-                <ul v-else class="activity">
-                  <activity v-for="action in orderBy(incident.activity, 'occurredAt', -1)" :key="action.id" :action="action"></activity>
+                <ul v-else-if="activity.length" class="activity">
+                  <activity v-for="action in orderBy(activity.slice((this.pageNum - 1) * 10, this.pageNum * 10), 'occurredAt', -1)" :key="action.id" :action="action" />
                 </ul>
+                <div v-if="incident && activity.length > 10" class="text-center">
+                  <paginate :page-count="Math.ceil(activity.length/10)" :click-handler="changePage" :prev-text="'Prev'" :next-text="'Next'" :page-range="3" :container-class="'pagination'" />
+                </div>
+                <p v-else-if="!activity.length" class="card-text font-weight-bold text-center">No activity.</p>
               </div>
             </div>
           </div>
@@ -299,6 +306,7 @@
 import Vue from 'vue'
 import Vue2Filters from 'vue2-filters'
 import Multiselect from 'vue-multiselect'
+import Paginate from 'vuejs-paginate'
 import { divIcon, latLng } from 'leaflet'
 import { mapGetters, mapActions } from 'vuex'
 import { LMap, LTileLayer, LMarker } from 'vue2-leaflet'
@@ -320,6 +328,7 @@ import NewTaskModal from '@/components/modals/NewTask'
 import TaskModal from '@/components/modals/Task'
 import FileUploaderModal from '@/components/modals/FileUploader'
 import QuestionModal from '@/components/modals/Question'
+import ActivityFilter from '@/components/utils/ActivityFilter'
 import VclSquare from '@/components/utils/VclSquare'
 import VclBulletListReversed from '@/components/utils/VclBulletListReversed'
 
@@ -344,6 +353,8 @@ export default {
     IncidentDetailsModal,
     IncidentLocationModal,
     QuestionModal,
+    ActivityFilter,
+    Paginate,
     LMap,
     LTileLayer,
     LMarker,
@@ -367,6 +378,8 @@ export default {
         attribution: `Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors | <a href="${Vue.prototype.$mapTileServerLink}">${Vue.prototype.$mapTileServerName}</a>`,
         zoom: 15
       },
+      pageNum: 1,
+      filterActivities: 'all',
       task: null,
       viewingIncident: [],
       viewingInterval: null,
@@ -487,6 +500,13 @@ export default {
         })
       }
     },
+    changeFilter: function (value) {
+      console.log(4546)
+      this.filterActivities = value
+    },
+    changePage: function (pageNum) {
+      this.pageNum = pageNum
+    },
     toggleSidebar: function () {
       this.$refs.sidebar.toggleSidebar()
     },
@@ -554,6 +574,13 @@ export default {
         html: `<div class="marker bg-${this.incident.priority}"><i class="fas fa-${this.incident.icon} fa-fw text-white fa-2x"></i></div>`,
         iconSize: [2, 2]
       })
+    },
+    activity: function () {
+      if (this.filterActivities !== 'all') {
+        return this.incident.activity.filter(activity => activity.type === this.filterActivities)
+      } else {
+        return this.incident.activity
+      }
     },
     getName: function () {
       return this.incident.publicName ? this.incident.publicName : this.incident.name

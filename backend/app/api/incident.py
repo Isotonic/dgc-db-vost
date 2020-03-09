@@ -9,7 +9,7 @@ from ..utils.create import create_comment, create_task
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from ..utils.supervisor import flag_to_supervisor, request_incident_status_change
 from ..utils.change import edit_incident, change_incident_status, change_incident_allocation, change_incident_priority, change_incident_public, change_incident_location
-from .utils.models import id_model, incident_model, pinned_model, status_model, user_model, priority_model, public_model, comment_model, new_comment_model, task_model, new_task_model, edit_incident_model, point_feature_model, change_location_model, flag_reason_model, status_change_reason_model
+from .utils.models import id_model, incident_model, pinned_model, status_model, user_model, priority_model, public_model, comment_model, new_comment_model, task_model, new_task_model, edit_incident_model, point_feature_model, change_location_model, flag_reason_model, status_change_reason_model, activity_model
 
 ns_incident = Namespace('Incident', description='Used to carry out actions related to incidents.', path='/incidents', decorators=[jwt_required])
 
@@ -493,6 +493,25 @@ class TasksEndpoint(Resource):
         if task is False:
             ns_incident.abort(400, 'Name is empty')
         return task, 200
+
+
+@ns_incident.route('/<int:id>/activity')
+@ns_incident.doc(params={'id': 'Incident ID.'})
+@ns_incident.resolve_object('incident', lambda kwargs: Incident.query.get_or_error(kwargs.pop('id')))
+class ActivityEndpoint(Resource):
+    @ns_incident.doc(security='access_token')
+    @ns_incident.response(200, 'Success', activity_model)
+    @ns_incident.response(401, 'Incorrect credentials')
+    @ns_incident.response(403, 'Missing incident access')
+    @ns_incident.response(404, 'Incident doesn\'t exist')
+    @api.marshal_with(activity_model)
+    def get(self, incident):
+        """
+                Returns incident's activity.
+        """
+        current_user = User.query.filter_by(id=get_jwt_identity()).first()
+        ns_incident.has_incident_access(current_user, incident)
+        return incident.actions, 200
 
 
 @ns_incident.route('/<int:id>/tasks/me')

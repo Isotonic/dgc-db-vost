@@ -115,5 +115,5 @@ def create_task_comment(text, task, added_by):
     emit_incident('NEW_TASK_COMMENT', {'id': task.id, 'incidentId': task.incident.id, 'comment': comment_marshalled, 'code': 200}, task.incident)
     task_action(user=added_by, action_type=TaskLog.action_values['add_comment'],
                    task=task)
-    incident_action(user=added_by, action_type=IncidentLog.action_values['add_subtask_comment'], incident=task.incident, task=task)
+    incident_action(user=added_by, action_type=IncidentLog.action_values['add_task_comment'], incident=task.incident, task=task)
     return comment
