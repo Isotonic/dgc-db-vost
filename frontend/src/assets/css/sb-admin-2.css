@@ -2524,7 +2524,7 @@ a.close.disabled {
 }
 
 .tooltip-inner {
-  max-width: 200px;
+  max-width: 300px;
   padding: .25rem .5rem;
   color: #fff;
   text-align: center;
@@ -5305,4 +5305,9 @@ div .marker {
 .pagination > li.disabled > span {
   color: #858796 !important;
   cursor: not-allowed;
+}
+
+.comments-map-popup {
+  position: relative;
+  top: -0.3px;
 }

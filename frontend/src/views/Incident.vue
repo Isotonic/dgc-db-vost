@@ -291,7 +291,7 @@
                 <div v-if="incident && activity.length > 10" class="text-center">
                   <paginate :page-count="Math.ceil(activity.length/10)" :click-handler="changePage" :prev-text="'Prev'" :next-text="'Next'" :page-range="3" :container-class="'pagination'" />
                 </div>
-                <p v-else-if="!activity.length" class="card-text font-weight-bold text-center">No activity.</p>
+                <p v-else-if="!activity.length" class="card-text font-weight-bold text-center">No activity currently.</p>
               </div>
             </div>
           </div>

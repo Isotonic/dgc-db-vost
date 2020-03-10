@@ -2,8 +2,8 @@ from app import db
 from datetime import datetime
 from flask_socketio import emit
 from flask_restx import marshal
-from ..api.utils.models import activity_model
 from app.models import AuditLog, IncidentLog, TaskLog
+from ..api.utils.models import activity_model, task_activity_model
 
 def audit_action(user, action_type, target_id=None, reason=None):
     action = AuditLog(user=user, action_type=action_type, target_id=target_id, reason=reason)
@@ -24,7 +24,8 @@ def task_action(user, action_type, task, subtask=None, target_users=None, extra=
     if not target_users:
         target_users = []
     action = TaskLog(user=user, action_type=action_type, task=task, subtask=subtask, target_users=target_users, extra=extra, occurred_at=datetime.utcnow())
-    action_marshalled = marshal(action, activity_model)
+    action_marshalled = marshal(action, task_activity_model)
+    print(action_marshalled)
     emit('TASK_ACTIVITY', {'id': task.id, 'incidentId': task.incident.id, 'activity': action_marshalled, 'code': 200}, namespace='/', room=f'{task.incident.deployment_id}-all')
     db.session.add(action)
     db.session.commit()

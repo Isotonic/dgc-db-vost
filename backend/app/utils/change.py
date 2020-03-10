@@ -87,15 +87,15 @@ def edit_incident(incident, name, description, incident_type, reported_via, link
     linked_incidents_marshalled = marshal(incident.linked, incident_model_name)
     emit_incident('CHANGE_INCIDENT_DETAILS', {'id': incident.id, 'name': name, 'description': description, 'type': incident_type, 'reportedVia': reported_via, 'linkedIncidents': linked_incidents_marshalled, 'reference': reference, 'icon': incident.get_icon(), 'code': 200}, incident)
     if incident_obj.name != name:
-        incident_action(changed_by, IncidentLog.action_values['edit_incident_name'], incident=incident, extra=f'{incident_obj.name} to {name}')
+        incident_action(changed_by, IncidentLog.action_values['edit_incident_name'], incident=incident, extra=f'"{incident_obj.name}" to "{name}"')
     if incident_obj.description != description:
-        incident_action(changed_by, IncidentLog.action_values['edit_incident_description'], incident=incident, extra=f'{incident_obj.description} to {description}')
+        incident_action(changed_by, IncidentLog.action_values['edit_incident_description'], incident=incident, extra=f'"{incident_obj.description}" to "{description}"')
     if incident_obj.incident_type != incident_type:
-        incident_action(changed_by, IncidentLog.action_values['edit_incident_type'], incident=incident, extra=f'{incident_obj.incident_type} to {incident_type}')
+        incident_action(changed_by, IncidentLog.action_values['edit_incident_type'], incident=incident, extra=f'"{incident_obj.incident_type}" to "{incident_type}"')
     if incident_obj.reported_via != reported_via:
-        incident_action(changed_by, IncidentLog.action_values['edit_incident_reported_via'], incident=incident, extra=f'{incident_obj.reported_via} to {reported_via}')
+        incident_action(changed_by, IncidentLog.action_values['edit_incident_reported_via'], incident=incident, extra=f'"{incident_obj.reported_via}" to "{reported_via}"')
     if incident_obj.reference != reference:
-        incident_action(changed_by, IncidentLog.action_values['edit_incident_reference'], incident=incident, extra=f'{incident_obj.reference} to {reference}')
+        incident_action(changed_by, IncidentLog.action_values['edit_incident_reference'], incident=incident, extra=f'"{incident_obj.reference}" to "{reference}"')
     for x in added:
         if incident not in x.linked:
             x.linked.append(incident)
@@ -224,12 +224,13 @@ def change_task_status(task, status, changed_by):
 def change_task_description(task, description, changed_by):
     if task.description == description:
         return False
+    old_description = task.description
     task.description = description
     emit_incident('CHANGE_TASK_DESCRIPTION', {'id': task.id, 'incidentId': task.incident.id, 'description': description, 'code': 200}, task.incident)
     task_action(user=changed_by, action_type=TaskLog.action_values['changed_description'],
-                task=task, extra=description)
+                task=task, extra=f'"{old_description}" to "{task.description}"')
     incident_action(user=changed_by, action_type=IncidentLog.action_values['changed_task_description'], incident=task.incident, task=task,
-                    extra=description)
+                    extra=f'"{old_description}" to "{task.description}"')
 
 
 def change_task_tags(task, tags, changed_by):

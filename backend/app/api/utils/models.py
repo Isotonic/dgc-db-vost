@@ -125,12 +125,22 @@ deployment_model = api.model('Deployment',
                              'users': fields.List(fields.Nested(user_model_without_group), description='Whitelisted users that are able to access this deployment, if both users and groups are empty then all users and groups have access to it.')})
 
 activity_model = api.model('Activity',
-                           {'id': fields.Integer(),
-                            'user': fields.Nested(user_model),
+                           {'id': fields.Integer(description='ID of the activity.'),
+                            'user': fields.Nested(user_model, description='User who carried out the action.'),
                             'comment': fields.String(description='Comment text, can be null.'),
                             'commentId': fields.String(attribute='comment_id', description='Comment id, can be null.'),
                             'task': fields.String(description='Task name, can be null.'),
                             'taskId': fields.String(attribute='task_id', description='Task id, can be null.'),
+                            'subtask': fields.String(description='Subtask name, can be null.'),
+                            'subtaskId': fields.String(attribute='subtask_id', description='Subtask id, can be null.'),
+                            'targetUsers': fields.Nested(user_model, attribute='target_users', description='Affected users, can be null.'),
+                            'extra': fields.String(description='Extra text, can be null.'),
+                            'type': fields.String(attribute=lambda x: x.get_action_type(), description='Type of action taken.'),
+                            'occurredAt': fields.Integer(attribute=lambda x: int(x.occurred_at.timestamp()), description='UTC timestamp of when the activity occurred.')})
+
+task_activity_model = api.model('Task Activity',
+                           {'id': fields.Integer(description='ID of the activity.'),
+                            'user': fields.Nested(user_model, description='User who carried out the action.'),
                             'subtask': fields.String(description='Subtask name, can be null.'),
                             'subtaskId': fields.String(attribute='subtask_id', description='Subtask id, can be null.'),
                             'targetUsers': fields.Nested(user_model, attribute='target_users', description='Affected users, can be null.'),
@@ -178,7 +188,7 @@ task_model = api.model('Task',
                          'assignedTo': fields.List(fields.Nested(user_model_without_group), attribute='assigned_to', description='User\'s the task is assigned to, can be empty.'),
                          'subtasks': fields.List(fields.Nested(subtask_model), description='Tasks within the task, can be empty.'),
                          'comments': fields.List(fields.Nested(task_comment_model), description='Comments in the task, can be empty.'),
-                         'activity': fields.List(fields.Nested(activity_model), description='Actions the occured in the task.')}) ##TODO Change to actions
+                         'activity': fields.List(fields.Nested(task_activity_model), attribute='task_actions', description='Actions the occured in the task.')})
 
 
 task_model_with_incident = api.model('Task With Incident',
@@ -194,7 +204,7 @@ task_model_with_incident = api.model('Task With Incident',
                          'assignedTo': fields.List(fields.Nested(user_model_without_group), attribute='assigned_to', description='User\'s the task is assigned to, can be empty.'),
                          'subtasks': fields.List(fields.Nested(subtask_model), description='Tasks within the task, can be empty.'),
                          'comments': fields.List(fields.Nested(task_comment_model), description='Comments in the task, can be empty.'),
-                         'activity': fields.List(fields.Nested(activity_model), description='Actions the occured in the task.')}) ##TODO Change to actions
+                         'activity': fields.List(fields.Nested(task_activity_model), attribute='task_actions', description='Actions the occured in the task.')}) ##TODO Change to actions
 
 
 incident_model_name = api.model('Incident Name',

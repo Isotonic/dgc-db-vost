@@ -457,35 +457,22 @@ class IncidentLog(db.Model):
 class TaskLog(db.Model):
     action_values = {'create_subtask': 1, 'complete_subtask': 2, 'delete_subtask': 3, 'changed_description': 4,
                      'assigned_user': 5, 'removed_user': 6, 'incomplete_subtask': 7, 'add_comment': 8, 'edit_subtask': 9, 'changed_tags': 10, 'edit_task_comment': 11, 'delete_task_comment': 12}  ##TODO RE-ORDER ONCE DONE
-    action_strings = {1: 'created $subtask', 2: 'marked $subtask as complete',
-                      3: 'deleted $extra',
-                      4: 'changed task description to "$extra"', 5: 'added $target_users to task',
-                      6: 'removed $target_users from task', 7: 'marked $subtask as incomplete', 8: 'added comment to task', 9: 'edited subtask $subtask', 10: 'changed the task\'s tags', 11: 'edited task comment', 12: 'deleted task comment'}
+
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     user = db.relationship('User', backref='task_actions')
     task_id = db.Column(db.Integer, db.ForeignKey('incident_task.id'))
-    task = db.relationship('IncidentTask', backref='task_logs', lazy='selectin')
+    task = db.relationship('IncidentTask', backref='task_actions', lazy='selectin')
     subtask_id = db.Column(db.Integer, db.ForeignKey('incident_sub_task.id'))
-    subtask = db.relationship('IncidentSubTask', backref='task_logs', lazy='selectin')
+    subtask = db.relationship('IncidentSubTask', backref='task_actions', lazy='selectin')
     target_users = db.relationship('User', secondary=tasklog_target_users_junction, backref='task_log_target')
     action_type = db.Column(db.Integer())
-    reason = db.Column(db.String(256))
     extra = db.Column(db.String())
     occurred_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    def __repr__(self):
-        target_users = None
-        if self.target_users:
-            if len(self.target_users) > 1:
-                target_users = list_of_names(self.target_users)
-            else:
-                target_users = self.target_users[0]
-        msg = Template(self.action_strings[self.action_type]).substitute(target_users=target_users, task=self.task,
-                                                                         subtask=self.subtask,
-                                                                         extra=self.extra)
-        return f'{msg}.'
+    def get_action_type(self):
+        return list(self.action_values.keys())[list(self.action_values.values()).index(self.action_type)]
 
 
 class RevokedToken(db.Model):

@@ -21,7 +21,7 @@
               <span class="incident-card-actions-text">{{ taskText }}</span>
             </div>
             <div v-if="properties.comments.length">
-              <i class="far fa-comment" v-tooltip="'Updates'"></i>
+              <i class="far fa-comment comments-map-popup" v-tooltip="'Updates'"></i>
               <span class="incident-card-actions-text">{{ properties.comments.length }}</span>
             </div>
           </li>

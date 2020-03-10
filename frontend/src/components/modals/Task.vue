@@ -104,7 +104,7 @@
           <span class="font-weight-bold"> Activity</span>
         </h5>
         <ul class="activity">
-          <activity v-for="action in orderBy(task.activity, 'occurredAt', -1)" :key="action.id" :action="action"></activity>
+          <task-activity v-for="action in orderBy(task.activity, 'occurredAt', -1)" :key="action.id" :action="action" />
         </ul>
       </div>
     </div>
@@ -119,7 +119,7 @@ import { mapGetters, mapActions } from 'vuex'
 import CommentBox from '../CommentBox'
 import Subtask from '@/components/Subtask'
 import TaskComment from '@/components/TaskComment'
-import Activity from '@/components/Activity'
+import TaskActivity from '@/components/TaskActivity'
 import { ModalMixin } from '@/utils/mixins'
 
 export default {
@@ -129,7 +129,7 @@ export default {
     CommentBox,
     Subtask,
     TaskComment,
-    Activity,
+    TaskActivity,
     Multiselect
   },
   props: {

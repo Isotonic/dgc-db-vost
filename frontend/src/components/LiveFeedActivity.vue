@@ -95,9 +95,9 @@ export default {
       }
     },
     actionText: function () {
-      return `<span>${fillTemplate(actionStrings[this.action.type], { targetUsers: this.action.targetUsers.length ? this.targetedUsersText : null, task: this.action.task, extra: this.action.extra, incident: `<span class="text-primary" v-tooltip="{ content: '${this.card}', html: true }">${this.action.incidentName}</span>` })}</span>`
+      return `<span>${fillTemplate(actionStrings[this.action.type], { targetUsers: this.action.targetUsers.length ? this.targetedUsersText : null, task: this.action.task, extra: this.action.extra, incident: `<span class="text-primary" v-tooltip="{ content: '${this.incidentTooltip}', html: true }">${this.action.incidentName}</span>` })}</span>`
     },
-    card: function () {
+    incidentTooltip: function () {
       return `<span><b>ID:</b> #${this.action.incidentId}<br /><b>Description:</b> ${this.slashEscape(this.action.description)}<br /><b>Location:</b> ${this.slashEscape(this.action.location)}${this.action.tasks ? `<br /><b>Tasks:<b> ${this.action.tasks}` : ''}${this.action.comments ? `<br /><b>Updates:<b> ${this.action.comments}` : ''}</span>`
     }
   }
