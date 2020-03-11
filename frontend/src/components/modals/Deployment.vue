@@ -100,13 +100,11 @@ export default {
       if (this.edit) {
         if (this.name === this.deployment.name && this.description === this.deployment.description && this.open === this.deployment.open && !this.didUsersChange && !this.didGroupsChange) {
           this.$emit('close')
-          document.body.classList.remove('modal-open')
         } else {
           deploymentData.open = this.open
           this.ApiPut(`deployments/${this.deployment.id}`, deploymentData)
             .then(() => {
               this.$emit('close')
-              document.body.classList.remove('modal-open')
               e.target.reset()
             })
         }
@@ -114,7 +112,6 @@ export default {
         this.ApiPost('deployments', deploymentData)
           .then(() => {
             this.$emit('close')
-            document.body.classList.remove('modal-open')
             this.name = ''
             this.description = ''
             this.usersSelected = []

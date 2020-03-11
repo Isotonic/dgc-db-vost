@@ -11,7 +11,7 @@
               <span class="font-weight-bold">Currently viewing: </span>
               <div class="avatar-group mr-2">
                 <i v-for="user in viewingIncident" :key="user.name" class="avatar avatar-sm" v-tooltip="`${user.firstname} ${user.surname}`">
-                  <img alt="Avatar" :src="user.avatarUrl" class="rounded-circle avatar-sm">
+                  <img alt="Avatar" :src="user.avatarUrl" class="rounded-circle avatar-sm hover" @click="openUserModal(user)" />
                 </i>
               </div>
             </div>
@@ -88,7 +88,7 @@
                     <div class="text-s font-weight-bold text-primary text-uppercase mb-1">Assigned To</div>
                     <div class="avatar-group">
                       <i v-for="user in incident.assignedTo" :key="user.name" class="avatar avatar-sm" v-tooltip="`${user.firstname} ${user.surname}`">
-                        <img alt="Avatar" :src="user.avatarUrl" class="rounded-circle avatar-sm">
+                        <img alt="Avatar" :src="user.avatarUrl" class="rounded-circle avatar-sm hover" @click="openUserModal(user)" />
                       </i>
                     </div>
                     <div v-if="!incident.assignedTo.length" class="h5 mb-0 font-weight-bold text-gray-800">Unassigned</div>
@@ -228,7 +228,7 @@
               <ul v-else class="list-group">
                 <task v-for="task in orderBy(incident.tasks, 'createdAt')" :key="task.id" :task="task" @openModal="openTaskModal(task)" @toggle="taskToggle"></task>
               </ul>
-              <task-modal v-if="isTaskModalVisible" v-show="isTaskModalVisible" :visible="isTaskModalVisible" :deploymentId="this.deploymentId" @close="isTaskModalVisible = false" :task="task" />
+              <task-modal v-if="isTaskModalVisible" v-show="isTaskModalVisible" :visible="isTaskModalVisible" :deploymentName="deploymentNameApi" :deploymentId="this.deploymentId" :incidentId="incidentId" @close="isTaskModalVisible = false" :task="task" />
               <div v-if="incident && !incident.tasks.length" class="card-body">
                 <p class="card-text font-weight-bold text-center">No tasks currently.</p>
               </div>
@@ -286,18 +286,19 @@
               <div class="card-body bg-light">
                 <vcl-bullet-list v-if="!incident" :rows="3" />
                 <ul v-else-if="activity.length" class="activity">
-                  <activity v-for="action in orderBy(activity.slice((this.pageNum - 1) * 10, this.pageNum * 10), 'occurredAt', -1)" :key="action.id" :action="action" />
+                  <activity v-for="action in orderBy(activity, 'occurredAt', -1).slice((this.pageNum - 1) * 10, this.pageNum * 10)" :key="action.id" :action="action" :deploymentName="deploymentNameApi" :deploymentId="deploymentId" />
                 </ul>
                 <div v-if="incident && activity.length > 10" class="text-center">
                   <paginate :page-count="Math.ceil(activity.length/10)" :click-handler="changePage" :prev-text="'Prev'" :next-text="'Next'" :page-range="3" :container-class="'pagination'" />
                 </div>
-                <p v-else-if="!activity.length" class="card-text font-weight-bold text-center">No activity currently.</p>
+                <p v-else-if="incident && !activity.length" class="card-text font-weight-bold text-center">No activity currently.</p>
               </div>
             </div>
           </div>
         </div>
       </div>
     </div>
+    <user-modal v-if="isUserModalVisible" v-show="isUserModalVisible" :visible="isUserModalVisible" :deploymentName="deploymentName" :deploymentId="deploymentId" :currentIncidentId="incidentId" :userProp="userModal" @close="isUserModalVisible = false" />
     <file-uploader-modal v-if="isFileUploaderModalVisible" v-show="isFileUploaderModalVisible" :visible="isFileUploaderModalVisible" @close="isFileUploaderModalVisible = false" />
   </div>
 </template>
@@ -328,6 +329,7 @@ import NewTaskModal from '@/components/modals/NewTask'
 import TaskModal from '@/components/modals/Task'
 import FileUploaderModal from '@/components/modals/FileUploader'
 import QuestionModal from '@/components/modals/Question'
+import UserModal from '@/components/modals/User'
 import ActivityFilter from '@/components/utils/ActivityFilter'
 import VclSquare from '@/components/utils/VclSquare'
 import VclBulletListReversed from '@/components/utils/VclBulletListReversed'
@@ -353,6 +355,7 @@ export default {
     IncidentDetailsModal,
     IncidentLocationModal,
     QuestionModal,
+    UserModal,
     ActivityFilter,
     Paginate,
     LMap,
@@ -380,6 +383,8 @@ export default {
       },
       pageNum: 1,
       filterActivities: 'all',
+      userModal: null,
+      isUserModalVisible: false,
       task: null,
       viewingIncident: [],
       viewingInterval: null,
@@ -412,24 +417,24 @@ export default {
     }
   },
   methods: {
-    markAsComplete: function () {
+    markAsComplete () {
       if (this.hasPermission('change_status')) {
         this.ApiPut(`incidents/${this.incidentId}/status`, { open: !this.incident.open })
       } else {
         this.isRequestStatusChangeModalVisible = true
       }
     },
-    changePriority: function (priority) {
+    changePriority (priority) {
       if (this.hasPermission('change_priority')) {
         this.ApiPut(`incidents/${this.incidentId}/priority`, { priority: priority })
       }
     },
-    changePublic: function (publicBoolean) {
+    changePublic (publicBoolean) {
       if (this.hasPermission('mark_as_public')) {
         this.ApiPut(`incidents/${this.incidentId}/public`, { public: publicBoolean })
       }
     },
-    taskToggle: function (taskId, toggle) {
+    taskToggle (taskId, toggle) {
       this.ApiPut(`tasks/${taskId}/status`, { completed: toggle })
     },
     submitComment (editor) {
@@ -443,12 +448,11 @@ export default {
       }
     },
     addComment (publicBoolean) {
-      document.body.classList.remove('modal-open')
       this.ApiPost(`incidents/${this.incidentId}/comments`, { text: JSON.stringify(this.commentJson), public: publicBoolean })
       this.isCommentQuestionModalVisible = false
       this.$refs.commentBox.resetContent()
     },
-    openTaskModal: function (task) {
+    openTaskModal (task) {
       this.task = task
       this.isTaskModalVisible = true
     },
@@ -481,16 +485,16 @@ export default {
         this.isHandlingAllocation = false
       }
     },
-    formatSelect: function ({ firstname, surname }) {
+    formatSelect ({ firstname, surname }) {
       return `${firstname} ${surname}`
     },
-    setAllocatedSelecter: function () {
+    setAllocatedSelecter () {
       this.allocatedSelected = this.incident.assignedTo
     },
-    showCommentBox: function (show) {
+    showCommentBox (show) {
       this.commentBoxVisible = show
     },
-    flyToCoords: function () {
+    flyToCoords () {
       const map = this.$refs.map
       if (map) {
         const flyToLatLng = latLng(this.mapCoords)
@@ -500,14 +504,17 @@ export default {
         })
       }
     },
-    changeFilter: function (value) {
-      console.log(4546)
+    openUserModal (user) {
+      this.userModal = user
+      this.isUserModalVisible = true
+    },
+    changeFilter (value) {
       this.filterActivities = value
     },
-    changePage: function (pageNum) {
+    changePage (pageNum) {
       this.pageNum = pageNum
     },
-    toggleSidebar: function () {
+    toggleSidebar () {
       this.$refs.sidebar.toggleSidebar()
     },
     ...mapActions('sockets', {

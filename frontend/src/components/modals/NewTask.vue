@@ -65,7 +65,6 @@ export default {
       this.ApiPost(`incidents/${this.incidentId}/tasks`, taskData)
         .then(() => {
           this.$emit('close')
-          document.body.classList.remove('modal-open')
           this.name = ''
           this.description = ''
           this.setAssignedSelecter()

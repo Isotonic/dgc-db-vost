@@ -32,7 +32,6 @@ export default {
         this.ApiPost(`incidents/${this.incidentId}/flag-to-supervisor`, { reason: this.reason })
           .then(() => {
             this.$emit('close')
-            document.body.classList.remove('modal-open')
             this.reason = ''
             e.target.reset()
             Vue.noty.success(`Successfully flagged to supervisor.`)

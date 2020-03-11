@@ -1,5 +1,5 @@
 <template>
-  <select v-model="filterActivities" class="custom-select custom-select-sm text-primary font-weight-bold ml-2">
+  <select v-model="filterActivities" :class="['custom-select', 'custom-select-sm', 'font-weight-bold', 'ml-2', textBlack ? 'text-black' : 'text-primary']">
     <option value="all">All Activites</option>
     <optgroup label="Incident">
       <option value="create_incident">Created Incidents Only</option>
@@ -53,14 +53,29 @@
 <script>
 export default {
   name: 'ActvityFilter',
+  props: {
+    current: {
+      type: String,
+      default: 'all'
+    },
+    textBlack: {
+      type: Boolean,
+      default: false
+    }
+  },
   data: function () {
     return {
-      filterActivities: 'all'
+      filterActivities: this.current
     }
   },
   watch: {
     filterActivities (value) {
-      this.$emit('changeFilter', value)
+      if (this.filterActivities !== this.current) {
+        this.$emit('changeFilter', value)
+      }
+    },
+    current () {
+      this.filterActivities = this.current
     }
   }
 }

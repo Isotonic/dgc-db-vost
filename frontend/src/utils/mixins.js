@@ -80,5 +80,10 @@ export const ModalMixin = {
     if (this.visible) {
       document.body.classList.add('modal-open')
     }
+  },
+  beforeDestroy () {
+    if (document.body.classList.contains('modal-open')) {
+      document.body.classList.remove('modal-open')
+    }
   }
 }

@@ -217,8 +217,9 @@ def change_task_status(task, status, changed_by):
         task.completed_at = None
         action_type = 'incomplete_task'
     emit_incident('CHANGE_TASK_STATUS', {'id': task.id, 'incidentId': task.incident.id, 'completed': status, 'timestamp': task.completed_at.timestamp() if task.completed else None, 'code': 200}, task.incident)
+    task_action(user=changed_by, action_type=TaskLog.action_values[action_type], task=task)
     incident_action(user=changed_by, action_type=IncidentLog.action_values[action_type],
-                    incident=task.incident, task=task)
+                    incident=task.incident, task=task, extra=task.name)
 
 
 def change_task_description(task, description, changed_by):
@@ -287,7 +288,7 @@ def change_subtask_status(subtask, status, changed_by):
     else:
         subtask.completed_at = None
         action_type = 'incomplete_subtask'
-    emit_incident('CHANGE_SUBTASK_STATUS', {'id': subtask.id, 'taskId': task.incident.id, 'incidentId': task.incident.id, 'completed': status, 'timestamp': subtask.completed_at.timestamp() if subtask.completed else None, 'code': 200}, task.incident)
+    emit_incident('CHANGE_SUBTASK_STATUS', {'id': subtask.id, 'taskId': task.id, 'incidentId': task.incident.id, 'completed': status, 'timestamp': subtask.completed_at.timestamp() if subtask.completed else None, 'code': 200}, task.incident)
     task_action(user=changed_by, action_type=TaskLog.action_values[action_type], task=task, subtask=subtask)
     incident_action(user=changed_by, action_type=IncidentLog.action_values[action_type], incident=task.incident, task=task,
                     extra=subtask.name)

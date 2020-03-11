@@ -48,7 +48,6 @@ export default {
       this.ApiPost('users', this.groupId ? { email: this.email, group: parseInt(this.groupId) } : { email: this.email })
         .then(() => {
           this.$emit('close')
-          document.body.classList.remove('modal-open')
           this.email = ''
           this.groupId = null
           e.target.reset()

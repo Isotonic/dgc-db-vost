@@ -129,7 +129,6 @@ export default {
       this.ApiPut(`comments/${this.comment.id}`, { text: JSON.stringify(editor.getJSON()) })
     },
     deleteComment: function (modalAnswer) {
-      document.body.classList.remove('modal-open')
       this.isCommentQuestionModalVisible = false
       if (modalAnswer) {
         this.ApiDelete(`comments/${this.comment.id}`)

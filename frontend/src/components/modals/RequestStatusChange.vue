@@ -31,7 +31,6 @@ export default {
       this.ApiPost(`incidents/${this.incidentId}/request-status-change`, this.reason.length ? { reason: this.reason } : {})
         .then(() => {
           this.$emit('close')
-          document.body.classList.remove('modal-open')
           this.reason = ''
           e.target.reset()
           Vue.noty.success(`Successfully requested incident status change.`)

@@ -54,7 +54,7 @@
                       </div>
                       <input v-model="queryDebounced" type="text" class="form-control bg-light b-radius-0 small" placeholder="Search for an incident..." aria-label="Search for an incident">
                     </div>
-                    <incident-card v-for="incident in orderBy(queryResults, sortedBy[0], sortedBy[1])" :key="incident.id" :incident="incident" :query="queryDebounced" @goTo="goTo" />
+                    <incident-card v-for="incident in orderBy(queryResults, sortedBy[0], sortedBy[1])" :key="incident.id" :deploymentName="deploymentNameApi" :deploymentId="deploymentId" :incident="incident" :query="queryDebounced" @goTo="goTo" />
                     <div v-if="!queryResults.length" class="text-center font-weight-bold mt-3">
                     <span v-if="!queryDebounced.length">No incidents</span>
                     <span v-else-if="queryDebounced.length">No incidents found</span>

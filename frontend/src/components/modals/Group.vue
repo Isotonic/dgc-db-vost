@@ -69,7 +69,6 @@ export default {
         this.ApiPost('groups', this.getData)
           .then(() => {
             this.$emit('close')
-            document.body.classList.remove('modal-open')
             this.supervisor = false
             this.create_deployment = false
             this.decision_making_log = false
@@ -89,7 +88,6 @@ export default {
         this.ApiPut(`groups/${this.group.id}`, this.getData)
           .then(() => {
             this.$emit('close')
-            document.body.classList.remove('modal-open')
             Vue.noty.success(`Successfully edited group.`)
           })
       }

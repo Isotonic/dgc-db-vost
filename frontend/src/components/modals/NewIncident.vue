@@ -161,7 +161,6 @@ export default {
         .then(r => r.data)
         .then(data => {
           this.$emit('close')
-          document.body.classList.remove('modal-open')
           this.name = ''
           this.description = ''
           this.type = ''

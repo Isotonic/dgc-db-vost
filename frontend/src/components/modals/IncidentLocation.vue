@@ -53,13 +53,11 @@ export default {
     handleSubmit () {
       if (this.location[0] === this.currentLocation[0] && this.location[1] === this.currentLocation[1] && this.address === this.currentAddress) {
         this.$emit('close')
-        document.body.classList.remove('modal-open')
         return
       }
       this.ApiPut(`incidents/${this.incidentId}/location`, { address: this.address, longitude: this.location[0], latitude: this.location[1] })
         .then(() => {
           this.$emit('close')
-          document.body.classList.remove('modal-open')
         })
     },
     handleResult (event) {

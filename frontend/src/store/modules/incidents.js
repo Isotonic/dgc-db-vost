@@ -311,7 +311,7 @@ const mutations = {
     }
   },
   SOCKET_CHANGE_SUBTASK_STATUS (state, data) {
-    console.log('Recieved task tags event')
+    console.log('Recieved subtask status event')
     const incident = state.incidents.find(incident => incident.id === data.incidentId)
     if (incident) {
       const task = incident.tasks.find(task => task.id === data.taskId)

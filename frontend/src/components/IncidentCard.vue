@@ -1,5 +1,5 @@
 <template>
-  <li class="list-group-item list-group-flush incident-card" @click="goTo">
+  <li class="list-group-item list-group-flush incident-card" @click.once="goTo">
     <div class="row align-items-center no-gutters">
       <div :class="['col', 'mr-2', (!publicPage && incident.tasks.length) || incident.comments.length ?  'mb-2' : '']">
         <h6>
@@ -25,33 +25,56 @@
       <ol v-if="!publicPage && incident.assignedTo.length" class="incident-card-assigned-to list-unstyled">
         <div class="avatar-group">
           <i v-for="user in incident.assignedTo" :key="user.name" class="avatar avatar-sm" v-tooltip="`${user.firstname} ${user.surname}`">
-            <img alt="Avatar" :src="user.avatarUrl" class="rounded-circle avatar-sm">
+            <img alt="Avatar" :src="user.avatarUrl" class="rounded-circle avatar-sm hover" @click="openUserModal(user)" />
           </i>
         </div>
+        <user-modal v-if="isUserModalVisible" v-show="isUserModalVisible" :visible="isUserModalVisible" :deploymentName="deploymentName" :deploymentId="deploymentId" :userProp="userModal" @close="isUserModalVisible = false" />
       </ol>
     </ol>
   </li>
 </template>
 
 <script>
+// TODO Fix clicking avatars firing
 import TextHighlight from 'vue-text-highlight'
+
+import UserModal from '@/components/modals/User'
 
 export default {
   name: 'IncidentCard',
   components: {
+    UserModal,
     TextHighlight
   },
   props: {
     incident: Object,
     query: String,
+    deploymentName: {
+      type: String,
+      default: null
+    },
+    deploymentId: {
+      type: Number,
+      default: null
+    },
     publicPage: {
       type: Boolean,
       default: false
     }
   },
+  data () {
+    return {
+      userModal: null,
+      isUserModalVisible: false
+    }
+  },
   methods: {
-    goTo: function () {
+    goTo () {
       this.$emit('goTo', this.incident)
+    },
+    openUserModal (user) {
+      this.userModal = user
+      this.isUserModalVisible = true
     }
   },
   computed: {

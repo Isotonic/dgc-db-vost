@@ -138,7 +138,6 @@ export default {
         return
       } else if (this.hasntChanged) {
         this.$emit('close')
-        document.body.classList.remove('modal-open')
       }
       let incidentData = { name: this.name, type: this.type }
 
@@ -161,7 +160,6 @@ export default {
       this.ApiPut(`incidents/${this.incident.id}`, incidentData)
         .then(() => {
           this.$emit('close')
-          document.body.classList.remove('modal-open')
         })
     },
     formatSelect: function ({ name, id }) {

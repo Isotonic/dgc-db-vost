@@ -4097,21 +4097,17 @@ MODIFIED VERSION
   content: "";
   position: absolute;
   top: 43px;
-  left: -25px;
+  left: -37px;
   width: 12px;
   height: 12px;
   background-color: #f5f5f5;
-  border: 2px solid #367fec;
+  border: 2px solid #e8e8e8;
   z-index: 1;
   border-radius: 50%;
   -webkit-transition-property: top, left, width, height, border-color;
   transition-property: top, left, width, height, border-color;
   -webkit-transition-duration: .2s;
   transition-duration: .2s
-}
-
-.activity>li>div+div .media:before {
-  border-color: #4caf50
 }
 
 .activity>li>div+div .media:hover:before, .activity>li>div .media:hover:before {
@@ -4122,7 +4118,7 @@ MODIFIED VERSION
   content: "";
   position: absolute;
   top: 53px;
-  left: -20px;
+  left: -30px;
   height: 100%;
   border: 1px solid #e8e8e8
 }
@@ -4132,7 +4128,6 @@ MODIFIED VERSION
 }
 
 .activity>li>div {
-  margin-left: 20px;
   padding-top: 10px;
   padding-bottom: 10px;
   position: relative
@@ -4154,12 +4149,6 @@ MODIFIED VERSION
 
 .activity>li>div:hover i:before {
   color: #0061f2!important
-}
-
-.activity-icon {
-  position: absolute;
-  left: -61px;
-  top: 37px
 }
 
 @media (max-width:767px) {
@@ -5091,7 +5080,7 @@ div .marker {
 }
 
 .navbar-search-results {
-  z-index: 9999;
+  z-index: 999;
   border-bottom-left-radius: 0
 }
 
@@ -5128,36 +5117,36 @@ div .marker {
 .search-results>.mb-4>.incident-card {
   border-left: none;
   border-right: none;
-  border-bottom: none
+  border-bottom: none;
 }
 
 .search-results>.mb-4>.incident-card:first-child {
-  border-top: none
+  border-top: none;
 }
 
 .VueTables__search-field {
-  margin-left: 2px
+  margin-left: 2px;
 }
 
 .hover:hover {
-  cursor: pointer
+  cursor: pointer;
 }
 
 .full-length {
-  width: 100%
+  width: 100%;
 }
 
 .fa-bookmark:hover, .VueTables__child-row-toggler:hover {
-  color: #000
+  color: #000;
 }
 
 .toggled>.sidebar-brand {
-  padding: 0
+  padding: 0;
 }
 
 .sidebar-brand>img {
   margin-left: 1.5rem;
-  margin-right: 1.5rem
+  margin-right: 1.5rem;
 }
 
 .fa-redo-alt:hover {

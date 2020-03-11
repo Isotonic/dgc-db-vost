@@ -25,7 +25,6 @@ def task_action(user, action_type, task, subtask=None, target_users=None, extra=
         target_users = []
     action = TaskLog(user=user, action_type=action_type, task=task, subtask=subtask, target_users=target_users, extra=extra, occurred_at=datetime.utcnow())
     action_marshalled = marshal(action, task_activity_model)
-    print(action_marshalled)
     emit('TASK_ACTIVITY', {'id': task.id, 'incidentId': task.incident.id, 'activity': action_marshalled, 'code': 200}, namespace='/', room=f'{task.incident.deployment_id}-all')
     db.session.add(action)
     db.session.commit()

@@ -32,7 +32,7 @@
         <span>Live Feed</span>
       </router-link>
     </li>
-    <li class="nav-item">
+    <li class="nav-item d-none">
       <router-link :to="{ name: 'decisionMakingLog', params: {deploymentName: deploymentName.replace(/ /g, '-'), deploymentId: deploymentId} }" class="nav-link">
         <i class="fas fa-fw fa-pen"></i>
         <span>Decision-Making Log</span>

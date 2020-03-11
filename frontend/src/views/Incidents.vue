@@ -114,7 +114,7 @@
                 <div slot="assignedTo" slot-scope="{row}">
                   <div v-if="row.assignedTo.length" class="avatar-group">
                     <i v-for="user in row.assignedTo" :key="user.id" class="avatar avatar-sm" v-tooltip="`${user.firstname} ${user.surname}`">
-                      <img alt="Avatar" :src="user.avatarUrl" class="rounded-circle avatar-sm">
+                      <img alt="Avatar" :src="user.avatarUrl" class="rounded-circle avatar-sm hover" @click="openUserModal(user)" />
                     </i>
                   </div>
                   <div v-else>
@@ -122,6 +122,7 @@
                   </div>
                 </div>
               </v-client-table>
+              <user-modal v-if="isUserModalVisible" v-show="isUserModalVisible" :visible="isUserModalVisible" :deploymentName="deploymentName" :deploymentId="deploymentId" :userProp="userModal" @close="isUserModalVisible = false" />
             </div>
           </div>
         </div>
@@ -139,13 +140,15 @@ import router from '@/router/index'
 import Topbar from '@/components/Topbar'
 import Sidebar from '@/components/Sidebar'
 import NewIncidentModal from '@/components/modals/NewIncident'
+import UserModal from '@/components/modals/User'
 
 export default {
   name: 'incidents',
   components: {
     Topbar,
     Sidebar,
-    NewIncidentModal
+    NewIncidentModal,
+    UserModal
   },
   props: {
     deploymentName: String,
@@ -157,6 +160,8 @@ export default {
       showingStatus: 'open',
       activeTime: '',
       activeInterval: null,
+      userModal: null,
+      isUserModalVisible: false,
       columns: ['pinned', 'name', 'location', 'priority', 'assignedTo', 'taskPercentage', 'lastUpdated'],
       options: {
         headings: {
@@ -303,6 +308,10 @@ export default {
     },
     changePin: function (incident) {
       this.ApiPost(`incidents/${incident.id}/pinned`, { pinned: !incident.pinned })
+    },
+    openUserModal (user) {
+      this.userModal = user
+      this.isUserModalVisible = true
     },
     toggleSidebar: function () {
       this.$refs.sidebar.toggleSidebar()
@@ -454,7 +463,7 @@ export default {
     let self = this
     Event.$on('vue-tables.row-click', function (data) {
       const sel = getSelection().toString()
-      if (data.event.target.className.includes('fa-bookmark') || sel) {
+      if (data.event.target.className.includes('fa-bookmark') || data.event.target.className.includes('rounded-circle') || sel) {
         return
       }
       router.push({ name: 'incident', params: { deploymentName: self.deploymentNameApi.replace(/ /g, '-'), deploymentId: self.deploymentId, incidentName: data.row.name.replace(/ /g, '-'), incidentId: data.row.id } })

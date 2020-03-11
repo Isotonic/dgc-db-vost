@@ -456,7 +456,7 @@ class IncidentLog(db.Model):
 
 class TaskLog(db.Model):
     action_values = {'create_subtask': 1, 'complete_subtask': 2, 'delete_subtask': 3, 'changed_description': 4,
-                     'assigned_user': 5, 'removed_user': 6, 'incomplete_subtask': 7, 'add_comment': 8, 'edit_subtask': 9, 'changed_tags': 10, 'edit_task_comment': 11, 'delete_task_comment': 12}  ##TODO RE-ORDER ONCE DONE
+                     'assigned_user': 5, 'removed_user': 6, 'incomplete_subtask': 7, 'add_comment': 8, 'edit_subtask': 9, 'changed_tags': 10, 'edit_task_comment': 11, 'delete_task_comment': 12, 'complete_task': 13, 'incomplete_task': 14}  ##TODO RE-ORDER ONCE DONE
 
 
     id = db.Column(db.Integer, primary_key=True)

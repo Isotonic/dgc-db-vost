@@ -104,7 +104,7 @@
           <span class="font-weight-bold"> Activity</span>
         </h5>
         <ul class="activity">
-          <task-activity v-for="action in orderBy(task.activity, 'occurredAt', -1)" :key="action.id" :action="action" />
+          <task-activity v-for="action in orderBy(task.activity, 'occurredAt', -1)" :key="action.id" :action="action" :deploymentName="deploymentName" :deploymentId="deploymentId" />
         </ul>
       </div>
     </div>
@@ -134,7 +134,9 @@ export default {
   },
   props: {
     task: Object,
-    deploymentId: Number
+    deploymentName: String,
+    deploymentId: Number,
+    incidentId: Number
   },
   data () {
     return {
@@ -212,7 +214,6 @@ export default {
     deleteTask () {
       this.ApiDelete(`tasks/${this.task.id}`)
         .then(() => {
-          document.body.classList.remove('modal-open')
           this.$emit('close')
         })
     },

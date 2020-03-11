@@ -32,13 +32,14 @@
               <div class="card-body bg-light">
                 <vcl-bullet-list v-if="!hasLoaded" :rows="4" />
                 <ul v-else-if="this.activities.length" class="activity">
-                  <live-feed-activity v-for="action in orderBy(slicedActivities, 'occurredAt', sortBy)" :key="action.id" :action="action" :deploymentName="deploymentNameApi" :deploymentId="deploymentId" />
+                  <live-feed-activity v-for="action in orderBy(activities, 'occurredAt', sortBy).slice((this.pageNum - 1) * 20, this.pageNum * 20)" :key="action.id" :action="action" :deploymentName="deploymentNameApi" :deploymentId="deploymentId" @userModal="openUserModal" />
                 </ul>
                 <h5 v-else class="font-weight-bold text-center mt-3">No activity.</h5>
                 <div v-if="activities.length > 20" class="text-center">
                   <paginate :page-count="Math.ceil(activities.length/20)" :click-handler="changePage" :prev-text="'Prev'" :next-text="'Next'" :page-range="5" :container-class="'pagination'" />
                 </div>
               </div>
+              <user-modal v-if="isUserModalVisible" v-show="isUserModalVisible" :visible="isUserModalVisible" :deploymentName="deploymentName" :deploymentId="deploymentId" :userProp="userModal" @close="isUserModalVisible = false" />
             </div>
           </div>
         </div>
@@ -57,6 +58,7 @@ import Topbar from '@/components/Topbar'
 import Sidebar from '@/components/Sidebar'
 import LiveFeedActivity from '@/components/LiveFeedActivity'
 import ActivityFilter from '@/components/utils/ActivityFilter'
+import UserModal from '@/components/modals/User'
 
 export default {
   name: 'incidentMap',
@@ -66,6 +68,7 @@ export default {
     Sidebar,
     LiveFeedActivity,
     ActivityFilter,
+    UserModal,
     Paginate,
     VclBulletList
   },
@@ -78,6 +81,8 @@ export default {
       showingIncidents: 'all',
       showingStatus: 'open',
       filterActivities: 'all',
+      userModal: null,
+      isUserModalVisible: false,
       sortBy: -1,
       pageNum: 1
     }
@@ -88,6 +93,10 @@ export default {
     },
     changePage: function (pageNum) {
       this.pageNum = pageNum
+    },
+    openUserModal (user) {
+      this.userModal = user
+      this.isUserModalVisible = true
     },
     toggleSidebar: function () {
       this.$refs.sidebar.toggleSidebar()
@@ -132,15 +141,12 @@ export default {
       }
     },
     activities: function () {
-      const activities = this.incidents.flatMap(incident => incident.activity.map(activity => Object.assign({}, activity, { incidentName: incident.name, incidentId: incident.id, location: incident.location.properties.address, description: incident.description, tasks: incident.tasks.length ? `${incident.tasks.filter(task => task.completedAt).length}/${incident.tasks.length}` : null, comments: incident.comments ? incident.comments.length : null })))
+      const activities = this.incidents.flatMap(incident => incident.activity.map(activity => Object.assign({}, activity, { incidentName: incident.name, incidentId: incident.id, description: incident.description, priority: incident.priority, location: incident.location.properties.address, tasks: incident.tasks.length ? `${incident.tasks.filter(task => task.completedAt).length}/${incident.tasks.length}` : null, comments: incident.comments ? incident.comments.length : null })))
       if (this.filterActivities !== 'all') {
         return activities.filter(activity => activity.type === this.filterActivities)
       } else {
         return activities
       }
-    },
-    slicedActivities: function () {
-      return this.activities.slice((this.pageNum - 1) * 20, this.pageNum * 20)
     },
     ...mapGetters('user', {
       hasPermission: 'hasPermission'
