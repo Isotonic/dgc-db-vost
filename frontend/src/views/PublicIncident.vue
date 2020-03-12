@@ -24,7 +24,7 @@
                 <h6 class="m-0 font-weight-bold text-primary">Updates</h6>
               </div>
               <div class="card-body">
-                <ul class="list-unstyled" v-for="comment in incident.comments" :key="comment.id">
+                <ul class="list-unstyled" v-for="comment in orderBy(incident.comments, 'sentAt', -1)" :key="comment.id">
                   <public-comment :comment="comment"></public-comment>
                 </ul>
               </div>
@@ -52,6 +52,7 @@
 <script>
 import Vue from 'vue'
 import router from '@/router'
+import Vue2Filters from 'vue2-filters'
 import { divIcon, latLng } from 'leaflet'
 import { LMap, LTileLayer, LMarker } from 'vue2-leaflet'
 
@@ -62,6 +63,7 @@ import 'leaflet/dist/leaflet.css'
 
 export default {
   name: 'publicIncident',
+  mixins: [Vue2Filters.mixin],
   components: {
     Topbar,
     PublicComment,

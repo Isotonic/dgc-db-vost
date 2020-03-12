@@ -112,10 +112,10 @@ export default {
   },
   methods: {
     isMarkComplete: function (row) {
-      return row.type === 'Mark As Complete' || row.type === 'Mark As Incomplete'
+      return row.type === 'Mark As Closed' || row.type === 'Mark As Open'
     },
     isMarkClosed: function (row) {
-      return row.type === 'Mark As Complete'
+      return row.type === 'Mark As Closed'
     },
     markDealtWith: function (row, carryOutAction) {
       this.ApiPut(`actions-required/${row.id}`, { carryOutAction: carryOutAction })

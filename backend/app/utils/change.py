@@ -118,13 +118,13 @@ def change_incident_status(incident, status, changed_by):
     incident.open_status = status
     if status:
         incident.closed_at = None
-        action_type = 'marked_incomplete'
+        action_type = 'marked_open'
     else:
         incident.closed_at = datetime.utcnow()
-        action_type = 'marked_complete'
+        action_type = 'marked_closed'
     emit_incident('CHANGE_INCIDENT_STATUS', {'id': incident.id, 'open': status, 'code': 200}, incident)
     incident_action(user=changed_by, action_type=IncidentLog.action_values[action_type], incident=incident)
-    actions_required = SupervisorActions.query.filter_by(incident_id=incident.id, action_type='Mark As Complete' if not status else 'Mark As Incomplete').all()
+    actions_required = SupervisorActions.query.filter_by(incident_id=incident.id, action_type='Mark As Closed' if not status else 'Mark As Open').all()
     for x in actions_required:
         supervisor.mark_request_complete(x, False, changed_by)
 
@@ -140,6 +140,9 @@ def change_incident_allocation(incident, allocated_to, changed_by):
     if removed:
         incident_action(user=changed_by, action_type=IncidentLog.action_values['unassigned_user'],
                         incident=incident, target_users=removed)
+        for x in removed:
+            if not x.has_permission(incident):
+                emit('REMOVE_INCIDENT', {'id': incident.id, 'code': 200}, namespace='/', room=f'{incident.deployment_id}-{x.id}')
     if added:
         incident_action(user=changed_by, action_type=IncidentLog.action_values['assigned_user'],
                         incident=incident, target_users=added)

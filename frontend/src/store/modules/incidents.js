@@ -209,6 +209,8 @@ const mutations = {
     const incident = state.incidents.find(incident => incident.id === data.id)
     if (incident) {
       incident.assignedTo = data.assignedTo
+    } else {
+      this._vm.$socket.client.emit('get_incident', { incidentId: data.id })
     }
   },
   SOCKET_CHANGE_INCIDENT_PRIORITY (state, data) {
@@ -340,6 +342,10 @@ const mutations = {
         }
       }
     }
+  },
+  SOCKET_REMOVE_INCIDENT (state, data) {
+    console.log('Recieved remove incident event')
+    state.incidents = state.incidents.filter(incident => incident.id !== data.id)
   },
   SOCKET_DELETE_COMMENT (state, data) {
     console.log('Recieved comment delete event')

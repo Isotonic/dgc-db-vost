@@ -427,11 +427,11 @@ class AuditLog(db.Model):
 class IncidentLog(db.Model):
     action_values = {'create_incident': 1, 'create_task': 2, 'complete_task': 3, 'delete_task': 4, 'add_comment': 5,
                      'delete_comment': 6, 'incomplete_task': 7, 'assigned_user': 8, 'unassigned_user': 9,
-                     'marked_complete': 10, 'marked_incomplete': 11, 'changed_priority': 12,
+                     'marked_closed': 10, 'marked_open': 11, 'changed_priority': 12,
                      'changed_task_description': 13, 'assigned_user_task': 14,
                      'unassigned_user_task': 15, 'marked_public': 16, 'marked_not_public': 17, 'complete_subtask': 18, 'incomplete_subtask': 19, 'create_subtask': 20, 'add_task_comment': 21,
                      'marked_comment_public': 22, 'marked_comment_not_public': 23, 'edit_comment': 24, 'edit_subtask': 25, 'edit_incident': 26, 'changed_task_tags': 27, 'edit_task_comment': 28,
-                     'delete_task_comment': 29, 'delete_subtask': 30, 'change_incident_location': 31, 'flag_supervisor': 32, 'request_mark_complete': 33, 'request_mark_incomplete': 34, 'edit_incident_name': 35,
+                     'delete_task_comment': 29, 'delete_subtask': 30, 'change_incident_location': 31, 'flag_supervisor': 32, 'request_mark_closed': 33, 'request_mark_open': 34, 'edit_incident_name': 35,
                      'edit_incident_description': 36, 'edit_incident_type': 37, 'edit_incident_reported_via': 38, 'edit_incident_linked': 39, 'edit_incident_unlinked': 40, 'edit_incident_reference': 41}  ##TODO RE-ORDER ONCE DONE
 
 

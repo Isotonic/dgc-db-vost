@@ -1,10 +1,11 @@
 import functools
-from .models import User
 from jwt import exceptions
 from app import db, socketio
 from datetime import datetime
 from flask_restx import marshal
+from .models import User, Incident
 from flask_jwt_extended import decode_token
+from .api.utils.models import incident_model
 from flask_login import current_user, login_user
 from .api.utils.models import user_model_without_group
 from flask_socketio import emit, join_room, disconnect
@@ -141,3 +142,21 @@ def on_join_deployment(data):
 def on_join_admin():
     if current_user.has_permission('supervisor'):
         join_room('admin')
+
+@socketio.on('get_incident')
+@login_required_sockets
+def on_get_incident(data):
+    try:
+        incident_id = data['incidentId']
+    except KeyError:
+        return
+    incident = Incident.query.filter_by(id=incident_id).first()
+    if not incident or not current_user.has_incident_access(incident):
+        return
+    incident_marshalled = marshal(incident, incident_model)
+    if current_user in incident.users_pinned:
+        incident_marshalled['pinned'] = True
+    else:
+        incident_marshalled['pinned'] = False
+    emit('NEW_INCIDENT', {'incident': incident_marshalled, 'code': 200}, namespace='/', room=f'{incident.deployment_id}-{current_user.id}')
+

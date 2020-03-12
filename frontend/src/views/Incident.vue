@@ -20,8 +20,8 @@
                   <span class="btn-icon">
                       <i class="fas fa-check"></i>
                   </span>
-                  <span v-if="incident && hasPermission('change_status')" class="text">{{ incident.open ? 'Mark As Complete' : 'Mark As Incomplete' }}</span>
-                  <span v-else-if="incident" class="text">{{ incident.open ? 'Request Mark As Complete' : 'Request Mark As Incomplete' }}</span>
+                  <span v-if="incident && hasPermission('change_status')" class="text">{{ incident.open ? 'Mark As Closed' : 'Mark As Open' }}</span>
+                  <span v-else-if="incident" class="text">{{ incident.open ? 'Request Mark As Closed' : 'Request Mark As Open' }}</span>
               </button>
               <request-status-change-modal v-if="isRequestStatusChangeModalVisible" v-show="isRequestStatusChangeModalVisible" :visible="isRequestStatusChangeModalVisible" :incidentId="incidentId" @close="isRequestStatusChangeModalVisible = false" />
               <button v-if="incident && !incident.public && hasPermission('mark_as_public')" class="btn btn-icon-split btn-group-incidents mr-2 btn-success" @click="isIncidentPublicModalVisible = true">
@@ -46,7 +46,6 @@
                 </social-sharing>
                 <b-dropdown-item @click="changePublic(false)">Hide from public</b-dropdown-item>
               </b-dropdown>
-              <incident-public-modal v-if="isIncidentPublicModalVisible" v-show="isIncidentPublicModalVisible" :visible="isIncidentPublicModalVisible" :incident="incident" :edit="incident.public" @close="isIncidentPublicModalVisible = false" />
               <b-dropdown id="FlagDropdown" toggle-class="btn-icon-split btn-group-incidents btn-warning dropdown-toggle text-white">
                 <template slot="button-content">
                     <span class="btn-icon">
@@ -57,6 +56,7 @@
                 <b-dropdown-item>User</b-dropdown-item>
                 <b-dropdown-item @click="isFlagToSupervisorModalVisible = true">Supervisor</b-dropdown-item>
               </b-dropdown>
+              <incident-public-modal v-if="isIncidentPublicModalVisible" v-show="isIncidentPublicModalVisible" :visible="isIncidentPublicModalVisible" :incident="incident" :edit="incident.public" @close="isIncidentPublicModalVisible = false" />
               <flag-to-supervisor-modal v-if="isFlagToSupervisorModalVisible" v-show="isFlagToSupervisorModalVisible" :visible="isFlagToSupervisorModalVisible" :incidentId="incidentId" @close="isFlagToSupervisorModalVisible = false" />
             </div>
           </div>
