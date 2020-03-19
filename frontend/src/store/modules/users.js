@@ -11,7 +11,7 @@ const getters = {
     return state.loaded
   },
   getUsers: (state) => {
-    return state.groups
+    return state.users
   },
   getUsersGrouped: (state) => {
     let groups = {}

@@ -39,5 +39,3 @@ app.register_blueprint(api_blueprint, url_prefix='/api')
 
 from app import websockets, models
 login.login_view = 'login'
-
-db.create_all()

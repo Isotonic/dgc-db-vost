@@ -326,7 +326,7 @@ export default {
     },
     getUsers () {
       Vue.prototype.$api
-        .get(`/users`)
+        .get(`/users/detailed`)
         .then(r => r.data)
         .then(users => {
           this.users = users

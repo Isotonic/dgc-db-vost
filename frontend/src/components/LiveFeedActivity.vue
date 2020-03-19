@@ -48,7 +48,7 @@ const actionStrings = {
   'marked_comment_not_public': 'marked comment as not publicly viewable in ${incident}',
   'edit_comment': 'edited update in ${incident}',
   'edit_subtask': 'edited subtask ${extra} in ${incident}',
-  'edit_incident': 'edited ${incident} details',
+  'flag_user': 'flagged to ${targetUsers} with reason "${extra}"',
   'changed_task_tags': 'changed tags for ${task} in ${incident}',
   'edit_task_comment': 'edited comment in ${task} in ${incident}',
   'delete_task_comment': 'deleted comment in ${task} in ${incident}',

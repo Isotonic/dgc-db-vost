@@ -3,7 +3,10 @@
     <sidebar :deploymentId="deploymentId" :deploymentName="deploymentNameApi" ref="sidebar" />
     <div id="content-wrapper" class="d-flex flex-column">
       <topbar :deploymentId="deploymentId" :deploymentName="deploymentNameApi" @toggleSidebar="toggleSidebar" />
-      <div class="container-fluid">
+      <div v-if="hasIncidentsLoaded && !incident" class="text-center mt-4">
+        <h3 class="font-weight-bold mt-4">You don't have access to this incident.</h3>
+      </div>
+      <div v-else class="container-fluid">
         <div class="d-sm-flex align-items-center justify-content-between mb-4">
           <h1 class="font-weight-bold mb-0">{{ deploymentNameApi }} - {{ incidentId }}</h1>
           <div class="d-flex mb-1 mt-2">
@@ -23,7 +26,6 @@
                   <span v-if="incident && hasPermission('change_status')" class="text">{{ incident.open ? 'Mark As Closed' : 'Mark As Open' }}</span>
                   <span v-else-if="incident" class="text">{{ incident.open ? 'Request Mark As Closed' : 'Request Mark As Open' }}</span>
               </button>
-              <request-status-change-modal v-if="isRequestStatusChangeModalVisible" v-show="isRequestStatusChangeModalVisible" :visible="isRequestStatusChangeModalVisible" :incidentId="incidentId" @close="isRequestStatusChangeModalVisible = false" />
               <button v-if="incident && !incident.public && hasPermission('mark_as_public')" class="btn btn-icon-split btn-group-incidents mr-2 btn-success" @click="isIncidentPublicModalVisible = true">
                   <span class="btn-icon">
                       <i class="fas fa-eye"></i>
@@ -53,10 +55,12 @@
                     </span>
                     <span class="text">Flag</span>
                 </template>
-                <b-dropdown-item>User</b-dropdown-item>
+                <b-dropdown-item @click="isFlagToUserModalVisible = true">User</b-dropdown-item>
                 <b-dropdown-item @click="isFlagToSupervisorModalVisible = true">Supervisor</b-dropdown-item>
               </b-dropdown>
+              <request-status-change-modal v-if="isRequestStatusChangeModalVisible" v-show="isRequestStatusChangeModalVisible" :visible="isRequestStatusChangeModalVisible" :incidentId="incidentId" @close="isRequestStatusChangeModalVisible = false" />
               <incident-public-modal v-if="isIncidentPublicModalVisible" v-show="isIncidentPublicModalVisible" :visible="isIncidentPublicModalVisible" :incident="incident" :edit="incident.public" @close="isIncidentPublicModalVisible = false" />
+              <flag-to-user-modal v-if="isFlagToUserModalVisible" v-show="isFlagToUserModalVisible" :visible="isFlagToUserModalVisible" :incidentId="incidentId" :deploymentId="deploymentId" @close="isFlagToUserModalVisible = false" />
               <flag-to-supervisor-modal v-if="isFlagToSupervisorModalVisible" v-show="isFlagToSupervisorModalVisible" :visible="isFlagToSupervisorModalVisible" :incidentId="incidentId" @close="isFlagToSupervisorModalVisible = false" />
             </div>
           </div>
@@ -299,7 +303,6 @@
       </div>
     </div>
     <user-modal v-if="isUserModalVisible" v-show="isUserModalVisible" :visible="isUserModalVisible" :deploymentName="deploymentName" :deploymentId="deploymentId" :currentIncidentId="incidentId" :userProp="userModal" @close="isUserModalVisible = false" />
-    <file-uploader-modal v-if="isFileUploaderModalVisible" v-show="isFileUploaderModalVisible" :visible="isFileUploaderModalVisible" @close="isFileUploaderModalVisible = false" />
   </div>
 </template>
 
@@ -321,13 +324,13 @@ import Comment from '@/components/Comment'
 import Activity from '@/components/Activity'
 import CommentBox from '@/components/CommentBox'
 import RequestStatusChangeModal from '@/components/modals/RequestStatusChange'
+import FlagToUserModal from '@/components/modals/FlagToUser'
 import FlagToSupervisorModal from '@/components/modals/FlagToSupervisor'
 import IncidentPublicModal from '@/components/modals/IncidentPublic'
 import IncidentDetailsModal from '@/components/modals/IncidentDetails'
 import IncidentLocationModal from '@/components/modals/IncidentLocation'
 import NewTaskModal from '@/components/modals/NewTask'
 import TaskModal from '@/components/modals/Task'
-import FileUploaderModal from '@/components/modals/FileUploader'
 import QuestionModal from '@/components/modals/Question'
 import UserModal from '@/components/modals/User'
 import ActivityFilter from '@/components/utils/ActivityFilter'
@@ -347,10 +350,10 @@ export default {
     Activity,
     CommentBox,
     RequestStatusChangeModal,
+    FlagToUserModal,
     FlagToSupervisorModal,
     NewTaskModal,
     TaskModal,
-    FileUploaderModal,
     IncidentPublicModal,
     IncidentDetailsModal,
     IncidentLocationModal,
@@ -395,13 +398,13 @@ export default {
       showFlagDropdown: false,
       showPriorityDropdown: false,
       isRequestStatusChangeModalVisible: false,
+      isFlagToUserModalVisible: false,
       isFlagToSupervisorModalVisible: false,
       isIncidentPublicModalVisible: false,
       isIncidentDetailsModalVisible: false,
       isIncidentLocationModalVisible: false,
       isNewTaskModalVisible: false,
       isTaskModalVisible: false,
-      isFileUploaderModalVisible: false,
       isCommentQuestionModalVisible: false,
       commentBoxVisible: true,
       isHandlingAllocation: false
@@ -614,7 +617,8 @@ export default {
       getDeploymentUsers: 'getUsers'
     }),
     ...mapGetters('incidents', {
-      getIncident: 'getIncident'
+      getIncident: 'getIncident',
+      hasIncidentsLoaded: 'hasLoaded'
     })
   },
   watch: {

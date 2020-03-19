@@ -35,6 +35,7 @@ const socket = io(process.env.NODE_ENV === 'development' ? 'http://localhost:500
 Vue.use(VueSocketIOExt, socket, { debug: true, store })
 
 Vue.use(VueNoty, {
+  theme: 'nest',
   timeout: 2000,
   progressBar: true
 })

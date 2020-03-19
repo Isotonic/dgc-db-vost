@@ -2198,6 +2198,12 @@ a.badge-light.focus, a.badge-light:focus {
   border-radius: .35rem
 }
 
+.alert-success {
+  color: #07682f;
+  background-color: #aaf1d6;
+  border-color: #aaf1d6
+}
+
 .alert-danger {
   color: #78261f;
   background-color: #fadbd8;
@@ -3338,7 +3344,9 @@ a:focus {
   -webkit-transform-origin: top right;
   transform-origin: top right;
   right: .25rem;
-  margin-top: -.25rem
+  margin-top: 1.5rem;
+  padding: .25em .55em;
+  font-size: 80%;
 }
 
 .sidebar .nav-item .nav-link .img-profile, .topbar .nav-item .nav-link .img-profile {
@@ -3958,6 +3966,13 @@ form.user .btn-user {
   display: inline-block
 }
 
+.avatar-md {
+  width: 32px;
+  height: 32px;
+  font-size: .875rem;
+  display: inline-block
+}
+
 .avatar-group .avatar {
   position: relative;
   z-index: 2
@@ -4554,6 +4569,10 @@ h6>input {
 .multiselect__clear:after {
   -webkit-transform: rotate(45deg);
   transform: rotate(45deg)
+}
+
+.multiselect__placeholder {
+  color: #858796 !important;
 }
 
 .menubar {
@@ -5299,4 +5318,9 @@ div .marker {
 .comments-map-popup {
   position: relative;
   top: -0.3px;
+}
+
+.notifications {
+  overflow-y: scroll;
+  max-height: 300px;
 }

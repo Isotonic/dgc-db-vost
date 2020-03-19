@@ -1,5 +1,5 @@
 import pyavagen
-from string import Template
+from hashids import Hashids
 from threading import Thread
 from os import path, makedirs
 from datetime import datetime
@@ -7,6 +7,8 @@ from flask_mail import Message
 from flask import render_template
 from flask_login import UserMixin
 from app import app, db, login, argon2, mail
+
+hashids = Hashids(min_length=16)
 
 avatar_colours = ['#26de81', '#3867d6', '#eb3b5a', '#0fb9b1', '#f7b731', '#a55eea', '#fed330', '#45aaf2', '#fa8231',
                   '#2bcbba', '#fd9644', '#2d98da', '#8854d0', '#20bf6b', '#fc5c65', '#4b7bec']
@@ -104,18 +106,17 @@ class User(db.Model, UserMixin):
             makedirs(f'./app/static/img/avatars')
         avatar = pyavagen.Avatar(pyavagen.CHAR_AVATAR, size=128, font_size=65,
                                  string=f'{self.firstname} {self.surname}', color_list=avatar_colours)
-        avatar.generate().save(f'./app/static/img/avatars/{self.id}_{self.firstname}_{self.surname}.png')
+        avatar.generate().save(f'./app/static/img/avatars/{hashids.encode(self.id)}.png')
 
-    def get_avatar(self, static=True):
-        return f'https://eu.ui-avatars.com/api/?name={self.firstname}+{self.surname}&background={avatar_colours[self.id % len(avatar_colours)][1:]}&color=fff&font-size=0.5'
+    def get_avatar(self):
         try:
-            avatar_path = f'{"/static/" if static else ""}img/avatars/{self.id}_{self.firstname}_{self.surname}.png'
+            avatar_path = f'/static/img/avatars/{hashids.encode(self.id)}.png'
             if path.exists(f'./app{avatar_path}'):
-                return f'http://localhost:5000{avatar_path}'
+                return f'http{"" if app.debug else "s"}://{app.config.get("DOMAIN_NAME")}{avatar_path}'
             self.create_avatar()
-            return f'http://localhost:5000{avatar_path}'
-        except: ##TODO FIX: Store in docker volume
-           pass
+            return f'http{"" if app.debug else "s"}://{app.config.get("DOMAIN_NAME")}{avatar_path}'
+        except:
+            return f'https://eu.ui-avatars.com/api/?name={self.firstname}+{self.surname}&background={avatar_colours[self.id % len(avatar_colours)][1:]}&color=fff&font-size=0.5'
 
     def get_deployments(self):
         deployments = []
@@ -400,6 +401,21 @@ class SupervisorActions(db.Model):
     requested_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
+class Notifications(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    user = db.relationship('User', backref='notifications', foreign_keys=[user_id])
+    deployment_id = db.Column(db.Integer, db.ForeignKey('deployment.id'))
+    deployment = db.relationship('Deployment')
+    incident_id = db.Column(db.Integer, db.ForeignKey('incident.id'))
+    incident = db.relationship('Incident')
+    triggered_by_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    triggered_by = db.relationship('User', backref='notifcations_triggered', foreign_keys=[triggered_by_id])
+    action_type = db.Column(db.String(64))
+    reason = db.Column(db.String(1024))
+    triggered_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
 class EmailLink(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
     link = db.Column(db.String(128), unique=True)
@@ -411,10 +427,15 @@ class EmailLink(db.Model):
         msg.html = render_template('registration_email.html', email_link=self.link)
         send_async_email(app, msg)
 
+    def send_password_reset_email(self):
+        msg = Message('DGVOST Password Reset', sender=app.config.get('MAIL_USERNAME'), recipients=[self.user.email])
+        msg.html = render_template('password_reset.html', name=self.user.firstname, email_link=self.link)
+        send_async_email(app, msg)
+
 
 class AuditLog(db.Model):
     action_values = {'create_user': 1, 'verify_user': 2, 'edit_user_group': 3, 'edit_user_status': 4, 'delete_user': 5, 'create_group': 6,
-                     'edit_group': 7, 'delete_group': 8, 'create_deployment': 9, 'edit_deployment': 10, 'activate_user': 11, 'deactivate_user': 12}
+                     'edit_group': 7, 'delete_group': 8, 'create_deployment': 9, 'edit_deployment': 10, 'activate_user': 11, 'deactivate_user': 12, 'edit_user_settings': 13}
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
@@ -430,7 +451,7 @@ class IncidentLog(db.Model):
                      'marked_closed': 10, 'marked_open': 11, 'changed_priority': 12,
                      'changed_task_description': 13, 'assigned_user_task': 14,
                      'unassigned_user_task': 15, 'marked_public': 16, 'marked_not_public': 17, 'complete_subtask': 18, 'incomplete_subtask': 19, 'create_subtask': 20, 'add_task_comment': 21,
-                     'marked_comment_public': 22, 'marked_comment_not_public': 23, 'edit_comment': 24, 'edit_subtask': 25, 'edit_incident': 26, 'changed_task_tags': 27, 'edit_task_comment': 28,
+                     'marked_comment_public': 22, 'marked_comment_not_public': 23, 'edit_comment': 24, 'edit_subtask': 25, 'flag_user': 26, 'changed_task_tags': 27, 'edit_task_comment': 28,
                      'delete_task_comment': 29, 'delete_subtask': 30, 'change_incident_location': 31, 'flag_supervisor': 32, 'request_mark_closed': 33, 'request_mark_open': 34, 'edit_incident_name': 35,
                      'edit_incident_description': 36, 'edit_incident_type': 37, 'edit_incident_reported_via': 38, 'edit_incident_linked': 39, 'edit_incident_unlinked': 40, 'edit_incident_reference': 41}  ##TODO RE-ORDER ONCE DONE
 
@@ -487,3 +508,17 @@ class RevokedToken(db.Model):
     def is_jti_blacklisted(cls, jti):
         query = cls.query.filter_by(jti=jti).first()
         return bool(query)
+
+db.create_all()
+db.session.commit()
+
+if not Group.query.all() and not User.query.all():
+    group = Group(name='Supervisor')
+    group.set_permissions(['supervisor'])
+    db.session.add(group)
+    db.session.commit()
+
+    user = User(firstname='Admin', surname='Admin', email='admin@admin.com', group=group, status=2)
+    user.set_password('admin', initial=True)
+    db.session.add(user)
+    db.session.commit()

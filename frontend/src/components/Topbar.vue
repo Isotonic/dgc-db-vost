@@ -31,18 +31,37 @@
           <span class="text">{{ !user ? 'Login' : 'View Deployments' }}</span>
         </button>
       </router-link>
-      <li v-if="!publicPage" class="nav-item dropdown no-arrow mx-1">
-        <a class="nav-link dropdown-toggle" id="notificationDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-          <i class="fas fa-bell fa-fw"></i>
-            <span class="badge badge-danger badge-counter"></span>
-        </a>
-        <div class="dropdown-list dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="notificationDropdown">
-          <h6 class="dropdown-header">
-            Notification Center
-          </h6>
-          <a class="dropdown-item text-center small text-gray-500">No Notifications</a>
+      <b-dropdown v-if="!publicPage && user" variant="link" size="xs" toggle-tag="li" toggle-class="nav-item" menu-class="dropdown-list dropdown-menu dropdown-menu-right shadow">
+        <template slot="button-content">
+          <a class="nav-link dropdown-toggle" id="notificationDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <i class="fas fa-bell fa-fw"></i>
+            <span v-if="user.notifications.length" class="badge badge-danger badge-counter">{{ user.notifications.length }}</span>
+          </a>
+        </template>
+        <b-dropdown-header>
+          <h6 class="font-weight-bold text-center mb-0">Notification Center</h6>
+        </b-dropdown-header>
+        <div v-if="user.notifications.length" class="notifications">
+          <span class="dropdown-item text-center text-primary font-weight-bold" @click="markAllAsRead">
+            Mark All As Read
+          </span>
+          <a v-for="notification in orderBy(user.notifications, 'occurredAt', -1)" :key="notification.id" class="dropdown-item d-flex align-items-center" @click="goToNotification(notification)">
+            <div class="mr-3">
+              <img alt="Avatar" :src="notification.triggeredBy.avatarUrl" class="rounded-circle avatar-md hover" />
+            </div>
+            <div>
+              <div class="small text-gray-500">{{ notification.occurredAt | moment("from", "now") }}</div>
+              <div v-if="notification.type === 'flagged_incident'">
+                <span class="font-weight-bold">{{ notification.triggeredBy.firstname }} {{ notification.triggeredBy.surname }}</span> has flagged <span class="font-weight-bold">{{ notification.incidentName }} with reason:</span><span> {{ notification.reason }}</span>
+              </div>
+              <div v-else>
+                <span class="font-weight-bold">{{ notification.triggeredBy.firstname }} {{ notification.triggeredBy.surname }}</span> {{ notificationType(notification.type) }} <span class="font-weight-bold">{{ notification.incidentName }}.</span>
+              </div>
+            </div>
+          </a>
         </div>
-      </li>
+        <span v-if="user && !user.notifications.length" class="dropdown-item disabled text-center small text-gray-500">No Notifications</span>
+      </b-dropdown>
       <div v-if="!publicPage" class="topbar-divider d-none d-sm-block"></div>
       <b-dropdown v-if="!publicPage" variant="link" size="xs" toggle-tag="li" toggle-class="nav-item">
         <template slot="button-content">
@@ -51,27 +70,38 @@
               <img class="img-profile rounded-circle" :src="avatarUrl">
             </a>
         </template>
-        <b-dropdown-item><i class="fas fa-cogs fa-sm fa-fw mr-2 text-gray-400"></i>Settings</b-dropdown-item>
+        <b-dropdown-item @click="isAccountSettingsModalVisible = true"><i class="fas fa-cogs fa-sm fa-fw mr-2 text-gray-400"></i>Account</b-dropdown-item>
         <b-dropdown-item v-if="hasPermission('Supervisor')" @click="adminSettings"><i class="fas fa-users-cog fa-sm fa-fw mr-2 text-gray-400"></i>Admin</b-dropdown-item>
         <div class="dropdown-divider"></div>
         <b-dropdown-item @click="logout"><i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>Logout</b-dropdown-item>
       </b-dropdown>
+      <account-settings-modal v-if="isAccountSettingsModalVisible" v-show="isAccountSettingsModalVisible" :visible="isAccountSettingsModalVisible" @close="isAccountSettingsModalVisible = false" />
     </ul>
   </nav>
 </template>
 
 <script>
 import _ from 'lodash'
+import Vue from 'vue'
 import fz from 'fuzzaldrin-plus'
 import router from '@/router/index'
+import Vue2Filters from 'vue2-filters'
 import { mapGetters } from 'vuex'
 
 import IncidentCard from '@/components/IncidentCard'
+import AccountSettingsModal from '@/components/modals/AccountSettings'
+
+const typeStrings = {
+  'unassigned_incident': 'has unassigned you from',
+  'assigned_incident': 'has assigned you to'
+}
 
 export default {
   name: 'Topbar',
+  mixins: [Vue2Filters.mixin],
   components: {
-    IncidentCard
+    IncidentCard,
+    AccountSettingsModal
   },
   props: {
     deploymentId: Number,
@@ -100,7 +130,8 @@ export default {
   data () {
     return {
       query: '',
-      hideResults: false
+      hideResults: false,
+      isAccountSettingsModalVisible: false
     }
   },
   methods: {
@@ -110,12 +141,26 @@ export default {
       }
       this.query = ''
     },
+    goToNotification: function (notification) {
+      if (notification.type !== 'unassigned_incident' && (!this.$route.params.incidentId || parseInt(this.$route.params.incidentId) !== notification.incidentId)) {
+        router.push({ name: 'incident', params: { deploymentName: notification.deploymentName.replace(/ /g, '-'), deploymentId: notification.deploymentId, incidentName: notification.incidentName.replace(' ', '-'), incidentId: notification.incidentId } })
+      }
+      this.ApiDelete(`/notifications/${notification.id}`)
+        .then(() => Vue.noty.success('Marked notification as read.'))
+    },
+    markAllAsRead: function () {
+      this.ApiDelete(`/notifications`)
+        .then(() => Vue.noty.success('Marked all notification as read.'))
+    },
     delayBlur: function () {
       const that = this
       setTimeout(function () { that.hideResults = true }, 400)
     },
     adminSettings: function () {
       router.push({ name: 'admin' })
+    },
+    notificationType: function (type) {
+      return typeStrings[type]
     },
     logout: function () {
       this.$store.dispatch('user/logout')

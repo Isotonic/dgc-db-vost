@@ -61,6 +61,7 @@ def handle_expired_token(error):
 from .authentication import ns_auth
 from .user import ns_user
 from .group import ns_group
+from .notification import ns_notification
 from .deployment import ns_deployment
 from .incident import ns_incident
 from .comment import ns_comment
@@ -73,6 +74,7 @@ from .public import ns_public
 api.add_namespace(ns_auth)
 api.add_namespace(ns_user)
 api.add_namespace(ns_group)
+api.add_namespace(ns_notification)
 api.add_namespace(ns_deployment)
 api.add_namespace(ns_incident)
 api.add_namespace(ns_comment)

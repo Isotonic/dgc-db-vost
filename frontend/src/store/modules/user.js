@@ -125,8 +125,29 @@ const actions = {
     dispatch('storeDestroy')
     router.push({ name: 'login', query: { redirect: currentPath } })
   },
+  updateDetails ({ commit }, [firstname, surname, email]) {
+    commit('updateFirstname', firstname)
+    commit('updateSurname', surname)
+    commit('updateEmail', email)
+  },
+  updateTokens ({ commit }, [accessToken, refreshToken]) {
+    commit('setAccessToken', accessToken)
+    commit('setRefreshToken', refreshToken)
+  },
+  socket_newNotification ({ commit }, data) {
+    console.log('Recieved notification event')
+    commit('addNewNotification', data)
+    if (data.type === 'assigned_incident') {
+      Vue.noty.success(`You have been assigned to ${data.incidentName}.`)
+    } else if (data.type === 'unassigned_incident') {
+      Vue.noty.error(`You have been unassigned from ${data.incidentName}.`)
+    } else if (data.type === 'flagged_incident') {
+      Vue.noty.error(`${data.triggeredBy.firstname} ${data.triggeredBy.surname} has flagged ${data.incidentName} with reason: ${data.reason}.`)
+    }
+  },
   logout ({ dispatch }) {
     dispatch('storeDestroy')
+    this._vm.$socket.client.close()
     router.push({ name: 'publicMap' })
   },
   storeDestroy ({ commit, dispatch }) {
@@ -157,6 +178,26 @@ const mutations = {
   setRefreshToken (state, value) {
     localStorage.refreshToken = value
     state.refreshToken = value
+  },
+  updateFirstname (state, firstname) {
+    state.user.firstname = firstname
+  },
+  updateSurname (state, surname) {
+    state.user.surname = surname
+  },
+  updateEmail (state, email) {
+    state.user.email = email
+  },
+  addNewNotification (state, notification) {
+    state.user.notifications.push(notification)
+  },
+  SOCKET_DELETE_NOTIFICATION (state, data) {
+    console.log('Recieved delete notification event')
+    state.user.notifications = state.user.notifications.filter(notification => notification.id !== data.id)
+  },
+  SOCKET_DELETE_ALL_NOTIFICATIONS (state) {
+    console.log('Recieved delete all notifications event')
+    state.user.notifications = []
   },
   deleteAccessToken (state) {
     localStorage.removeItem('accessToken')

@@ -2,12 +2,12 @@ from ..api import api
 from sqlalchemy import func
 from .utils.resource import Resource
 from .utils.namespace import Namespace
-from ..utils.create import create_user
 from ..utils.delete import delete_user
 from ..models import User, Group, EmailLink
-from flask_jwt_extended import jwt_required, get_jwt_identity
-from ..utils.change import change_user_group, complete_registration, change_user_status
-from .utils.models import id_model, create_user_modal, full_user_model, user_model, group_model, email_model, registration_model, task_model_with_incident, user_status_model
+from ..utils.create import create_user, create_password_reset_email
+from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_jwt_identity
+from ..utils.change import change_user_group, edit_user_details, complete_registration, change_user_password, change_user_status
+from .utils.models import id_model, create_user_modal, user_model, user_admin_panel_model, user_full_details_model, group_model, email_model, registration_model, password_reset_model, task_model_with_incident, user_status_model, edit_user_details_model, updated_user_details_model
 
 ns_user = Namespace('User', description='Used to carry out actions related to users.', path='/users')
 
@@ -15,10 +15,9 @@ ns_user = Namespace('User', description='Used to carry out actions related to us
 class UsersEndpoint(Resource):
     @jwt_required
     @ns_user.doc(security='access_token')
-    @ns_user.response(200, 'Success', [full_user_model])
+    @ns_user.response(200, 'Success', [user_model])
     @ns_user.response(401, 'Incorrect credentials')
-    @ns_user.response(403, 'Missing supervisor permission')
-    @api.marshal_with(full_user_model)
+    @api.marshal_with(user_model)
     def get(self):
         """
                 Returns all users.
@@ -59,18 +58,87 @@ class UsersEndpoint(Resource):
         return created_user, 200
 
 
+@ns_user.route('/detailed')
+class UsersEndpoint(Resource):
+    @jwt_required
+    @ns_user.doc(security='access_token')
+    @ns_user.response(200, 'Success', [user_admin_panel_model])
+    @ns_user.response(401, 'Incorrect credentials')
+    @ns_user.response(403, 'Missing supervisor permission')
+    @api.marshal_with(user_admin_panel_model)
+    def get(self):
+        """
+                Returns all users with more details.
+        """
+        current_user = User.query.filter_by(id=get_jwt_identity()).first()
+
+        ns_user.has_permission(current_user, 'supervisor')
+        return User.query.all(), 200
+
+
 @ns_user.route('/me')
 class CurrentUserEndpoint(Resource):
     @jwt_required
     @ns_user.doc(security='access_token')
-    @ns_user.response(200, 'Success', user_model)
-    @api.marshal_with(user_model)
+    @ns_user.response(200, 'Success', user_full_details_model)
+    @api.marshal_with(user_full_details_model)
     def get(self):
         """
                 Returns user info of the current user.
         """
         user = User.query.filter_by(id=get_jwt_identity()).first()
         return user, 200
+
+
+    @jwt_required
+    @ns_user.expect(edit_user_details_model, validate=True)
+    @ns_user.doc(security='access_token')
+    @ns_user.response(200, 'Success', updated_user_details_model)
+    @ns_user.response(400, 'Firstname is empty')
+    @ns_user.response(400, 'Surname is empty')
+    @ns_user.response(400, 'Email is empty')
+    @ns_user.response(400, 'New Password is empty')
+    @ns_user.response(400, 'New password does not meet the requirements')
+    @ns_user.response(400, 'You already have these details set')
+    @ns_user.response(400, 'Password is incorrect')
+    @ns_user.response(401, 'Incorrect credentials')
+    def put(self):
+        """
+                Edits user's account settings.
+        """
+        payload = api.payload
+        current_user = User.query.filter_by(id=get_jwt_identity()).first()
+
+        if payload['firstname'] == '':
+            ns_user.abort(400, 'Firstname is empty')
+        elif payload['surname'] == '':
+            ns_user.abort(400, 'Surname is empty')
+        elif payload['email'] == '':
+            ns_user.abort(400, 'Email is empty')
+        elif payload['currentPassword'] == '':
+            ns_user.abort(400, 'Password is empty')
+        elif 'newPassword' in payload.keys() and payload['newPassword'] == '':
+            ns_user.abort(400, 'Password is empty')
+
+        new_password = None
+        if 'newPassword' in payload.keys():
+            new_password = payload['newPassword']
+        elif current_user.firstname == payload['firstname'] and current_user.surname == payload['surname'] and current_user.email == payload['email']:
+            ns_user.abort(401, 'You already have these details set')
+
+        if not current_user.check_password(api.payload['currentPassword']):
+            ns_user.abort(401, 'Password is incorrect')
+
+        if edit_user_details(current_user, payload['firstname'], payload['surname'], payload['email'], new_password) is False:
+            ns_user.abort(400, 'Password does not meet the requirements')
+
+        if new_password:
+            access_token = create_access_token(identity=current_user.id)
+            refresh_token = create_refresh_token(identity=current_user.id)
+
+            return {'firstname': current_user.firstname, 'surname': current_user.surname, 'email': current_user.email, 'access_token': access_token, 'refresh_token': refresh_token}, 200
+        else:
+            return {'firstname': current_user.firstname, 'surname': current_user.surname, 'email': current_user.email}, 200
 
 
 @ns_user.route('/<int:id>')
@@ -168,11 +236,73 @@ class RegistrationEndpoint(Resource):
         if payload['firstname'] == '':
             ns_user.abort(400, 'Firstname is empty')
         elif payload['surname'] == '':
-            ns_user.abort(400, 'Firstname is empty')
+            ns_user.abort(400, 'Surname is empty')
         elif payload['password'] == '':
-            ns_user.abort(400, 'Firstname is empty')
+            ns_user.abort(400, 'Password is empty')
 
         if complete_registration(email, payload['firstname'], payload['surname'], payload['password']) is False:
+            ns_user.abort(400, 'Password does not meet the requirements')
+        return 'Success', 200
+
+
+@ns_user.route('/request-password-reset')
+class RegistrationEndpoint(Resource):
+    @ns_user.expect(email_model, validate=True)
+    @ns_user.response(200, 'Success')
+    @ns_user.response(400, 'Firstname is empty')
+    @ns_user.response(400, 'Surname is empty')
+    @ns_user.response(400, 'Password is empty')
+    @ns_user.response(400, 'Password does not meet the requirements')
+    @ns_user.response(404, 'User with email doesn\'t exist')
+    def post(self):
+        """
+                Sends a password reset email to the user.
+        """
+        user = User.query.filter(func.lower(User.email) == func.lower(api.payload['email'])).first()
+        if not user or user.status < 1:
+            ns_user.abort(404, 'User with email doesn\'t exist')
+
+        create_password_reset_email(user)
+        return 'Success', 200
+
+
+@ns_user.route('/verify-password-reset-link/<string:link>')
+@ns_user.doc(params={'link': 'End path of the link.'})
+class PasswordLinkEndpoint(Resource):
+    @ns_user.response(200, 'Success', email_model)
+    @ns_user.response(404, 'Password reset link doesn\'t exist')
+    @api.marshal_with(email_model)
+    def get(self, link):
+        """
+                Returns if a password reset link is valid or not.
+        """
+        email = EmailLink.query.filter_by(link=link, forgot_password=True).first()
+        if not email or email.user.status < 1:
+            ns_user.abort(404, 'Password reset link doesn\'t exist')
+        return email.user, 200
+
+
+@ns_user.route('/password-reset/<string:link>')
+@ns_user.doc(params={'path': 'End path of the link.'})
+class PasswordResetEndpoint(Resource):
+    @ns_user.expect(password_reset_model, validate=True)
+    @ns_user.response(200, 'Success')
+    @ns_user.response(400, 'Password is empty')
+    @ns_user.response(400, 'Password does not meet the requirements')
+    @ns_user.response(404, 'Password reset link doesn\'t exist')
+    def put(self, link):
+        """
+                Reset the user's password.
+        """
+        email = EmailLink.query.filter_by(link=link, forgot_password=True).first()
+        if not email or email.user.status < 1:
+            ns_user.abort(404, 'Password reset link doesn\'t exist')
+
+        payload = api.payload
+        if payload['password'] == '':
+            ns_user.abort(400, 'Password is empty')
+
+        if change_user_password(email, payload['password']) is False:
             ns_user.abort(400, 'Password does not meet the requirements')
         return 'Success', 200
 

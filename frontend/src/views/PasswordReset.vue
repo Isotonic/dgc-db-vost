@@ -6,17 +6,11 @@
           <div class="card-body p-0">
             <div class="p-5">
               <div class="text-center">
-                <h1 class="h4 text-gray-900 mb-4">Complete DGVOST Registration</h1>
+                <h1 class="h4 text-gray-900 mb-4">DGVOST Password Reset</h1>
               </div>
-              <form class="user" @submit.prevent="register">
-                <div class="alert alert-danger text-center" v-if="error">Registration link does not exist or was revoked. Please ask a supervisor to send a new one.</div>
+              <form class="user" @submit.prevent="passwordReset">
+                <div class="alert alert-danger text-center" v-if="error">Password reset link does not exist or has expired.</div>
                 <div v-else>
-                  <div class="form-group">
-                    <input v-model="firstname" type="text" class="form-control form-control-user" placeholder="Enter Firstname" aria-label="Firstname" required autofocus>
-                  </div>
-                  <div class="form-group">
-                    <input v-model="surname" type="text" class="form-control form-control-user" placeholder="Enter Surname" aria-label="Surname" required autofocus>
-                  </div>
                   <div class="form-group">
                     <input v-model="password" type="password" class="form-control form-control-user" placeholder="Enter Password" aria-label="Password" required>
                   </div>
@@ -34,7 +28,7 @@
                         <span class="ml-4">Match<br></span>
                       </div>
                   </div>
-                  <button type="submit" class="btn btn-primary btn-user btn-block mt-4">Submit</button>
+                  <button type="submit" class="btn btn-primary btn-user btn-block mt-4">Reset</button>
                 </div>
               </form>
             </div>
@@ -56,8 +50,6 @@ export default {
   data () {
     return {
       email: '',
-      firstname: '',
-      surname: '',
       password: '',
       checkPassword: '',
       stoppedTyping: false,
@@ -71,10 +63,10 @@ export default {
     }
   },
   methods: {
-    register () {
+    passwordReset () {
       if (this.firstname !== '' && this.surname !== '' && this.passwordValidation) {
         Vue.prototype.$http
-          .put(`users/complete-registration/${this.link}`, { firstname: this.firstname, surname: this.surname, password: this.password })
+          .put(`users/password-reset/${this.link}`, { password: this.password })
           .then(() => {
             this.$store.dispatch('user/login', [this.email, this.password])
               .then(() => this.$router.push(this.$route.query.redirect || { name: 'deployments' }))
@@ -116,7 +108,7 @@ export default {
   created: function () {
     document.body.classList.add('bg-gradient-primary')
     Vue.prototype.$http
-      .get(`users/verify-registration-link/${this.link}`)
+      .get(`users/verify-password-reset-link/${this.link}`)
       .then(r => r.data)
       .then((data) => {
         this.email = data.email

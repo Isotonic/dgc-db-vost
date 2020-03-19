@@ -15,6 +15,19 @@ def delete_user(user, deleted_by):
     emit('delete_user', {'id': user.id, 'code': 200}, namespace='/', room='admin')
 
 
+def delete_notification(notification):
+    db.session.delete(notification)
+    db.session.commit()
+    emit('delete_notification', {'id': notification.id, 'code': 200}, namespace='/', room=f'{notification.user.id}')
+
+
+def delete_all_notifications(user):
+    for notification in user.notifications:
+        db.session.delete(notification)
+    db.session.commit()
+    emit('delete_all_notifications', {'code': 200}, namespace='/', room=f'{user.id}')
+
+
 def delete_comment(comment, deleted_by):
     incident = comment.incident
     db.session.delete(comment)

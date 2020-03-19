@@ -91,15 +91,15 @@
       <div class="form-group mb-3">
         <input v-model="reference" class="form-control" placeholder="Reference (Optional)" type="text">
       </div>
-      <div class="form-group mb-3">
-        <input v-model="address" class="form-control" placeholder="Address" type="text">
-      </div>
       <span v-if="locationNotSet" class="text-danger">Please select the location of the incident.</span>
       <div id="Map" class="map-container">
         <MglMap :accessToken="accessToken" :mapStyle="mapStyle" @click="onClickMap" :center="[-4.003661, 56.584255]" :zoom="3">
           <MglGeocoderControl :accessToken="accessToken" :input="searchResult" @result="handleResult" :draggable="true" />
           <MglMarker v-if="markerSet" :coordinates="location" :draggable="true" color="blue" />
         </MglMap>
+      </div>
+      <div class="form-group mt-3">
+        <input v-model="address" class="form-control" placeholder="Address" type="text">
       </div>
       <div class="text-center">
         <button type="submit" class="btn btn-primary my-4">Submit</button>

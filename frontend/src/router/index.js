@@ -51,6 +51,19 @@ const routes = [
     }
   },
   {
+    path: '/password-reset/:link',
+    name: 'passwordReset',
+    component: () => import(/* webpackChunkName: "password reset" */ '../views/PasswordReset.vue'),
+    props (route) {
+      const props = { ...route.params }
+      return props
+    },
+    meta: {
+      title: _ => 'Password Reset',
+      requiresAuth: false
+    }
+  },
+  {
     path: '/deployments',
     name: 'deployments',
     component: () => import(/* webpackChunkName: "deployments" */ '../views/Deployments.vue'),
@@ -123,20 +136,6 @@ const routes = [
     },
     meta: {
       title: _ => 'Live Feed',
-      requiresAuth: true
-    }
-  },
-  {
-    path: '/deployments/:deploymentName-:deploymentId(\\d+)/decision-making-log',
-    name: 'decisionMakingLog',
-    component: () => import(/* webpackChunkName: "decision-making log" */ '../views/Incident.vue'),
-    props (route) {
-      const props = { ...route.params }
-      props.deploymentId = +props.deploymentId
-      return props
-    },
-    meta: {
-      title: _ => 'Decision-Making Log',
       requiresAuth: true
     }
   },

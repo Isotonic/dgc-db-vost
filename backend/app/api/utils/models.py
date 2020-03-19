@@ -96,14 +96,15 @@ group_model = api.model('Group',
                          'users': fields.Nested(user_model_without_group, description='Users in the group.'),
                          'permissions': fields.List(fields.String, attribute=lambda x: x.get_permissions() if x else None, description='Group\'s permissions.')})
 
-user_model = api.model('User',
+
+user_model = api.model('User Slimmed',
                         {'id': fields.Integer(description='ID of the user.'),
                          'firstname': fields.String(description='Firstname of the user.'),
                          'surname': fields.String(description='Surname of the user.'),
                          'avatarUrl': fields.String(attribute=lambda x: x.get_avatar(), description='URL for the user\'s avatar.'),
                          'group': fields.Nested(group_model_without_users, allow_null=True, description='Group the user belongs to, can be empty too.')})
 
-full_user_model = api.model('User Full Details',
+user_admin_panel_model = api.model('User Detailed',
                         {'id': fields.Integer(description='ID of the user.'),
                          'firstname': fields.String(description='Firstname of the user.'),
                          'surname': fields.String(description='Surname of the user.'),
@@ -113,6 +114,27 @@ full_user_model = api.model('User Full Details',
                          'avatarUrl': fields.String(attribute=lambda x: x.get_avatar(), description='URL for the user\'s avatar.'),
                          'group': fields.Nested(group_model_without_users, allow_null=True, description='Group the user belongs to, can be empty too.')})
 
+notification_model = api.model('Notification',
+                        {'id': fields.Integer(description='ID of the notification.'),
+                         'deploymentId': fields.Integer(attribute='deployment_id', description='ID of the deployment related to the notification.'),
+                         'deploymentName': fields.String(attribute=lambda x: x.deployment.name, description='Name of the deployment related to the notification.'),
+                         'incidentId': fields.Integer(attribute='incident_id', description='ID of the incident related to the notification.'),
+                         'incidentName': fields.String(attribute=lambda x: x.incident.name, description='Name of the incident related to the notification.'),
+                         'type': fields.String(attribute='action_type', description='Type of notification'),
+                         'triggeredBy': fields.Nested(user_model, attribute='triggered_by', description='User who triggered the notification.'),
+                         'reason': fields.String(description='Reason as to why the user triggered the notification, can be null'),
+                         'occurredAt': fields.Integer(attribute=lambda x: int(x.triggered_at.timestamp()), description='UTC timestamp of when the notification occurred.')})
+
+user_full_details_model = api.model('User',
+                        {'id': fields.Integer(description='ID of the user.'),
+                         'firstname': fields.String(description='Firstname of the user.'),
+                         'surname': fields.String(description='Surname of the user.'),
+                         'email': fields.String(description='Email of the user.'),
+                         'createdAt': fields.Integer(attribute=lambda x: int(x.created_at.timestamp()), description='UTC timestamp of the user\'s creation.'),
+                         'status': fields.String(description='Status of the user. -1 = Disabled account, 0 = Sent email, 1 = Active account.'),
+                         'avatarUrl': fields.String(attribute=lambda x: x.get_avatar(), description='URL for the user\'s avatar.'),
+                         'group': fields.Nested(group_model_without_users, allow_null=True, description='Group the user belongs to, can be empty too.'),
+                         'notifications': fields.Nested(notification_model, description='Notifications the user has.')})
 
 deployment_model = api.model('Deployment',
                             {'id': fields.Integer(description='ID of the deployment.'),
@@ -276,9 +298,27 @@ tags_model = api.model('Tags',
 
 email_model = api.model('Email', {'email': fields.String(description='Email address.', required=True)})
 
-registration_model = api.model('Registration', {'firstname': fields.String(description='Firstname of the user.'),
-                                                'surname': fields.String(description='Surname of the user.'),
-                                                'password': fields.String(description='Password, must be at least 8 characters, contain a lowercase and uppercase letter and contain a number.')})
+password_reset_model = api.model('Password Reset', {'password': fields.String(description='Password, must be at least 8 characters, contain a lowercase and uppercase letter and contain a number.', required=True)})
+
+
+registration_model = api.model('Registration', {'firstname': fields.String(description='Firstname of the user.', required=True),
+                                                'surname': fields.String(description='Surname of the user.', required=True),
+                                                'password': fields.String(description='Password, must be at least 8 characters, contain a lowercase and uppercase letter and contain a number.', required=True)})
+
+
+edit_user_details_model = api.model('Edit User Details', {'firstname': fields.String(description='Firstname of the user.', required=True),
+                                                          'surname': fields.String(description='Surname of the user.', required=True),
+                                                          'email': fields.String(description='Email of the user.', required=True),
+                                                          'currentPassword': fields.String(description='Password of the user.', required=True),
+                                                          'newPassword': fields.String(description='Optional new password, must be at least 8 characters, contain a lowercase and uppercase letter and contain a number.')})
+
+
+updated_user_details_model = api.model('Updated User Details', {'firstname': fields.String(description='Firstname of the user.', required=True),
+                                                                'surname': fields.String(description='Surname of the user.', required=True),
+                                                                'email': fields.String(description='Email of the user.', required=True),
+                                                                'access_token': fields.String(description='If the password was changed then a new access token will also be sent.'),
+                                                                'refresh_token': fields.String(description='If the password was changed then a new refresh token will also be sent.')})
+
 
 change_location_model = api.model('Change location',
                             {'address': fields.String(required=True),
@@ -296,7 +336,9 @@ action_required_model = api.model('Actions Required',
 
 mark_dealt_with_model = api.model('Mark Dealt With', {'carryOutAction': fields.Boolean(description='Optional carrying out of action if it\'s changing the incident\'s status.')})
 
-flag_reason_model = api.model('Flag Reason', {'reason': fields.String(description='Reason for flagging.', required=True)})
+flag_user_model = api.model('Flag To User', {'id': fields.Integer(description='ID of the user.', required=True), 'reason': fields.String(description='Reason for flagging.', required=True)})
+
+flag_supervisor_model = api.model('Flag Supervisor', {'reason': fields.String(description='Reason for flagging.', required=True)})
 
 status_change_reason_model = api.model('Reason', {'reason': fields.String(description='Optional reason for requesting status change')})
 

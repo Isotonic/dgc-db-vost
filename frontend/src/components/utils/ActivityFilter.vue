@@ -17,10 +17,11 @@
       <option value="marked_public">Marked Incidents Public Only</option>
       <option value="marked_not_public">Marked Incidents Private Only</option>
       <option value="marked_closed">Marked Incidents Complete Only</option>
-      <option value="marked_open">Marked Incidents Uncomplete Only</option>
-      <option value="flag_supervisor">Incidents Flagged Only</option>
+      <option value="marked_incomplete">Marked Incidents Uncomplete Only</option>
+      <option value="flag_user">Incidents Flagged To Users Only</option>
+      <option value="flag_supervisor">Incidents Flagged To Supervisors Only</option>
       <option value="request_mark_closed">Incidents Requested Complete Only</option>
-      <option value="request_mark_open">Incidents Requested Uncomplete Only</option>
+      <option value="request_mark_incomplete">Incidents Requested Uncomplete Only</option>
     </optgroup>
     <optgroup label="Task">
       <option value="create_task">Created Tasks Only</option>

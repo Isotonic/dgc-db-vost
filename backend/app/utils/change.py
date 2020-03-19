@@ -6,6 +6,7 @@ from datetime import datetime
 from flask_restx import marshal
 from flask_socketio import emit
 from .websocket import emit_incident
+from .notification import new_notification
 from .actions import audit_action, incident_action, task_action
 from app.models import User, Group, AuditLog, IncidentLog, TaskLog, SupervisorActions
 from ..api.utils.models import user_model_without_group, group_model, group_model_without_users, incident_model, incident_model_name, point_feature_model
@@ -48,6 +49,27 @@ def change_user_status(user, status, changed_by):
     user.status = status
     audit_action(changed_by, AuditLog.action_values['activate_user' if status == 1 else 'deactivate_user'])
     emit('change_user_status', {'id': user.id, 'status': status, 'code': 200}, namespace='/', room='admin')
+
+
+def change_user_password(email, password):
+    pattern = re.compile('(?=.*\d)(?=.*[a-z])(?=.*[A-Z])')
+    if not pattern.match(password):
+        return False
+    email.user.set_password(password, initial=True)
+    db.session.delete(email)
+    db.session.commit()
+
+
+def edit_user_details(user, firstname, surname, email, new_password):
+    if new_password:
+        pattern = re.compile('(?=.*\d)(?=.*[a-z])(?=.*[A-Z])')
+        if not pattern.match(new_password):
+            return False
+        user.set_password(new_password)
+    user.firstname = firstname
+    user.surname = surname
+    user.email = email
+    audit_action(user, AuditLog.action_values['edit_user_settings'])
 
 
 def edit_deployment(deployment, name, description, open_status, group_ids, user_ids, changed_by):
@@ -137,15 +159,6 @@ def change_incident_allocation(incident, allocated_to, changed_by):
     incident.assigned_to = allocated_to
     users_marshalled = marshal(incident.assigned_to, user_model_without_group)
     emit_incident('CHANGE_INCIDENT_ALLOCATION', {'id': incident.id, 'assignedTo': users_marshalled, 'code': 200}, incident)
-    if removed:
-        incident_action(user=changed_by, action_type=IncidentLog.action_values['unassigned_user'],
-                        incident=incident, target_users=removed)
-        for x in removed:
-            if not x.has_permission(incident):
-                emit('REMOVE_INCIDENT', {'id': incident.id, 'code': 200}, namespace='/', room=f'{incident.deployment_id}-{x.id}')
-    if added:
-        incident_action(user=changed_by, action_type=IncidentLog.action_values['assigned_user'],
-                        incident=incident, target_users=added)
     if not incident.supervisor_approved:
         incident.supervisor_approved = True
         incident_marshalled = marshal(incident, incident_model)
@@ -156,6 +169,18 @@ def change_incident_allocation(incident, allocated_to, changed_by):
         action_required = SupervisorActions.query.filter_by(incident_id=incident.id, action_type='New Incident').first()
         if action_required:
             supervisor.mark_request_complete(action_required, False, changed_by)
+    if removed:
+        incident_action(user=changed_by, action_type=IncidentLog.action_values['unassigned_user'],
+                        incident=incident, target_users=removed)
+        for x in removed:
+            if not x.has_permission(incident):
+                emit('REMOVE_INCIDENT', {'id': incident.id, 'code': 200}, namespace='/', room=f'{incident.deployment_id}-{x.id}')
+        new_notification(removed, None, 'unassigned_incident', incident, changed_by)
+    if added:
+        incident_action(user=changed_by, action_type=IncidentLog.action_values['assigned_user'],
+                        incident=incident, target_users=added)
+        new_notification(added, None, 'assigned_incident', incident, changed_by)
+
 
 
 def change_incident_priority(incident, priority, changed_by):

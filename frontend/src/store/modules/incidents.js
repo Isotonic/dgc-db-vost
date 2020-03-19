@@ -62,16 +62,18 @@ const actions = {
       })
   },
   fetchActionsRequired ({ commit }, deploymentId) {
-    Vue.prototype.$api
-      .get(`deployments/${deploymentId}/actions-required`)
-      .then(r => r.data)
-      .then(actionsRequired => {
-        commit('setActionsRequired', actionsRequired)
-        commit('setActionsRequiredLoaded', true)
-      })
-      .catch(error => {
-        console.log(error.response.data.message)
-      })
+    if (deploymentId) {
+      Vue.prototype.$api
+        .get(`deployments/${deploymentId}/actions-required`)
+        .then(r => r.data)
+        .then(actionsRequired => {
+          commit('setActionsRequired', actionsRequired)
+          commit('setActionsRequiredLoaded', true)
+        })
+        .catch(error => {
+          console.log(error.response.data.message)
+        })
+    }
   },
   refetch ({ state, commit, rootGetters }) {
     Vue.prototype.$api

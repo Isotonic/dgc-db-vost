@@ -91,6 +91,8 @@ def on_viewing_incident(data):
         send_changes_only = data['sendChangesOnly']
     except KeyError:
         return
+    if not current_user.has_incident_access(incident_id):
+        return
     if incident_id not in viewing_incidents.keys():
         viewing_incidents[incident_id] = {current_user.id: datetime.utcnow().timestamp()}
     elif incident_id in viewing_incidents.keys() and current_user.id not in viewing_incidents[incident_id]:

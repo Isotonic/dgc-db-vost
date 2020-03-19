@@ -32,12 +32,6 @@
         <span>Live Feed</span>
       </router-link>
     </li>
-    <li class="nav-item d-none">
-      <router-link :to="{ name: 'decisionMakingLog', params: {deploymentName: deploymentName.replace(/ /g, '-'), deploymentId: deploymentId} }" class="nav-link">
-        <i class="fas fa-fw fa-pen"></i>
-        <span>Decision-Making Log</span>
-      </router-link>
-    </li>
     <div v-if="isSupervisor">
       <hr class="sidebar-divider">
       <div class="sidebar-heading">

@@ -5,8 +5,9 @@ from flask_socketio import emit
 from .websocket import emit_incident
 from .supervisor import new_incident
 from .change import change_task_status
+from .notification import new_notification
 from .actions import audit_action, incident_action, task_action
-from ..api.utils.models import full_user_model, group_model, deployment_model, comment_model, task_model, task_comment_model, subtask_model
+from ..api.utils.models import user_admin_panel_model, group_model, deployment_model, comment_model, task_model, task_comment_model, subtask_model
 from app.models import User, Group, Deployment, Incident, IncidentTask, IncidentSubTask, TaskComment, IncidentComment, EmailLink, AuditLog, IncidentLog, TaskLog
 
 
@@ -20,9 +21,19 @@ def create_user(email, group, created_by):
     db.session.add(email_link)
     audit_action(created_by, action_type=AuditLog.action_values['create_user'], target_id=user.id)
     email_link.send_registration_email()
-    user_marshalled = marshal(user, full_user_model)
+    user_marshalled = marshal(user, user_admin_panel_model)
     emit('new_user', {'user': user_marshalled, 'code': 200}, namespace='/', room='admin')
     return user
+
+
+def create_password_reset_email(user):
+    existing_emails = EmailLink.query.filter_by(user_id=user.id, forgot_password=True).all()
+    for x in existing_emails:
+        db.session.delete(x)
+    email_link = EmailLink(user_id=user.id, link=secrets.token_urlsafe(20), forgot_password=True)
+    db.session.add(email_link)
+    db.session.commit()
+    email_link.send_password_reset_email()
 
 
 def create_group(name, permission_list, created_by):
@@ -117,3 +128,8 @@ def create_task_comment(text, task, added_by):
                    task=task)
     incident_action(user=added_by, action_type=IncidentLog.action_values['add_task_comment'], incident=task.incident, task=task)
     return comment
+
+
+def flag_to_user(incident, user, reason, flagged_by):
+    new_notification([user], reason, 'flagged_incident', incident, flagged_by)
+    incident_action(user=flagged_by, action_type=IncidentLog.action_values['flag_user'], target_users=[user], incident=incident, extra=reason)

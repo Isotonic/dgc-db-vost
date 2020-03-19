@@ -4,12 +4,28 @@
       <div class="col-xl-5 col-lg-6 col-md-4">
         <div class="card o-hidden border-0 shadow-lg my-5">
           <div class="card-body p-0">
-            <div class="p-5">
+            <div v-if="forgotPassword" class="p-5">
+              <div class="text-center">
+                <h1 class="h4 text-gray-900 mb-4">Forgotten Password</h1>
+              </div>
+              <form class="user" @submit.prevent="requestPasswordReset">
+                <div :class="['alert', 'text-center', passwordResetSuccess ? 'alert-success' : 'alert-danger']" v-if="passwordResetSuccess || passwordResetError">{{ passwordResetSuccess ? 'Sent email with password reset' : 'Incorrect email provided' }}</div>
+                <div class="form-group">
+                  <input v-model="email" type="email" class="form-control form-control-user" name="email" placeholder="Enter Email" aria-label="Email" required autofocus>
+                </div>
+                <button type="submit" class="btn btn-primary btn-user btn-block mt-4">Request Password Reset</button>
+              </form>
+              <hr>
+              <div class="text-center">
+                <a class="small" @click="forgotPassword = false">Login?</a>
+              </div>
+            </div>
+            <div v-else class="p-5">
               <div class="text-center">
                 <h1 class="h4 text-gray-900 mb-4">Log in to DGVOST</h1>
               </div>
               <form class="user" @submit.prevent="login">
-                <div class="alert alert-danger text-center" v-if="error">Incorrect login details provided</div>
+                <div class="alert alert-danger text-center" v-if="loginError">Incorrect login details provided</div>
                 <div class="form-group">
                   <input v-model="email" type="email" class="form-control form-control-user" name="email" placeholder="Enter Email" aria-label="Email" required autofocus>
                 </div>
@@ -24,7 +40,7 @@
               </form>
               <hr>
               <div class="text-center">
-                <a class="small" href="forgot-password.html">Forgot Password?</a>
+                <a class="small" @click="forgotPassword = true">Forgot Password?</a>
               </div>
             </div>
           </div>
@@ -35,6 +51,8 @@
 </template>
 
 <script>
+import Vue from 'vue'
+
 export default {
   name: 'login',
   data () {
@@ -42,10 +60,23 @@ export default {
       email: '',
       password: '',
       rememberMe: false,
-      error: false
+      forgotPassword: false,
+      passwordResetSuccess: false,
+      passwordResetError: false,
+      loginError: false
     }
   },
   methods: {
+    requestPasswordReset () {
+      Vue.prototype.$api
+        .post('users/request-password-reset', { email: this.email })
+        .then(() => {
+          this.passwordResetSuccess = true
+        })
+        .catch(() => {
+          this.passwordResetError = true
+        })
+    },
     login () {
       this.$store.dispatch('user/login', [this.email, this.password])
         .then(() => {
@@ -60,7 +91,7 @@ export default {
     },
     loginFailed () {
       this.password = ''
-      this.error = true
+      this.loginError = true
     }
   },
   beforeCreate () {

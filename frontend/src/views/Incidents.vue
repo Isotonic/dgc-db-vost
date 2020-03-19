@@ -97,7 +97,8 @@
             <div class="table-responsive">
               <v-client-table id="IncidentsTable" :data="incidents" :columns="columns" :options="options" ref="incidentsTable">
                 <div slot="child_row" slot-scope="props">
-                  <span class="font-weight-bold">Description:</span> {{ props.row.description }}
+                  <span class="font-weight-bold">Description:</span> {{ props.row.description }}<br />
+                  <span class="font-weight-bold">Updates:</span> {{ props.row.comments.length }}
                 </div>
                 <div slot="pinned" slot-scope="{row}">
                   <i :class="[row.pinned ? 'fas fa-bookmark' : 'far fa-bookmark']" v-tooltip="row.pinned ? 'Pinned' : 'Not pinned'" @click="changePin(row)"></i>
