@@ -1,0 +1,48 @@
+apiVersion: apps.openshift.io/v1
+kind: DeploymentConfig
+metadata:
+  name: dc-dgvost-postgresdb
+  namespace: dgvostproject
+spec:
+  replicas: 1
+  strategy:
+    resources: {}
+  template:
+    metadata:
+      labels:
+        app: dgvost-postgresdb
+        deploymentconfig: dc-dgvost-postgresdb
+        group: dgvost
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:12
+        resources:
+          requests:
+            cpu: "500m"
+            memory: "2Gi"
+          limits:
+            cpu: "2000m"
+            memory: "6Gi"
+        env:
+         - name: "POSTGRES_URL" #Postgres server URL.
+           value: "srv-dgvost-postgresdb"
+         - name: "POSTGRES_USER" #Can be anything, username for the Postgres user.
+           value: ""
+         - name: "POSTGRES_PASSWORD" #Can be anything, password for the Postgres user.
+           value: ""
+         - name: "POSTGRES_DB" #Can be anything, database name.
+           value: ""
+         - name: PGDATA
+           value: /var/lib/postgresql/data/pgdata
+        ports:
+          - containerPort: 5432
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+          - mountPath: /var/lib/postgresql/data/pgdata
+            name: nfs-access
+      serviceAccount: containerroot
+      volumes:
+      - name: nfs-access
+        persistentVolumeClaim:
+          claimName:  gluster-postgres-db

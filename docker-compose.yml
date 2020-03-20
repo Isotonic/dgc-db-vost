@@ -1,0 +1,29 @@
+version: '3.7'
+
+services:
+  web:
+    build: .
+    volumes:
+      - avatars_data:/app/app/static/img/avatars
+    ports:
+      - 8007:8765
+    env_file:
+      - .env
+    entrypoint:
+      - /entrypoint.sh
+    links:
+      - db:postgres
+    depends_on:
+      - db
+  db:
+    image: postgres:12-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    ports:
+      - 5432:5432
+    env_file:
+      - .env
+
+volumes:
+  avatars_data:
+  postgres_data:

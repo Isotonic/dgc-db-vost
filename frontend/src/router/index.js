@@ -6,6 +6,7 @@ Vue.use(VueRouter)
 const routes = [
   {
     path: '/',
+    alias: '/home',
     name: 'publicMap',
     component: () => import(/* webpackChunkName: "public map" */ '../views/PublicMap.vue'),
     meta: {

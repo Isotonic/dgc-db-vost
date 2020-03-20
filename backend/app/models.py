@@ -112,9 +112,9 @@ class User(db.Model, UserMixin):
         try:
             avatar_path = f'/static/img/avatars/{hashids.encode(self.id)}.png'
             if path.exists(f'./app{avatar_path}'):
-                return f'http{"" if app.debug else "s"}://{app.config.get("DOMAIN_NAME")}{avatar_path}'
+                return avatar_path
             self.create_avatar()
-            return f'http{"" if app.debug else "s"}://{app.config.get("DOMAIN_NAME")}{avatar_path}'
+            return avatar_path
         except:
             return f'https://eu.ui-avatars.com/api/?name={self.firstname}+{self.surname}&background={avatar_colours[self.id % len(avatar_colours)][1:]}&color=fff&font-size=0.5'
 

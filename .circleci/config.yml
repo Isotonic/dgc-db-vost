@@ -24,3 +24,10 @@ jobs:
           command: |
             chmod +x .circleci/release.sh
             .circleci/release.sh
+      - run:
+          name: Push to Docker Hub
+          command: |
+            docker logout
+            docker tag registry.heroku.com/$HEROKU_APP_NAME/web $DOCKER_HUB_REPO:latest
+            docker login -u $DOCKER_HUB_USERNAME -p $DOCKER_HUB_TOKEN
+            docker push $DOCKER_HUB_REPO:latest

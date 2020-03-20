@@ -1,0 +1,74 @@
+apiVersion: apps.openshift.io/v1
+kind: DeploymentConfig
+metadata:
+  name: dc-dgvost-dims
+  namespace: dgvostproject
+spec:
+  replicas: 1
+  strategy:
+    resources: {}
+  template:
+    metadata:
+      labels:
+        app: dgvost-dims
+        deploymentconfig: dc-dgvost-dims
+        group: dgvost
+    spec:
+      containers:
+      - name: dims
+        image: jaffern/dgvost:latest
+        resources:
+          requests:
+            cpu: "500m"
+            memory: "2Gi"
+          limits:
+            cpu: "2000m"
+            memory: "6Gi"
+        env:
+         - name: "POSTGRES_URL" #Postgres server URL.
+           value: "srv-dgvost-postgresdb"
+         - name: "POSTGRES_USER" #Can be anything, username for the Postgres user.
+           value: ""
+         - name: "POSTGRES_PASSWORD" #Can be anything, password for the Postgres user.
+           value: ""
+         - name: "POSTGRES_DB" #Can be anything, database name.
+           value: ""
+         - name: "FLASK_SECRET_KEY" #Generate a secure secret key.
+           value: ""
+         - name: "JWT_SECRET_KEY" #Generate a secure secret key.
+           value: ""
+         - name: "MAIL_SERVER" #Mail server URL.
+           value: ""
+         - name: "MAIL_PORT" #Mail server port.
+           value: ""
+         - name: "MAIL_USE_TLS" #True/False to use TLS or not, default is false.
+           value: "False"
+         - name: "MAIL_USE_SSL" #True/False to use SSL or not, default is true.
+           value: "True"
+         - name: "MAIL_USERNAME" #Username for mail server account.
+           value: ""
+         - name: "MAIL_PASSWORD" #Password for mail server account.
+           value: ""
+         - name: "VUE_APP_MAPBOX_API_KEY" #Generate one from this URL and restrict it to your website only. https://www.mapbox.com/
+           value: ""
+         - name: "VUE_APP_MAP_TILE_SERVER_NAME" #Name of the map tile server, e.g Wikimedia Maps
+           value: "Wikimedia Maps"
+         - name: "VUE_APP_MAP_TILE_SERVER_Url"
+           value: "https://maps.wikimedia.org/osm-intl/{z}/{x}/{y}.png" #Url to the tile server without the $, e.g https://maps.wikimedia.org/osm-intl/{z}/{x}/{y}.png
+         - name: "VUE_APP_MAP_TILE_SERVER_Link"
+           value: "https://foundation.wikimedia.org/wiki/Maps_Terms_of_Use" #Link to redirect users to if they click the attribution at the bottom right of the map, e.g https://foundation.wikimedia.org/wiki/Maps_Terms_of_Use
+         - name: "DOMAIN_NAME" #Website domain name. Example, dgvost.co.uk
+           value: ""
+         - name: "PORT" #Port for the server to listen on.
+           value: "8765"
+        ports:
+          - containerPort: 8765
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+          - mountPath: /app/static
+            name: nfs-access
+      serviceAccount: containerroot
+      volumes:
+      - name: nfs-access
+        persistentVolumeClaim:
+          claimName:  dgvostvol1dbclaim
