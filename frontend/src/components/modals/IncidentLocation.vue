@@ -7,7 +7,7 @@
       <div id="Map" class="map-container">
         <MglMap :accessToken="accessToken" :mapStyle="mapStyle" @click="onClickMap" :center="this.currentLocation" :zoom="15" ref="map">
           <MglGeocoderControl :accessToken="accessToken" :input="searchResult" @result="handleResult" :draggable="true" />
-          <MglMarker v-if="markerSet" :coordinates="location" :draggable="true" color="blue" />
+          <MglMarker v-if="markerSet" :coordinates="location" :draggable="true" @dragend="onMarkerMove" color="blue" />
         </MglMap>
       </div>
       <div class="text-center">
@@ -78,6 +78,9 @@ export default {
         this.location[0] = event.mapboxEvent.lngLat.lng
         this.location[1] = event.mapboxEvent.lngLat.lat
       }
+    },
+    onMarkerMove (event) {
+      this.location = [event.marker._lngLat.lng, event.marker._lngLat.lat]
     }
   }
 }

@@ -3,7 +3,7 @@
     <router-link v-if="nosidebar || noSearchBar" :to="{ name: goToDeployments ? 'deployments' : 'publicMap' }" class="deployments_brand_img">
       <img class="deployments_brand_img" src="@/assets/img/Logos/Default.png">
     </router-link>
-    <button v-else class="btn btn-link d-md-none rounded-circle mr-3" @click="$emit('toggleSidebar')">
+    <button v-else class="btn btn-link d-md-none rounded-circle mr-3" @click="toggleSidebar">
       <i class="fa fa-bars"></i>
     </button>
     <div v-if="!nosidebar">
@@ -159,6 +159,9 @@ export default {
     delayBlur: function () {
       const that = this
       setTimeout(function () { that.hideResults = true }, 400)
+    },
+    toggleSidebar: function () {
+      this.$emit('toggleSidebar')
     },
     adminSettings: function () {
       router.push({ name: 'admin' })

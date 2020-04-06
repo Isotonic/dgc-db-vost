@@ -95,7 +95,7 @@
       <div id="Map" class="map-container">
         <MglMap :accessToken="accessToken" :mapStyle="mapStyle" @click="onClickMap" :center="[-4.003661, 56.584255]" :zoom="3">
           <MglGeocoderControl :accessToken="accessToken" :input="searchResult" @result="handleResult" :draggable="true" />
-          <MglMarker v-if="markerSet" :coordinates="location" :draggable="true" color="blue" />
+          <MglMarker v-if="markerSet" :coordinates="location" :draggable="true" @dragend="onMarkerMove" color="blue" />
         </MglMap>
       </div>
       <div class="form-group mt-3">
@@ -171,7 +171,7 @@ export default {
           if (this.hasPermission('supervisor')) {
             router.push({ name: 'incident', params: { deploymentName: this.deploymentName.replace(/ /g, '-'), deploymentId: this.deploymentId, incidentName: data.name.replace(/ /g, '-'), incidentId: data.id } })
           } else {
-            Vue.noty.success(`Incident has successfully been sent to the supervisor's.`)
+            Vue.noty.success('Incident has successfully been sent to the supervisors.')
           }
         })
     },
@@ -193,6 +193,9 @@ export default {
         this.location[0] = event.mapboxEvent.lngLat.lng
         this.location[1] = event.mapboxEvent.lngLat.lat
       }
+    },
+    onMarkerMove (marker, map, event) {
+      this.location = [event.marker._lngLat.lng, event.marker._lngLat.lat]
     }
   },
   computed: {

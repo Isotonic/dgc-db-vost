@@ -53,6 +53,12 @@ export default {
     formatSelect: function ({ firstname, surname }) {
       return `${firstname} ${surname}`
     },
+    flaggable: function (user) {
+      if (user.id !== this.user.id && (this.getIncident(this.incidentId).assignedTo.some(user => user.id === this.user.id) || user.status > 1 || (user.group && (user.group.permissions.includes('supervisor') || user.group.permissions.includes('view_all_incidents'))))) {
+        return true
+      }
+      return false
+    },
     ...mapActions('users', {
       fetchUsers: 'fetchUsers'
     })
@@ -64,16 +70,19 @@ export default {
     ...mapGetters('users', {
       usersIsLoaded: 'isLoaded',
       getUsers: 'getUsers'
+    }),
+    ...mapGetters('incidents', {
+      getIncident: 'getIncident'
     })
   },
   created () {
     if (this.usersIsLoaded) {
-      this.selectOptions = this.getUsers.filter(user => user.id !== this.user.id)
+      this.selectOptions = this.getUsers.filter(user => this.flaggable(user))
     } else {
       this.isSelectLoading = true
       this.fetchUsers(this.deploymentId)
         .then(() => {
-          this.selectOptions = this.getUsers.filter(user => user.id !== this.user.id)
+          this.selectOptions = this.getUsers.filter(user => this.flaggable(user))
           this.isSelectLoading = false
         })
         .catch(() => { this.isSelectLoading = false })

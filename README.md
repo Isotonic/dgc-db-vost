@@ -12,7 +12,7 @@ If you wish to run a multi-container with the database then use `docker-compose 
 
 ### Development
 
-Rename `.env.development-example` in the backend folder to `.env` and `.env.local.development-example` in the frontend folder to `.env.local` and fill in the appropriate details for both. Then in the backend folder run `python3.6 dgvost.py` and run `npm run serve` in the frontend folder. This will run the backend API at `http://localhost:5000/api` and the frontend at `http://localhost:8080/`.
+Rename `.env.development-example` in the backend folder to `.env` and `.env.local.development-example` in the frontend folder to `.env.local` and fill in the appropriate details for both. Then in the backend folder run `python3.6 dgvost.py` and run `npm run serve` in the frontend folder. This will run the backend API at `http://localhost:5000/api/` and the frontend at `http://localhost:8080/`.
 
 
 ### Default login details

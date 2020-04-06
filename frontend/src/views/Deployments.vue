@@ -28,7 +28,7 @@
           </div>
         </div>
         <div class="row">
-          <deployment-card v-for="deployment in orderBy(deployments, 'createdAt', -1)" :key="deployment.id" :deployment="deployment" @edit="openEditDeploymentModal" />
+          <deployment-card v-for="deployment in orderBy(deployments, 'createdAt', -1)" :key="deployment.id" :deployment="deployment" :supervisor="hasPermission('create_deployment')" @edit="openEditDeploymentModal" />
         </div>
         <deployment-modal v-if="isEditDeploymentModalVisible" v-show="isEditDeploymentModalVisible" :visible="isEditDeploymentModalVisible" :groupOptions="groups" :userOptions="users" :edit="true" :deployment="editDeployment" @close="isEditDeploymentModalVisible = false" />
       </div>
@@ -111,6 +111,9 @@ export default {
   computed: {
     ...mapGetters('sockets', {
       isSocketConnected: 'isConnected'
+    }),
+    ...mapGetters('user', {
+      hasPermission: 'hasPermission'
     }),
     ...mapGetters('deployments', {
       deployments: 'getAll'

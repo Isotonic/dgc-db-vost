@@ -41,7 +41,14 @@ export default {
       if (!this.name.length || (this.edit && !this.checkChanged)) {
         return
       }
-      this.ApiPut(`incidents/${this.incident.id}/public`, this.getData)
+      let data = { public: true }
+      if (this.name !== this.incident.name) {
+        data.name = this.name
+      }
+      if (this.description !== this.incident.description) {
+        data.description = this.description
+      }
+      this.ApiPut(`incidents/${this.incident.id}/public`, data)
         .then(() => {
           this.$emit('close')
         })
@@ -50,9 +57,6 @@ export default {
   computed: {
     checkChanged: function () {
       return this.name !== this.getName || this.description !== this.getDescription
-    },
-    getData: function () {
-      return this.description.length ? { public: true, description: this.description } : { public: true }
     }
   }
 }

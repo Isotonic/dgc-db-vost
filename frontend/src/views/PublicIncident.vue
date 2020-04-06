@@ -2,7 +2,7 @@
   <div id="wrapper">
     <div id="content-wrapper" class="d-flex flex-column">
       <topbar :noSidebar="true" :publicPage="true" :noSearchBar="true" />
-      <div class="container-fluid">
+      <div v-if="incident" class="container-fluid">
         <div class="d-sm-flex align-items-center justify-content-between mb-4">
           <h1 class="font-weight-bold mb-0">{{ incident.deployment }}</h1>
         </div>

@@ -127,6 +127,9 @@ export default {
       this.isCommentQuestionModalVisible = false
       if (modalAnswer) {
         this.ApiDelete(`task-comments/${this.comment.id}`)
+        this.$nextTick(() => {
+          document.body.classList.add('modal-open')
+        })
       }
     },
     openUserModal (userId) {

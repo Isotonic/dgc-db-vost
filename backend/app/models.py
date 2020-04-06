@@ -1,6 +1,6 @@
 import os
 import pyavagen
-from hashids import Hashids
+import secrets
 from threading import Thread
 from datetime import datetime
 from flask_mail import Message
@@ -8,7 +8,6 @@ from flask import render_template
 from flask_login import UserMixin
 from app import app, db, login, argon2, mail
 
-hashids = Hashids(min_length=16)
 
 avatar_colours = ['#26de81', '#3867d6', '#eb3b5a', '#0fb9b1', '#f7b731', '#a55eea', '#fed330', '#45aaf2', '#fa8231',
                   '#2bcbba', '#fd9644', '#2d98da', '#8854d0', '#20bf6b', '#fc5c65', '#4b7bec']
@@ -84,8 +83,10 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(120), index=True, unique=True)
     status = db.Column(db.Integer(), default=0)
     password_hash = db.Column(db.String(128))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    password_last_updated = db.Column(db.DateTime, default=datetime.utcnow)
+    avatar_file = db.Column(db.String(64))
+    system_generated_avatar = db.Column(db.Boolean(), default=True)
+    created_at = db.Column(db.DateTime, default=datetime.now)
+    password_last_updated = db.Column(db.DateTime, default=datetime.now)
     group_id = db.Column(db.Integer, db.ForeignKey('group.id'))
     group = db.relationship('Group', backref='users')
     email_links = db.relationship('EmailLink', backref='user', cascade='all,delete')
@@ -96,35 +97,40 @@ class User(db.Model, UserMixin):
     def set_password(self, password, initial=False):
         self.password_hash = argon2.generate_password_hash(password)
         if initial:
-            self.password_last_updated = datetime.utcnow()
+            self.password_last_updated = datetime.now()
 
     def check_password(self, password):
         return argon2.check_password_hash(self.password_hash, password)
 
     def create_avatar(self):
         avatar = pyavagen.Avatar(pyavagen.CHAR_AVATAR, size=128, font_size=65, string=f'{self.firstname} {self.surname}', color_list=avatar_colours)
-        avatar.generate().save(f'./app/static/img/avatars/{hashids.encode(self.id)}.png')
+        self.avatar_file = f'{secrets.token_urlsafe(16)}.png'
+        self.system_generated_avatar = True
+        avatar.generate().save(f'./app/static/img/avatars/{self.avatar_file}')
+        db.session.commit()
 
     def save_avatar(self, image):
         self.delete_avatar()
-        image.save(f'./app/static/img/avatars/{hashids.encode(self.id)}.{image.filename.split(".")[-1]}')
+        self.avatar_file = f'{secrets.token_urlsafe(16)}.{image.filename.split(".")[-1]}'
+        self.system_generated_avatar = True
+        image.save(f'./app/static/img/avatars/{self.avatar_file}')
+        db.session.commit()
 
     def delete_avatar(self):
         try:
-            for x in ['png', 'jpg', 'jpeg']:
-                if os.path.exists(f'./app/static/img/avatars/{hashids.encode(self.id)}.{x}'):
-                    os.remove(f'./app/static/img/avatars/{hashids.encode(self.id)}.{x}')
+            if os.path.exists(f'./app/static/img/avatars/{self.avatar_file}'):
+                os.remove(f'./app/static/img/avatars/{self.avatar_file}')
         except:
             pass
 
     def get_avatar(self):
         try:
-            avatar_path = f'/static/img/avatars/{hashids.encode(self.id)}'
-            for x in ['png', 'jpg', 'jpeg']:
-                if os.path.exists(f'./app{avatar_path}.{x}'):
-                    return f'{avatar_path}.{x}'
+            if self.avatar_file:
+                avatar_path = f'/static/img/avatars/{self.avatar_file}'
+                if os.path.exists(f'./app{avatar_path}'):
+                    return f'{avatar_path}'
             self.create_avatar()
-            return f'{avatar_path}.png'
+            return f'/static/img/avatars/{self.avatar_file}'
         except:
             return f'https://eu.ui-avatars.com/api/?name={self.firstname}+{self.surname}&background={avatar_colours[self.id % len(avatar_colours)][1:]}&color=fff&font-size=0.5'
 
@@ -250,7 +256,7 @@ class Deployment(db.Model):
     open_status = db.Column(db.Boolean(), default=True)
     incidents = db.relationship('Incident', backref='deployment')
     users = db.relationship('User', secondary=deployment_user_junction, backref='deployments')
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now)
     closed_at = db.Column(db.DateTime)
 
     def __repr__(self):
@@ -289,11 +295,11 @@ class Incident(db.Model):
     reported_via = db.Column(db.String(256))
     reference = db.Column(db.String(128))
     incident_type = db.Column(db.String(32))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now)
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
     created_by_user = db.relationship('User', backref='created_incidents')
     closed_at = db.Column(db.DateTime)
-    last_updated = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    last_updated = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
     public = db.Column(db.Boolean(), default=False)
     supervisor_approved = db.Column(db.Boolean(), default=False)
     open_status = db.Column(db.Boolean(), default=True)
@@ -342,7 +348,7 @@ class IncidentTask(db.Model):
     subtasks = db.relationship('IncidentSubTask', backref='task', lazy='selectin', cascade='all,delete')
     comments = db.relationship('TaskComment', backref='task', lazy='selectin', cascade='all,delete')
     completed = db.Column(db.Boolean(), default=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now)
     completed_at = db.Column(db.DateTime)
     assigned_to = db.relationship('User', secondary=incidenttask_user_junction, lazy='selectin', backref='tasks')
 
@@ -355,7 +361,7 @@ class IncidentSubTask(db.Model):
     task_id = db.Column(db.Integer, db.ForeignKey('incident_task.id'))
     name = db.Column(db.String(64))
     completed = db.Column(db.Boolean(), default=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now)
     completed_at = db.Column(db.DateTime)
     assigned_to = db.relationship('User', secondary=incidentsubtask_user_junction, lazy='selectin', backref='subtasks')
 
@@ -369,7 +375,7 @@ class TaskComment(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     user = db.relationship('User', backref='task_comments', lazy='selectin')
     text = db.Column(db.String())
-    sent_at = db.Column(db.DateTime, default=datetime.utcnow)
+    sent_at = db.Column(db.DateTime, default=datetime.now)
     edited_at = db.Column(db.DateTime)
 
     def __repr__(self):
@@ -382,7 +388,7 @@ class IncidentComment(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     text = db.Column(db.String())
     public = db.Column(db.Boolean(), default=False)
-    sent_at = db.Column(db.DateTime, default=datetime.utcnow)
+    sent_at = db.Column(db.DateTime, default=datetime.now)
     edited_at = db.Column(db.DateTime)
 
     def __repr__(self):
@@ -394,7 +400,7 @@ class IncidentMedia(db.Model):
     incident_id = db.Column(db.Integer, db.ForeignKey('incident.id'))
     uploaded_by_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     saved_as = db.Column(db.String(64))
-    uploaded_at = db.Column(db.DateTime, default=datetime.utcnow)
+    uploaded_at = db.Column(db.DateTime, default=datetime.now)
 
 
 class SupervisorActions(db.Model):
@@ -407,7 +413,7 @@ class SupervisorActions(db.Model):
     requested_by = db.relationship('User', backref='actions_requested')
     action_type = db.Column(db.String(64))
     reason = db.Column(db.String(1024))
-    requested_at = db.Column(db.DateTime, default=datetime.utcnow)
+    requested_at = db.Column(db.DateTime, default=datetime.now)
 
 
 class Notifications(db.Model):
@@ -427,7 +433,7 @@ class Notifications(db.Model):
     triggered_by = db.relationship('User', backref='notifcations_triggered', foreign_keys=[triggered_by_id])
     action_type = db.Column(db.String(64))
     reason = db.Column(db.String(1024))
-    triggered_at = db.Column(db.DateTime, default=datetime.utcnow)
+    triggered_at = db.Column(db.DateTime, default=datetime.now)
 
 
 class EmailLink(db.Model):
@@ -456,7 +462,7 @@ class AuditLog(db.Model):
     action_type = db.Column(db.Integer())
     target_id = db.Column(db.Integer)
     reason = db.Column(db.String(256))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now)
 
 
 class IncidentLog(db.Model):
@@ -483,9 +489,7 @@ class IncidentLog(db.Model):
     target_users = db.relationship('User', secondary=incidentlog_target_users_junction, lazy='selectin', backref='incident_log_target')
     action_type = db.Column(db.Integer())
     extra = db.Column(db.String())
-    extra_one = db.Column(db.String(64))
-    extra_two = db.Column(db.String(64))
-    occurred_at = db.Column(db.DateTime, default=datetime.utcnow)
+    occurred_at = db.Column(db.DateTime, default=datetime.now)
 
     def get_action_type(self):
         return list(self.action_values.keys())[list(self.action_values.values()).index(self.action_type)]
@@ -498,15 +502,15 @@ class TaskLog(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    user = db.relationship('User', backref='task_actions')
+    user = db.relationship('User', backref='task_actions', lazy='selectin')
     task_id = db.Column(db.Integer, db.ForeignKey('incident_task.id'))
-    task = db.relationship('IncidentTask', backref='task_actions', lazy='selectin')
+    task = db.relationship('IncidentTask', backref='task_actions', lazy='selectin', cascade='all,delete')
     subtask_id = db.Column(db.Integer, db.ForeignKey('incident_sub_task.id'))
     subtask = db.relationship('IncidentSubTask', backref='task_actions', lazy='selectin')
-    target_users = db.relationship('User', secondary=tasklog_target_users_junction, backref='task_log_target')
+    target_users = db.relationship('User', secondary=tasklog_target_users_junction, backref='task_log_target', lazy='selectin')
     action_type = db.Column(db.Integer())
     extra = db.Column(db.String())
-    occurred_at = db.Column(db.DateTime, default=datetime.utcnow)
+    occurred_at = db.Column(db.DateTime, default=datetime.now)
 
     def get_action_type(self):
         return list(self.action_values.keys())[list(self.action_values.values()).index(self.action_type)]

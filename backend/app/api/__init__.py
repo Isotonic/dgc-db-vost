@@ -3,6 +3,7 @@ from jwt import exceptions
 from flask_restx import Api
 from flask import Blueprint, url_for
 from ..models import User, RevokedToken
+from flask_jwt_extended import exceptions as extended_exceptions
 
 @property
 def specs_url(self):
@@ -57,6 +58,10 @@ def get_type_or_class_name(var) -> str:
 @api.errorhandler(exceptions.ExpiredSignatureError)
 def handle_expired_token(error):
     return {'message': 'Token has expired'}, 401
+
+@api.errorhandler(extended_exceptions.RevokedTokenError)
+def handle_expired_token(error):
+    return {'message': 'Token has been revoked'}, 403
 
 from .authentication import ns_auth
 from .user import ns_user

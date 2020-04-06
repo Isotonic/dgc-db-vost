@@ -30,10 +30,10 @@ const getters = {
     return state.user.avatarUrl
   },
   hasPermission: (state) => (permission) => {
-    if (!state.user) {
+    if (!state.user || !state.user.group) {
       return false
     }
-    return state.user.status > 1 || (state.user.group && (state.user.group.permissions.includes('supervisor') || state.user.group.permissions.includes(permission)))
+    return state.user.status > 1 || (state.user.group.permissions.includes('supervisor') || state.user.group.permissions.includes(permission))
   }
 }
 
@@ -47,6 +47,11 @@ const actions = {
           commit('setUser', user)
           if (deploymentId !== null) {
             dispatch('checkActionsRequired', deploymentId)
+          }
+        })
+        .catch(error => {
+          if (error.response.status === 403) {
+            Vue.noty.error('Your account is disabled.')
           }
         })
     } else if (deploymentId !== null) {
@@ -138,7 +143,34 @@ const actions = {
     } else if (data.type === 'unassigned_subtask') {
       Vue.noty.error(`You have been unassigned from subtask ${data.subtaskName}.`)
     } else if (data.type === 'flagged_incident') {
-      Vue.noty.error(`${data.triggeredBy.firstname} ${data.triggeredBy.surname} has flagged ${data.incidentName} with reason: ${data.reason}.`)
+      Vue.noty.info(`${data.triggeredBy.firstname} ${data.triggeredBy.surname} has flagged ${data.incidentName} with reason: ${data.reason}.`)
+    }
+  },
+  socket_editUserGroup ({ state, commit, dispatch, rootGetters }, data) {
+    const alreadySupervisor = rootGetters['user/hasPermission']('supervisor')
+    const alreadyViewAllIncidents = rootGetters['user/hasPermission']('view_all_incidents')
+    if (data.group && (!state.user.group || state.user.group.id !== data.group.id)) {
+      this._vm.$socket.client.emit('join_new_group', { oldGroupId: state.user.group ? state.user.group.id : null })
+      dispatch('deployments/fetchAll', null, { root: true })
+    }
+    commit('updateUserGroup', data.group)
+    if (alreadyViewAllIncidents !== rootGetters['user/hasPermission']('view_all_incidents') || alreadySupervisor !== rootGetters['user/hasPermission']('supervisor')) {
+      dispatch('incidents/refetch', null, { root: true })
+      const deploymentId = rootGetters['incidents/getDeploymentId']
+      this._vm.$socket.client.emit('leave', { deploymentId: deploymentId })
+      this._vm.$socket.client.emit('join_deployment', { deploymentId: deploymentId })
+      if (alreadySupervisor && !rootGetters['user/hasPermission']('supervisor')) {
+        this._vm.$socket.client.emit('leave_supervisor', { deploymentId: deploymentId })
+      }
+      if (!rootGetters['user/hasPermission']('view_all_incidents')) {
+        this._vm.$socket.client.emit('leave_all', { deploymentId: deploymentId })
+      }
+    }
+  },
+  socket_revokeAccess ({ state, dispatch }, data) {
+    if (state.user.id === data.id) {
+      Vue.noty.error('Your account has been disabled.')
+      dispatch('logout')
     }
   },
   logout ({ dispatch }) {
@@ -174,6 +206,9 @@ const mutations = {
     localStorage.refreshToken = value
     state.refreshToken = value
   },
+  setUser (state, value) {
+    state.user = value
+  },
   updateFirstname (state, firstname) {
     state.user.firstname = firstname
   },
@@ -183,11 +218,19 @@ const mutations = {
   updateEmail (state, email) {
     state.user.email = email
   },
+  updateUserGroup (state, group) {
+    state.user.group = group
+  },
   addNewNotification (state, notification) {
     state.user.notifications.push(notification)
   },
   SOCKET_CHANGE_USER_AVATAR (state, data) {
-    state.user.avatarUrl = `${data.avatarUrl}?${new Date().getTime()}`
+    state.user.avatarUrl = data.avatarUrl
+  },
+  SOCKET_DELETE_USER_GROUP (state, data) {
+    if (state.user.group && state.user.group.id === data.id) {
+      state.user.group = null
+    }
   },
   SOCKET_DELETE_NOTIFICATION (state, data) {
     state.user.notifications = state.user.notifications.filter(notification => notification.id !== data.id)
@@ -206,9 +249,6 @@ const mutations = {
   },
   deleteUser (state) {
     state.user = null
-  },
-  setUser (state, value) {
-    state.user = value
   }
 }
 

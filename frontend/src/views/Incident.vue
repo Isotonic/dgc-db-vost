@@ -19,7 +19,7 @@
               </div>
             </div>
             <div>
-              <button v-if="incident" :class="['btn', 'btn-icon-split', 'btn-group-incidents', 'mr-2', incident.open ? 'btn-success' : 'btn-info']" @click="markAsComplete">
+              <button v-if="incident" :class="['btn', 'btn-icon-split', 'btn-group-incidents', 'mr-2', incident.open ? 'btn-success' : 'btn-closed']" @click="markAsComplete">
                   <span class="btn-icon">
                       <i class="fas fa-check"></i>
                   </span>
@@ -86,6 +86,13 @@
                   </multiselect>
                 </div>
               </b-dropdown>
+              <question-modal v-if="isUnassignSelfQuestionModalVisible" v-show="isUnassignSelfQuestionModalVisible" :visible="isUnassignSelfQuestionModalVisible" :title="'Unassign Self'" @btnAction="unassignSelf" @close="cancelUnassignSelf">
+                <template v-slot:question>
+                  <div class="text-center">
+                    <span class="font-weight-bold">Are you sure you want to unassign yourself from the incident? You will be unable to view it if you do so.</span>
+                  </div>
+                </template>
+              </question-modal>
               <div class="card-body">
                 <div class="row no-gutters align-items-center">
                   <div class="col mr-2">
@@ -403,6 +410,7 @@ export default {
       isIncidentPublicModalVisible: false,
       isIncidentDetailsModalVisible: false,
       isIncidentLocationModalVisible: false,
+      isUnassignSelfQuestionModalVisible: false,
       isNewTaskModalVisible: false,
       isTaskModalVisible: false,
       isCommentQuestionModalVisible: false,
@@ -481,11 +489,30 @@ export default {
       }
       this.isHandlingAllocation = true // Fix for Bootstrap-vue firing twice.
       if (this.didAllocatedChange) {
-        this.ApiPut(`incidents/${this.incidentId}/allocation`, { users: this.allocatedSelected.map(user => user.id) })
-          .then(() => { this.isHandlingAllocation = false })
+        if (this.incident.assignedTo.some(user => user.id === this.getUser.id) && !this.allocatedSelected.some(user => user.id === this.getUser.id) && !this.hasPermission('view_all_incidents')) {
+          this.isUnassignSelfQuestionModalVisible = true
+        } else {
+          this.ApiPut(`incidents/${this.incidentId}/allocation`, { users: this.allocatedSelected.map(user => user.id) })
+          this.isHandlingAllocation = false
+        }
       } else {
         this.isHandlingAllocation = false
       }
+    },
+    unassignSelf (unassignBoolean) {
+      if (unassignBoolean) {
+        this.isUnassignSelfQuestionModalVisible = false
+        this.isHandlingAllocation = false
+        this.ApiPut(`incidents/${this.incidentId}/allocation`, { users: this.allocatedSelected.map(user => user.id) })
+      } else {
+        this.cancelUnassignSelf()
+      }
+    },
+    cancelUnassignSelf () {
+      this.isUnassignSelfQuestionModalVisible = false
+      this.allocatedSelected.push(this.getUser)
+      this.isHandlingAllocation = false
+      this.closedAllocationDropdown()
     },
     formatSelect ({ firstname, surname }) {
       return `${firstname} ${surname}`
@@ -523,8 +550,7 @@ export default {
       checkSocketsConnected: 'checkConnected'
     }),
     ...mapActions('user', {
-      checkUserLoaded: 'checkLoaded',
-      getAccessToken: 'getAccessToken'
+      checkUserLoaded: 'checkLoaded'
     }),
     ...mapActions('users', {
       fetchUsers: 'fetchUsers'
@@ -635,6 +661,11 @@ export default {
         if (this.incident && this.incidentName !== this.incident.name.replace(/ /g, '-')) {
           history.pushState(null, '', `/deployments/${this.deployment.name.replace(/ /g, '-')}-${this.deploymentId}/incidents/${this.incident.name.replace(/ /g, '-')}-${this.incidentId}`)
         }
+        if (this.hasIncidentsLoaded && this.incident && this.isSocketConnected) {
+          this.$socket.client.emit('viewing_incident', { incidentId: this.incidentId, sendChangesOnly: false })
+        } else if (this.hasIncidentsLoaded && !this.incident && this.isSocketConnected) {
+          this.$socket.client.emit('leave_viewing_incident', { incidentId: this.incidentId })
+        }
       }
     },
     isSocketConnected (value) {
@@ -645,7 +676,7 @@ export default {
   },
   mounted: function () {
     this.viewingInterval = window.setInterval(() => {
-      if (this.viewingIncident.length) {
+      if (this.viewingIncident.length && this.incident) {
         this.$socket.client.emit('viewing_incident', { incidentId: this.incidentId, sendChangesOnly: true })
       }
     }, 60000)

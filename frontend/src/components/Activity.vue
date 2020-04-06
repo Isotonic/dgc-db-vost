@@ -28,7 +28,7 @@ const actionStrings = {
   'create_incident': 'created incident',
   'create_task': 'created task ${task}',
   'complete_task': 'marked ${extra} as complete',
-  'delete_task': 'deleted task ${task}',
+  'delete_task': 'deleted task ${extra}',
   'add_comment': 'added an update',
   'delete_comment': 'deleted an update',
   'incomplete_task': 'marked ${extra} as incomplete',
@@ -37,7 +37,7 @@ const actionStrings = {
   'marked_closed': 'marked incident as complete',
   'marked_open': 'marked incident as incomplete',
   'changed_priority': 'changed priority to ${extra}',
-  'changed_task_description': 'changed ${task} description to "{$extra}"',
+  'changed_task_description': 'changed ${task} description to "${extra}"',
   'assigned_user_task': 'assigned ${targetUsers} to ${task}',
   'unassigned_user_task': 'unassigned ${targetUsers} from ${task}',
   'marked_public': 'set the incident to publicly viewable',
@@ -56,7 +56,7 @@ const actionStrings = {
   'edit_task_comment': 'edited comment in ${task}',
   'delete_task_comment': 'deleted comment in ${task}',
   'delete_subtask': 'deleted subtask in ${task}',
-  'change_incident_location': 'changed the incident location',
+  'change_incident_location': 'changed the incident location from ${extra}',
   'flag_supervisor': 'flagged the incident to a supervisor',
   'request_mark_closed': 'requested the incident be marked as complete',
   'request_mark_open': 'requested the incident be marked as incomplete',
@@ -66,7 +66,7 @@ const actionStrings = {
   'edit_incident_reported_via': 'edited incident reported via from ${extra}',
   'edit_incident_linked': 'linked this incident to ${extra}',
   'edit_incident_unlinked': 'unlinked this incident from ${extra}',
-  'edit_incident_reference': 'edited incident reference to ${extra}'
+  'edit_incident_reference': 'edited incident reference from ${extra}'
 }
 
 export default {

@@ -29,7 +29,7 @@ const actions = {
   socket_connected ({ state, commit, dispatch }) {
     if (state.needsRefetching) {
       dispatch('user/refetch', null, { root: true })
-      dispatch('deployments/refetch', null, { root: true })
+      dispatch('deployments/fetchAll', null, { root: true })
       dispatch('incidents/refetch', null, { root: true })
       dispatch('users/refetch', null, { root: true })
       commit('setNeedsRefetching', false)

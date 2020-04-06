@@ -97,6 +97,9 @@ export default {
       this.isQuestionModalVisible = false
       if (modalAnswer) {
         this.ApiDelete(`subtasks/${this.subtask.id}`)
+        this.$nextTick(() => {
+          document.body.classList.add('modal-open')
+        })
       }
     },
     formatSelect: function ({ firstname, surname }) {

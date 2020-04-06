@@ -316,7 +316,7 @@ class DeploymentSupervisorActionsEndpoint(Resource):
     @api.marshal_with(action_required_model)
     def get(self, deployment):
         """
-                Returns all actions required by supervisor's.
+                Returns all actions required by supervisors.
         """
         current_user = User.query.filter_by(id=get_jwt_identity()).first()
         ns_deployment.has_permission(current_user, 'supervisor')

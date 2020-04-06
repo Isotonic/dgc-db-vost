@@ -102,6 +102,8 @@ class CurrentUserEndpoint(Resource):
     @jwt_required
     @ns_user.doc(security='access_token')
     @ns_user.response(200, 'Success', user_full_details_model)
+    @ns_user.response(401, 'Incorrect credentials')
+    @ns_user.response(403, 'Account was disabled')
     @api.marshal_with(user_full_details_model)
     def get(self):
         """
@@ -347,7 +349,7 @@ class UserStatusEndpoint(Resource):
 
     @jwt_required
     @ns_user.doc(security='access_token')
-    @ns_user.expect(id_model, validate=True)
+    @ns_user.expect(user_status_model, validate=True)
     @ns_user.response(200, 'Success', user_status_model)
     @ns_user.response(400, 'User already had this status')
     @ns_user.response(401, 'Incorrect credentials')
@@ -470,7 +472,8 @@ class UserTasksEndpoint(Resource):
             ns_user.abort(401, 'Image too big, must be less than 10MB')
 
         current_user.save_avatar(image)
-        emit('change_user_avatar', {'avatarUrl': current_user.get_avatar(), 'code': 200}, namespace='/', room=f'{current_user.id}')
+        emit('CHANGE_USER_AVATAR', {'avatarUrl': current_user.get_avatar(), 'code': 200}, namespace='/', room=f'{current_user.id}')
+        emit('CHANGE_USERS_AVATAR', {'id': current_user.id, 'avatarUrl': current_user.get_avatar(), 'code': 200}, namespace='/', room='all')
         return current_user, 200
 
 
@@ -485,7 +488,8 @@ class UserTasksEndpoint(Resource):
         """
         current_user = User.query.filter_by(id=get_jwt_identity()).first()
         current_user.delete_avatar()
-        emit('change_user_avatar', {'avatarUrl': current_user.get_avatar(), 'code': 200}, namespace='/', room=f'{current_user.id}')
+        emit('CHANGE_USER_AVATAR', {'avatarUrl': current_user.get_avatar(), 'code': 200}, namespace='/', room=f'{current_user.id}')
+        emit('CHANGE_USERS_AVATAR', {'id': current_user.id, 'avatarUrl': current_user.get_avatar(), 'code': 200}, namespace='/', room='all')
         return current_user, 200
 
 

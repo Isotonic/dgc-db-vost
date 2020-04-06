@@ -17,7 +17,7 @@
     </div>
     <div v-if="recentActivity.length">
       <ul class="activity mt-4">
-        <live-feed-activity v-for="action in orderBy(recentActivity, 'occurredAt', -1).slice((this.pageNum - 1) * 5, this.pageNum * 5)" :key="action.id" :action="action" :deploymentName="deploymentName" :deploymentId="deploymentId" @userModal="changeUser" @close="close" />
+        <live-feed-activity v-for="action in orderBy(recentActivity, 'occurredAt', -1).slice((this.pageNum - 1) * 5, this.pageNum * 5)" :key="action.id" :action="action" :deploymentName="deploymentName" :deploymentId="deploymentId" :isUserModal="true" @userModal="changeUser" @close="close" />
       </ul>
       <div v-if="recentActivity.length > 5" class="text-center">
         <paginate :page-count="Math.ceil(recentActivity.length/5)" :click-handler="changePage" :prev-text="'Prev'" :next-text="'Next'" :page-range="5" :container-class="'pagination'" />

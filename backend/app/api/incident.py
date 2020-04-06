@@ -429,10 +429,8 @@ class LocationEndpoint(Resource):
         """
         current_user = User.query.filter_by(id=get_jwt_identity()).first()
         ns_incident.has_incident_access(current_user, incident)
-
         if change_incident_location(incident, api.payload['address'], api.payload['longitude'], api.payload['latitude'], current_user) is False:
             ns_incident.abort(400, 'Incident already had this location')
-
         return incident, 200
 
 

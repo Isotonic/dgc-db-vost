@@ -37,7 +37,7 @@
       <label v-if="changePassword || firstname !== user.firstname || surname !== user.surname || email !== user.email || email !== user.email" for="currentPassword" class="text-primary font-weight-bold mt-2">Current password:</label>
       <input v-if="changePassword || firstname !== user.firstname || surname !== user.surname || email !== user.email || email !== user.email" v-model="currentPassword" id="currentPassword" class="form-control form-control-sm" placeholder="Enter your current password..." type="password" required>
       <div class="mt-3"><span v-if="!changePassword" class="font-weight-bold text-primary text-sm hover" @click="changePassword = true">Change Password?</span></div>
-      <button v-if="currentPassword.length" type="submit" class="btn btn-primary btn-user btn-block mt-4">Submit</button>
+      <button v-if="!changePassword || currentPassword.length" type="submit" class="btn btn-primary btn-user btn-block mt-4">Submit</button>
     </form>
   </modal>
 </template>
@@ -62,7 +62,6 @@ export default {
       changePassword: false,
       stoppedTyping: false,
       error: false,
-      cacheFix: 0,
       rules: [
         { message: 'Contain a lowercase letter.', regex: /[a-z]+/ },
         { message: 'Contain an uppercase letter.', regex: /[A-Z]+/ },
@@ -94,7 +93,10 @@ export default {
         })
     },
     submitDetails () {
-      if (this.firstname !== '' && this.surname !== '' && this.email !== '' && this.passwordValidation) {
+      if (this.firstname !== '' && this.surname !== '' && this.email !== '' && this.passwordValidation && !this.passwordsNotSame) {
+        if (this.firstname === this.user.firstname && this.surname === this.user.surname && this.email === this.user.email && !this.changePassword) {
+          return this.$emit('close')
+        }
         let data = { firstname: this.firstname, surname: this.surname, email: this.email, currentPassword: this.currentPassword }
         if (this.newPassword !== '') {
           data.newPassword = this.newPassword

@@ -10,7 +10,7 @@
         <div class="media-body">
           {{ action.occurredAt | moment("from", "now") }}
         </div>
-        <span class="card-text"><span class="text-primary" v-tooltip="action.user.group? action.user.group.name : 'No Group'" @click="openUserModal(action.user.id)">{{ action.user.firstname }} {{ action.user.surname }} </span><v-runtime-template :template="actionText" />.</span>
+        <span class="card-text"><span class="text-primary hover" v-tooltip="action.user.group? action.user.group.name : 'No Group'" @click="openUserModal(action.user.id)">{{ action.user.firstname }} {{ action.user.surname }} </span><v-runtime-template :template="actionText" />.</span>
       </div>
     </div>
     <user-modal v-if="isUserModalVisible" v-show="isUserModalVisible" :visible="isUserModalVisible" :deploymentName="deploymentName" :deploymentId="deploymentId" :currentIncidentId="incidentId" :userProp="userModal" @close="handleUserModalClose" />
@@ -36,10 +36,10 @@ const actionStrings = {
   'edit_subtask': 'edited subtask ${subtask}',
   'changed_task_name': 'changed task name from ${extra}',
   'changed_tags': 'changed the task\'s tags',
-  'edit_task_comment': 'edited task comment',
-  'delete_task_comment': 'deleted task comment',
-  'complete_task': 'marked ${task} complete',
-  'incomplete_task': 'marked ${task} incomplete'
+  'edit_task_comment': 'edited comment',
+  'delete_task_comment': 'deleted comment',
+  'complete_task': 'marked task complete',
+  'incomplete_task': 'marked task incomplete'
 }
 
 export default {

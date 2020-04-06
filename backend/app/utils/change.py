@@ -9,7 +9,15 @@ from .websocket import emit_incident
 from .notification import new_notification
 from .actions import audit_action, incident_action, task_action
 from app.models import User, Group, AuditLog, IncidentLog, TaskLog, SupervisorActions
-from ..api.utils.models import user_model_without_group, group_model, group_model_without_users, incident_model, incident_model_name, point_feature_model
+from ..api.utils.models import user_model_without_group, deployment_model, group_model_without_users, incident_model, incident_model_name, point_feature_model
+
+def format_incident(incident, user):
+    incident_marshalled = marshal(incident, incident_model)
+    if user in incident.users_pinned:
+        incident_marshalled['pinned'] = True
+    else:
+        incident_marshalled['pinned'] = False
+    return incident_marshalled
 
 
 def complete_registration(email_link, firstname, surname, password):
@@ -30,17 +38,24 @@ def edit_group(group, name, permissions, changed_by):
         return False
     group.name = name
     group.set_permissions(permissions)
+    group_marshalled = marshal(group, group_model_without_users)
     audit_action(changed_by, AuditLog.action_values['edit_group'])
     emit('edit_group', {'id': group.id, 'name': name, 'permissions': group.get_permissions(), 'code': 200}, namespace='/', room='admin')
+    emit('EDIT_USER_GROUP', {'id': group.id, 'group': group_marshalled, 'code': 200}, namespace='/', room=f'{group.id}')
 
 
 def change_user_group(user, group, changed_by):
     if user.group == group:
         return False
     user.group = group
-    group_marshalled = marshal(group, group_model_without_users)
+    if not user.group:
+        group_marshalled = None
+    else:
+        group_marshalled = marshal(group, group_model_without_users)
     audit_action(changed_by, AuditLog.action_values['edit_user_group'])
-    emit('change_user_group', {'id': user.id, 'group': group_marshalled, 'code': 200}, namespace='/', room='admin')
+    emit('change_users_group', {'id': user.id, 'group': group_marshalled, 'code': 200}, namespace='/', room='admin')
+    emit('EDIT_USER_GROUP', {'id': user.id, 'group': group_marshalled, 'code': 200}, namespace='/', room=f'{user.id}')
+    emit('CHANGE_USERS_GROUP', {'id': user.id, 'group': group_marshalled, 'code': 200}, namespace='/', room='all')
 
 
 def change_user_status(user, status, changed_by):
@@ -49,6 +64,9 @@ def change_user_status(user, status, changed_by):
     user.status = status
     audit_action(changed_by, AuditLog.action_values['activate_user' if status == 1 else 'deactivate_user'])
     emit('change_user_status', {'id': user.id, 'status': status, 'code': 200}, namespace='/', room='admin')
+    if status == -1:
+        emit('REVOKE_ACCESS', {'id': user.id, 'code': 200}, namespace='/', room=f'{user.id}')
+        emit('DELETE_USER', {'id': user.id, 'code': 200}, namespace='/', room='all')
 
 
 def change_user_password(email, password):
@@ -66,10 +84,18 @@ def edit_user_details(user, firstname, surname, email, new_password):
         if not pattern.match(new_password):
             return False
         user.set_password(new_password)
+    generate_new_avatar = False
+    if (user.firstname[0] != firstname[0] or user.surname[0] != surname[0]) and user.system_generated_avatar:
+        generate_new_avatar = True
     user.firstname = firstname
     user.surname = surname
     user.email = email
     audit_action(user, AuditLog.action_values['edit_user_settings'])
+    emit('CHANGE_USERS_NAME', {'id': user.id, 'firstname': user.firstname, 'surname': user.surname, 'code': 200}, namespace='/', room='all')
+    if generate_new_avatar:
+        user.delete_avatar()
+        emit('CHANGE_USER_AVATAR', {'avatarUrl': user.get_avatar(), 'code': 200}, namespace='/', room=f'{user.id}')
+        emit('CHANGE_USERS_AVATAR', {'id': user.id, 'avatarUrl': user.get_avatar(), 'code': 200}, namespace='/', room='all')
 
 
 def edit_deployment(deployment, name, description, open_status, group_ids, user_ids, changed_by):
@@ -83,13 +109,12 @@ def edit_deployment(deployment, name, description, open_status, group_ids, user_
         if open_status:
             deployment.closed_at = None
         else:
-            deployment.closed_at = datetime.utcnow()
+            deployment.closed_at = datetime.now()
     deployment.open_status = open_status
     deployment.groups = groups
     deployment.users = users
-    users_marshalled = marshal(deployment.users, user_model_without_group)
-    groups_marshalled = marshal(deployment.groups, group_model)
-    emit('CHANGE_DEPLOYMENT_EDIT', {'id': deployment.id, 'name': name, 'description': description, 'open': open_status, 'groups': groups_marshalled, 'users': users_marshalled, 'closedAt': deployment.closed_at.timestamp() if deployment.closed_at else None, 'code': 200}, namespace='/', room='deployments')
+    deployment_marshalled = marshal(deployment, deployment_model)
+    emit('EDIT_DEPLOYMENT', {'deployment': deployment_marshalled, 'code': 200}, namespace='/', room='deployments')
     audit_action(changed_by, action_type=AuditLog.action_values['edit_deployment'], target_id=deployment.id)
     return deployment
 
@@ -117,7 +142,7 @@ def edit_incident(incident, name, description, incident_type, reported_via, link
     if incident_obj.reported_via != reported_via:
         incident_action(changed_by, IncidentLog.action_values['edit_incident_reported_via'], incident=incident, extra=f'"{incident_obj.reported_via}" to "{reported_via}"')
     if incident_obj.reference != reference:
-        incident_action(changed_by, IncidentLog.action_values['edit_incident_reference'], incident=incident, extra=f'"{incident_obj.reference}" to "{reference}"')
+        incident_action(changed_by, IncidentLog.action_values['edit_incident_reference'], incident=incident, extra=f'"{incident_obj.reference}" to "{reference}"' if incident_obj.reference else f'N/A to "{reference}"')
     for x in added:
         if incident not in x.linked:
             x.linked.append(incident)
@@ -142,7 +167,7 @@ def change_incident_status(incident, status, changed_by):
         incident.closed_at = None
         action_type = 'marked_open'
     else:
-        incident.closed_at = datetime.utcnow()
+        incident.closed_at = datetime.now()
         action_type = 'marked_closed'
     emit_incident('CHANGE_INCIDENT_STATUS', {'id': incident.id, 'open': status, 'code': 200}, incident)
     incident_action(user=changed_by, action_type=IncidentLog.action_values[action_type], incident=incident)
@@ -161,10 +186,9 @@ def change_incident_allocation(incident, allocated_to, changed_by, added_notific
     emit_incident('CHANGE_INCIDENT_ALLOCATION', {'id': incident.id, 'assignedTo': users_marshalled, 'code': 200}, incident)
     if not incident.supervisor_approved:
         incident.supervisor_approved = True
-        incident_marshalled = marshal(incident, incident_model)
-        incident_marshalled['pinned'] = False
         for x in incident.assigned_to:
             if not x.has_permission('view_all_incidents'):
+                incident_marshalled = format_incident(incident, x)
                 emit('NEW_INCIDENT', {'incident': incident_marshalled, 'code': 200}, namespace='/', room=f'{incident.deployment_id}-{x.id}')
         action_required = SupervisorActions.query.filter_by(incident_id=incident.id, action_type='New Incident').first()
         if action_required:
@@ -173,15 +197,18 @@ def change_incident_allocation(incident, allocated_to, changed_by, added_notific
         incident_action(user=changed_by, action_type=IncidentLog.action_values['unassigned_user'],
                         incident=incident, target_users=removed)
         for x in removed:
-            if not x.has_permission(incident):
+            if not x.has_permission('view_all_incidents'):
                 emit('REMOVE_INCIDENT', {'id': incident.id, 'code': 200}, namespace='/', room=f'{incident.deployment_id}-{x.id}')
         new_notification(removed, None, 'unassigned_incident', incident, None, None, changed_by)
     if added:
         incident_action(user=changed_by, action_type=IncidentLog.action_values['assigned_user'],
                         incident=incident, target_users=added)
+        for x in added:
+            if not x.has_permission('view_all_incidents'):
+                incident_marshalled = format_incident(incident, x)
+                emit('NEW_INCIDENT', {'incident': incident_marshalled, 'code': 200}, namespace='/', room=f'{incident.deployment_id}-{x.id}')
         if added_notification:
             new_notification(added, None, 'assigned_incident', incident, None, None, changed_by)
-
 
 
 def change_incident_priority(incident, priority, changed_by):
@@ -208,12 +235,13 @@ def change_incident_public(incident, public, name, description, changed_by):
 def change_incident_location(incident, address, longitude, latitude, changed_by):
     if incident.location == address and incident.longitude == longitude and incident.latitude == latitude:
         return False
+    old_address = incident.location
     incident.location = address
     incident.longitude = longitude
     incident.latitude = latitude
     location_marshalled = marshal(incident, point_feature_model)
     emit_incident('CHANGE_INCIDENT_LOCATION', {'id': incident.id, 'location': location_marshalled, 'code': 200}, incident)
-    incident_action(user=changed_by, action_type=IncidentLog.action_values['change_incident_location'], incident=incident)
+    incident_action(user=changed_by, action_type=IncidentLog.action_values['change_incident_location'], incident=incident, extra=f'"{old_address}" to "{address}"')
 
 
 def change_comment_public(comment, public, changed_by):
@@ -229,7 +257,7 @@ def change_comment_text(comment, text, changed_by):
     if comment.text == text:
         return False
     comment.text = text
-    comment.edited_at = datetime.utcnow()
+    comment.edited_at = datetime.now()
     emit_incident('CHANGE_COMMENT_TEXT', {'id': comment.id, 'incidentId': comment.incident.id, 'text': text, 'editedAt': comment.edited_at.timestamp(), 'code': 200}, comment.incident)
     incident_action(user=changed_by, action_type=IncidentLog.action_values['edit_comment'],
                     incident=comment.incident, comment=comment)
@@ -240,7 +268,7 @@ def change_task_status(task, status, changed_by):
         return False
     task.completed = status
     if status:
-        task.completed_at = datetime.utcnow()
+        task.completed_at = datetime.now()
         action_type = 'complete_task'
     else:
         task.completed_at = None
@@ -319,7 +347,7 @@ def change_task_comment_text(task_comment, text, changed_by):
         return False
     task = task_comment.task
     task_comment.text = text
-    task_comment.edited_at = datetime.utcnow()
+    task_comment.edited_at = datetime.now()
     emit_incident('CHANGE_TASK_COMMENT_TEXT', {'id': task_comment.id, 'taskId': task.id, 'incidentId': task.incident.id, 'text': text, 'editedAt': task_comment.edited_at.timestamp(), 'code': 200}, task.incident)
     task_action(user=changed_by, action_type=TaskLog.action_values['edit_task_comment'], task=task)
     incident_action(user=changed_by, action_type=IncidentLog.action_values['edit_task_comment'],
@@ -332,7 +360,7 @@ def change_subtask_status(subtask, status, changed_by):
         return False
     subtask.completed = status
     if status:
-        subtask.completed_at = datetime.utcnow()
+        subtask.completed_at = datetime.now()
         action_type = 'complete_subtask'
     else:
         subtask.completed_at = None

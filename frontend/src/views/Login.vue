@@ -9,7 +9,7 @@
                 <h1 class="h4 text-gray-900 mb-4">Forgotten Password</h1>
               </div>
               <form class="user" @submit.prevent="requestPasswordReset">
-                <div :class="['alert', 'text-center', passwordResetSuccess ? 'alert-success' : 'alert-danger']" v-if="passwordResetSuccess || passwordResetError">{{ passwordResetSuccess ? 'Sent email with password reset' : 'Incorrect email provided' }}</div>
+                <div :class="['alert', 'text-center', passwordResetSuccess ? 'alert-success' : 'alert-danger']" v-if="passwordResetSuccess || passwordResetError">{{ passwordResetSuccess ? 'Sent email with password reset.' : 'Incorrect email provided.' }}</div>
                 <div class="form-group">
                   <input v-model="email" type="email" class="form-control form-control-user" name="email" placeholder="Enter Email" aria-label="Email" required autofocus>
                 </div>
@@ -25,7 +25,7 @@
                 <h1 class="h4 text-gray-900 mb-4">Log in to DGVOST</h1>
               </div>
               <form class="user" @submit.prevent="login">
-                <div class="alert alert-danger text-center" v-if="loginError">Incorrect login details provided</div>
+                <div class="alert alert-danger text-center" v-if="loginError">{{ errorType }}</div>
                 <div class="form-group">
                   <input v-model="email" type="email" class="form-control form-control-user" name="email" placeholder="Enter Email" aria-label="Email" required autofocus>
                 </div>
@@ -59,6 +59,7 @@ export default {
     return {
       email: '',
       password: '',
+      errorType: '',
       rememberMe: false,
       forgotPassword: false,
       passwordResetSuccess: false,
@@ -87,11 +88,15 @@ export default {
           }
           this.$router.push(this.$route.query.redirect || { name: 'deployments' })
         })
-        .catch(() => this.loginFailed())
-    },
-    loginFailed () {
-      this.password = ''
-      this.loginError = true
+        .catch((error) => {
+          if (error.response.status === 403) {
+            this.errorType = 'Your account has been disabled.'
+          } else {
+            this.errorType = 'Incorrect login details provided.'
+          }
+          this.password = ''
+          this.loginError = true
+        })
     }
   },
   beforeCreate () {

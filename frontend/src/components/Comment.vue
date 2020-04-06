@@ -160,7 +160,7 @@ export default {
       }
     },
     toText: function () {
-      return htmlToText.fromString(this.editor.getHTML(), { wordwrap: 0, uppercaseHeadings: true, noLinkBrackets: true })
+      return htmlToText.fromString(this.editor.getHTML(), { wordwrap: 0, uppercaseHeadings: true, noLinkBrackets: true, ignoreImage: true })
     },
     isUsersComment: function () {
       const user = this.$store.getters['user/getUser']

@@ -111,7 +111,6 @@ class GroupEndpoint(Resource):
                     permissions.append(x)
             except KeyError:
                 pass
-        print(permissions)
 
         if edit_group(group, payload['name'], permissions, current_user) is False:
             ns_group.abort(400, 'Nothing has been changed')

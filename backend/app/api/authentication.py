@@ -13,6 +13,7 @@ class LoginEndpoint(Resource):
     @ns_auth.expect(login_model, validate=True)
     @ns_auth.response(200, 'Success', tokens_model)
     @ns_auth.response(401, 'Incorrect credentials')
+    @ns_auth.response(403, 'Disabled account')
     def post(self):
         """
                 Returns an access and refresh token, as well as their expiry dates, the tokens are JWT so can be decoded for more info
@@ -20,10 +21,13 @@ class LoginEndpoint(Resource):
                 'refresh_token' is needed to refresh your access token once it has expired, it has a lifetime of 2 days.
         """
         user = User.query.filter(func.lower(User.email) == func.lower(api.payload['email'])).first()
-        if not user or user.status < 1:
+        if not user:
             ns_auth.abort(401, 'Incorrect credentials')
 
         if user.check_password(api.payload['password']):
+            if user.status < 1:
+                ns_auth.abort(403, 'Disabled account')
+
             access_token = create_access_token(identity=user.id)
             refresh_token = create_refresh_token(identity=user.id)
 

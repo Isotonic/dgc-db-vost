@@ -130,7 +130,7 @@ export default {
     },
     didUsersChange: function () {
       if (this.edit) {
-        return this.usersSelected.length &&
+        return this.usersSelected &&
         (this.usersSelected.length !== this.deployment.users.length ||
         !this.usersSelected.every(e => this.deployment.users.includes(e)))
       } else {
@@ -139,7 +139,7 @@ export default {
     },
     didGroupsChange: function () {
       if (this.edit) {
-        return this.groupsSelected.length &&
+        return this.groupsSelected &&
         (this.groupsSelected.length !== this.deployment.groups.length ||
         !this.groupsSelected.every(e => this.deployment.groups.includes(e)))
       } else {

@@ -2,7 +2,7 @@
 # https://testdriven.io/blog/deploying-flask-to-heroku-with-docker-and-gitlab/#docker
 
 # Build
-FROM node:13.5.0 as build-vue
+FROM node:14.7.0 as build-vue
 WORKDIR /app
 ENV PATH /app/node_modules/.bin:$PATH
 COPY ./frontend/package*.json ./

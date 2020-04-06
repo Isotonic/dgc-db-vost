@@ -317,6 +317,20 @@ export default {
         .sort((a, b) => scores[b.id] - scores[a.id])
     }
   },
+  watch: {
+    queryDebounced () {
+      const map = this.$refs.map
+      const geoJsonLayer = this.$refs.geoJsonLayer
+      if (map && geoJsonLayer) {
+        map.fitBounds(geoJsonLayer.getBounds())
+      }
+    },
+    showingStatus (value) {
+      if (this.heatmap) {
+        this.heatmapKey += 1
+      }
+    }
+  },
   async created () {
     this.checkUserLoaded(null)
     this.getIncidentsData()

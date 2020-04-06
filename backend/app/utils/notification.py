@@ -10,6 +10,6 @@ def new_notification(users, reason, action_type, incident, task, subtask, trigge
             continue
         notification = Notifications(user=x, reason=reason, action_type=action_type, deployment=incident.deployment, incident=incident, task=task, subtask=subtask, triggered_by=triggered_by)
         db.session.add(notification)
+        db.session.commit()
         notification_marshalled = marshal(notification, notification_model)
         emit('NEW_NOTIFICATION', notification_marshalled, namespace='/', room=f'{x.id}')
-    db.session.commit()

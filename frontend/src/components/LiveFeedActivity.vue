@@ -11,7 +11,7 @@
           {{ action.occurredAt | moment("from", "now") }}
         </div>
         <span class="card-text">
-        <span class="text-primary hover" v-tooltip="action.user.group? action.user.group.name : 'No Group'" @click="openUserModal(action.user.id)">{{ action.user.firstname }} {{ action.user.surname }} </span><v-runtime-template :template="actionText" />.</span>
+        <span v-if="!isUserModal" class="text-primary hover" v-tooltip="action.user.group? action.user.group.name : 'No Group'" @click="openUserModal(action.user.id)">{{ action.user.firstname }} {{ action.user.surname }} </span><strong v-else>{{ action.user.firstname }} {{ action.user.surname }} </strong><v-runtime-template :template="actionText" />.</span>
       </div>
     </div>
   </li>
@@ -26,7 +26,7 @@ const actionStrings = {
   'create_incident': 'created incident ${incident}',
   'create_task': 'created task ${task} in ${incident}',
   'complete_task': 'marked ${extra} as complete in ${incident}',
-  'delete_task': 'deleted task ${task} in ${incident}',
+  'delete_task': 'deleted task ${extra} in ${incident}',
   'add_comment': 'added an update in ${incident}',
   'delete_comment': 'deleted an update in ${incident}',
   'incomplete_task': 'marked ${extra} as incomplete in ${incident}',
@@ -35,7 +35,7 @@ const actionStrings = {
   'marked_closed': 'marked ${incident} as complete',
   'marked_open': 'marked ${incident} as incomplete',
   'changed_priority': 'changed ${incident} priority to ${extra}',
-  'changed_task_description': 'changed ${task} description to "{$extra}" in ${incident}',
+  'changed_task_description': 'changed ${task} description to "${extra}" in ${incident}',
   'assigned_user_task': 'assigned ${targetUsers} to ${task} in ${incident}',
   'unassigned_user_task': 'unassigned ${targetUsers} from ${task} in ${incident}',
   'marked_public': 'set ${incident} to publicly viewable',
@@ -54,7 +54,7 @@ const actionStrings = {
   'edit_task_comment': 'edited comment in ${task} in ${incident}',
   'delete_task_comment': 'deleted comment in ${task} in ${incident}',
   'delete_subtask': 'deleted subtask in ${task} in ${incident}',
-  'change_incident_location': 'changed ${incident} location',
+  'change_incident_location': 'changed ${incident} location from ${extra}',
   'flag_supervisor': 'flagged ${incident} to a supervisor',
   'request_mark_closed': 'requested ${incident} be marked as complete',
   'request_mark_open': 'requested ${incident} be marked as incomplete',
@@ -83,7 +83,11 @@ export default {
   props: {
     action: Object,
     deploymentId: Number,
-    deploymentName: String
+    deploymentName: String,
+    isUserModal: {
+      type: Boolean,
+      default: false
+    }
   },
   methods: {
     goToIncident () {
@@ -109,7 +113,7 @@ export default {
       if (this.action.targetUsers.length === 1) {
         return `<span class="text-primary hover" v-tooltip="'${this.action.targetUsers[0].group ? this.action.targetUsers[0].group.name : 'No Group'}'" @click="openUserModal(${this.action.targetUsers[0].id})">${this.action.targetUsers[0].firstname} ${this.action.targetUsers[0].surname}</span>`
       } else {
-        return `${this.action.targetUsers.slice(0, -1).map(user => `<span class="text-primary hover" v-tooltip="'${user.group ? user.group.name : 'No Group'}'">${user.firstname} ${user.surname}</span>`).join(', ')} and <span class="text-primary hover" v-tooltip="'${this.action.targetUsers.slice(-1)[0].group ? this.action.targetUsers.slice(-1)[0].group.name : 'No Group'}'">${this.action.targetUsers.slice(-1)[0].firstname} ${this.action.targetUsers.slice(-1)[0].surname}</span>`
+        return `${this.action.targetUsers.slice(0, -1).map(user => `<span class="text-primary hover" v-tooltip="'${user.group ? user.group.name : 'No Group'}'" @click="openUserModal(${user.id})">${user.firstname} ${user.surname}</span>`).join(', ')} and <span class="text-primary hover" v-tooltip="'${this.action.targetUsers.slice(-1)[0].group ? this.action.targetUsers.slice(-1)[0].group.name : 'No Group'}'" @click="openUserModal(${this.action.targetUsers.slice(-1)[0].id})">${this.action.targetUsers.slice(-1)[0].firstname} ${this.action.targetUsers.slice(-1)[0].surname}</span>`
       }
     },
     actionText: function () {

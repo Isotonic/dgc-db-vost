@@ -65,6 +65,13 @@ const actions = {
         })
     }
   },
+  socket_deleteGroup ({ state, commit }, data) {
+    for (let user of state.users) {
+      if (user.group && user.group.id === data.id) {
+        commit('removeUserGroup', user.id)
+      }
+    }
+  },
   storeDestroy ({ commit }) {
     commit('destroy')
   }
@@ -79,6 +86,34 @@ const mutations = {
   },
   setLoaded (state, value) {
     state.loaded = value
+  },
+  removeUserGroup (state, userId) {
+    const user = state.users.find(user => user.id === userId)
+    if (user) {
+      user.group = null
+    }
+  },
+  SOCKET_CHANGE_USERS_GROUP (state, data) {
+    const user = state.users.find(user => user.id === data.id)
+    if (user) {
+      user.group = data.group
+    }
+  },
+  SOCKET_CHANGE_USERS_NAME (state, data) {
+    const user = state.users.find(user => user.id === data.id)
+    if (user) {
+      user.firstname = data.firstname
+      user.surname = data.surname
+    }
+  },
+  SOCKET_CHANGE_USERS_AVATAR (state, data) {
+    const user = state.users.find(user => user.id === data.id)
+    if (user) {
+      user.avatarUrl = data.avatarUrl
+    }
+  },
+  SOCKET_DELETE_USER (state, data) {
+    state.users = state.users.filter(user => user.id !== data.id)
   },
   destroy (state) {
     state.users = []

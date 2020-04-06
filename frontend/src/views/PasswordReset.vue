@@ -53,6 +53,7 @@ export default {
       password: '',
       checkPassword: '',
       stoppedTyping: false,
+      successful: false,
       error: false,
       rules: [
         { message: 'Contain a lowercase letter.', regex: /[a-z]+/ },
@@ -64,13 +65,13 @@ export default {
   },
   methods: {
     passwordReset () {
-      if (this.firstname !== '' && this.surname !== '' && this.passwordValidation) {
+      if (this.firstname !== '' && this.surname !== '' && this.passwordValidation && !this.passwordsNotSame) {
         Vue.prototype.$http
           .put(`users/password-reset/${this.link}`, { password: this.password })
           .then(() => {
-            this.$store.dispatch('user/login', [this.email, this.password])
-              .then(() => this.$router.push(this.$route.query.redirect || { name: 'deployments' }))
-              .catch(() => this.$router.push({ name: 'login' }))
+            this.successful = true
+            this.$router.push({ name: 'login' })
+            Vue.noty.success('Password reset, please login.')
           })
           .catch((error) => {
             Vue.noty.error(error.response.data.message)
@@ -105,6 +106,12 @@ export default {
       return true
     }
   },
+  beforeCreate () {
+    if (this.$store.getters['user/loggedIn']) {
+      this.$router.push({ name: 'deployments' })
+      Vue.noty.error('You are currently logged in.')
+    }
+  },
   created: function () {
     document.body.classList.add('bg-gradient-primary')
     Vue.prototype.$http
@@ -113,13 +120,14 @@ export default {
       .then((data) => {
         this.email = data.email
       })
-      .catch((error) => {
+      .catch(() => {
         this.error = true
-        Vue.noty.error(error.response.data.message)
       })
   },
   beforeDestroy () {
-    document.body.classList.remove('bg-gradient-primary')
+    if (!this.successful) {
+      document.body.classList.remove('bg-gradient-primary')
+    }
   }
 }
 </script>

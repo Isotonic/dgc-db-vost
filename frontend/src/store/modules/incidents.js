@@ -111,6 +111,7 @@ const mutations = {
     const incident = state.incidents.find(incident => incident.id === data.id)
     if (incident) {
       incident.activity.push(data.activity)
+      incident.lastUpdatedAt = data.activity.occurredAt
     }
   },
   SOCKET_TASK_ACTIVITY (state, data) {
@@ -186,8 +187,6 @@ const mutations = {
     const incident = state.incidents.find(incident => incident.id === data.id)
     if (incident) {
       incident.assignedTo = data.assignedTo
-    } else {
-      this._vm.$socket.client.emit('get_incident', { incidentId: data.id })
     }
   },
   SOCKET_CHANGE_INCIDENT_PRIORITY (state, data) {

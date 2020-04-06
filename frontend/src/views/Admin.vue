@@ -141,7 +141,7 @@ export default {
           email: 'Email',
           group: 'Group',
           status: 'Status',
-          createdAt: 'Created At'
+          createdAt: 'Created'
         },
         templates: {
           name: function (h, row, index) {
@@ -242,7 +242,7 @@ export default {
     new_group: function (data) {
       this.groups.push(data.group)
     },
-    change_user_group: function (data) {
+    change_users_group: function (data) {
       const user = this.users.find(user => user.id === data.id)
       if (user) {
         user.group = data.group
@@ -303,7 +303,7 @@ export default {
       }
     },
     changeUserStatus (userId, status) {
-      this.ApiPut(`/users/${userId}/status`, { status: status })
+      this.ApiPut(`/users/${userId}/status`, { status: parseInt(status) })
         .then(() => Vue.noty.success(`Successfully changed user's status.`))
     },
     confirmDeleteGroup (group) {

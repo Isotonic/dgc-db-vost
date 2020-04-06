@@ -5,7 +5,7 @@
         <h6 class="font-weight-bold text-primary">{{ deployment.name }}
           <p class="mb-0 mt-1 pl-1 text-muted text-xs text-nowrap">Created {{ deployment.createdAt | moment("from", "now") }}</p>
         </h6>
-        <div class="dropdown no-arrow">
+        <div v-if="supervisor" class="dropdown no-arrow">
           <a role="button" class="dropdown-toggle" @click="$emit('edit', deployment)">
             <i class="fas fa-cog"></i>
           </a>
@@ -23,7 +23,8 @@
 export default {
   name: 'DeploymentCard',
   props: {
-    deployment: Object
+    deployment: Object,
+    supervisor: Boolean
   }
 }
 </script>
