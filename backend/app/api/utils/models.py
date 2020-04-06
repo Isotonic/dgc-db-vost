@@ -1,82 +1,81 @@
 from app.api import api
 from flask_restx import fields
 
-id_model = api.model('ID', {'id': fields.Integer()})
+id_model = api.model('ID', {'id': fields.Integer(description='ID.')})
 
 login_model = api.model('Login',
-                               {'email': fields.String(required=True), 'password': fields.String(required=True)})
+                       {'email': fields.String(description='Email address for account.', required=True), 'password': fields.String(description='Password for account.', required=True)})
 
-tokens_model = api.model('Token', {'access_token': fields.String(required=True),
-                                          'refresh_token': fields.String(required=True)})
+tokens_model = api.model('Token',
+                         {'access_token': fields.String(description='Access Token.', required=True),
+                         'refresh_token': fields.String(description='Refresh Token.', required=True)})
 
 create_user_modal = api.model('New User',
-                                  {'email': fields.String(required=True),
-                                   'group': fields.Integer(description='Optional ID of the group for the user to be added to, can be omitted.')})
+                          {'email': fields.String(description='Email address of new user.', required=True),
+                           'group': fields.Integer(description='Optional ID of the group for the user to be added to, can be omitted.')})
 
 new_group_model = api.model('New Group',
-                                   {'name': fields.String(description='Name of the group', required=True),
-                                    'supervisor': fields.Boolean(description='Admin access with full control, inherits all other permissions.', required=True),
-                                    'create_deployment': fields.Boolean(description='Create new deployments and edit existing ones.', required=True),
-                                    'view_all_incidents': fields.Boolean(description='View incidents even if not assigned.', required=True),
-                                    'change_priority': fields.Boolean(description='Change an incident\'s priority.', required=True),
-                                    'change_status': fields.Boolean(description='Change an incident\'s open status.', required=True),
-                                    'change_allocation': fields.Boolean(description='Change an incident\'s allocation.', required=True),
-                                    'mark_as_public': fields.Boolean(description='Change if an incident or incident comment if viewable by the public or not.', required=True)})
+                           {'name': fields.String(description='Name of the group', required=True),
+                            'supervisor': fields.Boolean(description='Admin access with full control, inherits all other permissions.', required=True),
+                            'create_deployment': fields.Boolean(description='Create new deployments and edit existing ones.', required=True),
+                            'view_all_incidents': fields.Boolean(description='View incidents even if not assigned.', required=True),
+                            'change_priority': fields.Boolean(description='Change an incident\'s priority.', required=True),
+                            'change_status': fields.Boolean(description='Change an incident\'s open status.', required=True),
+                            'change_allocation': fields.Boolean(description='Change an incident\'s allocation.', required=True),
+                            'mark_as_public': fields.Boolean(description='Change if an incident or incident comment if viewable by the public or not.', required=True)})
 
 
 new_deployment_model = api.model('New Deployment',
-                                        {'name': fields.String(required=True), 'description': fields.String(),
-                                         'groups': fields.List(fields.Integer, description='Group IDs to whitelist, leave blank for everyone to have access.'),
-                                         'users': fields.List(fields.Integer, description='User IDs to whitelist, leave blank for everyone to have access.')})
+                                {'name': fields.String(description='Name of the deployment.', required=True),
+                                 'description': fields.String(description='Description of the deployment.'),
+                                 'groups': fields.List(fields.Integer, description='Group IDs to whitelist, leave blank for everyone to have access.'),
+                                 'users': fields.List(fields.Integer, description='User IDs to whitelist, leave blank for everyone to have access.')})
 
 edit_deployment_model = api.model('Edit Deployment',
-                                        {'name': fields.String(required=True), 'description': fields.String(),
-                                         'open': fields.Boolean(description='Open status of the deployment.', required=True),
-                                         'groups': fields.List(fields.Integer, description='Group IDs to whitelist, leave blank for everyone to have access.'),
-                                         'users': fields.List(fields.Integer, description='User IDs to whitelist, leave blank for everyone to have access.')})
+                                {'name': fields.String(description='Name of the deployment', required=True),
+                                 'description': fields.String(description='Description of the deployment.'),
+                                 'open': fields.Boolean(description='Open status of the deployment.', required=True),
+                                 'groups': fields.List(fields.Integer, description='Group IDs to whitelist, leave blank for everyone to have access.'),
+                                 'users': fields.List(fields.Integer, description='User IDs to whitelist, leave blank for everyone to have access.')})
 
 new_comment_model = api.model('New Comment',
                               {'text': fields.String(required=True, description='Comment text.'),
                                'public': fields.Boolean(description='If the comment will be viewable by the public once the incident is marked public. Field will be ignored if you don\'t have the mark as public permission and defaulted to False. Optionally omit this field.')})
 
 new_task_model = api.model('New Task',
-                           {'name': fields.String(required=True, description='Task name'),
-                            'description': fields.String(description='Optional description of the task'),
+                           {'name': fields.String(required=True, description='Task name.'),
+                            'description': fields.String(description='Optional description of the task.'),
                             'assignedTo': fields.List(fields.Integer, description='Optional list of user IDs assigned to the task.')})
 
 new_incident_model = api.model('Create Incident',
-                                      {'name': fields.String(required=True),
-                                       'description': fields.String(required=True),
-                                       'type': fields.String(required=True),
-                                       'address': fields.String(required=True),
-                                       'longitude': fields.Float(required=True),
-                                       'latitude': fields.Float(required=True),
-                                       'reportedVia': fields.String(),
-                                       'reference': fields.String()})
+                              {'name': fields.String(description='Name of the incident.', required=True),
+                               'description': fields.String(description='Description of the incident.', required=True),
+                               'type': fields.String(description='Type of incident.', required=True),
+                               'address': fields.String(description='Address of the incident.', required=True),
+                               'longitude': fields.Float(description='Longitude of the incident.', required=True),
+                               'latitude': fields.Float(description='Latitude of the incident.', required=True),
+                               'reportedVia': fields.String(description='Incident reported via.'),
+                               'reference': fields.String(description='Incident reference.')})
 
 edit_incident_model = api.model('Edit Incident',
-                                      {'name': fields.String(required=True),
-                                       'description': fields.String(),
-                                       'type': fields.String(required=True),
-                                       'reportedVia': fields.String(),
-                                       'linkedIncidents': fields.List(fields.Integer),
-                                       'reference': fields.String()})
+                              {'name': fields.String(description='Name of incident', required=True),
+                               'description': fields.String(description='Description of incident.'),
+                               'type': fields.String(description='Type of incident.', required=True),
+                               'reportedVia': fields.String(description='Incident reported via.'),
+                               'linkedIncidents': fields.List(fields.Integer, description='Incidents linked to this incident.'),
+                               'reference': fields.String(description='Incident reference.')})
 
 
 point_geometry_model = api.model('Point Geometry', {
-    'type': fields.String(default='Point'),
-    'coordinates': fields.List(fields.Float, attribute=lambda x: x.get_coordinates(), description='Longitude and latitude.', type='Array')
-})
+                                'type': fields.String(default='Point'),
+                                'coordinates': fields.List(fields.Float, attribute=lambda x: x.get_coordinates(), description='Longitude and latitude.', type='Array')})
 
-point_properties_model = api.model('Point Properties', {
-    'address': fields.String(attribute='location', description='Address of the incident.')
-})
+point_properties_model = api.model('Point Properties', {'address': fields.String(attribute='location', description='Address of the incident.')})
 
 point_feature_model = api.model('Point Feature', {
-    'type': fields.String(default='Feature'),
-    'geometry': fields.Nested(point_geometry_model, attribute=lambda x: x),
-    'properties': fields.Nested(point_properties_model, attribute=lambda x: x)
-})
+                                'type': fields.String(default='Feature'),
+                                'geometry': fields.Nested(point_geometry_model, attribute=lambda x: x),
+                                'properties': fields.Nested(point_properties_model, attribute=lambda x: x)})
 
 user_model_without_group = api.model('User Without Group',
                         {'id': fields.Integer(description='ID of the user.'),
@@ -134,7 +133,7 @@ user_full_details_model = api.model('User',
                          'surname': fields.String(description='Surname of the user.'),
                          'email': fields.String(description='Email of the user.'),
                          'createdAt': fields.Integer(attribute=lambda x: int(x.created_at.timestamp()), description='UTC timestamp of the user\'s creation.'),
-                         'status': fields.String(description='Status of the user. -1 = Disabled account, 0 = Sent email, 1 = Active account.'),
+                         'status': fields.String(description='Status of the user. -1 = Disabled account, 0 = Sent email, 1 = Active account and 2 = Superuser.'),
                          'avatarUrl': fields.String(attribute=lambda x: x.get_avatar(), description='URL for the user\'s avatar.'),
                          'group': fields.Nested(group_model_without_users, allow_null=True, description='Group the user belongs to, can be empty too.'),
                          'notifications': fields.Nested(notification_model, description='Notifications the user has.')})
@@ -188,12 +187,12 @@ public_comment_model = api.model('Public Comment',
                              'editedAt': fields.Integer(attribute=lambda x: int(x.edited_at.timestamp()) if x.edited_at else None, description='UTC timestamp of when the update was last edited at, can be null.')})
 
 subtask_model = api.model('Subtask',
-                            {'id': fields.Integer(),
-                             'name': fields.String(),
-                             'completed': fields.Boolean(),
+                            {'id': fields.Integer(description='Subtask ID.'),
+                             'name': fields.String(description='Subtask name.'),
+                             'completed': fields.Boolean(description='Subtask completion status.'),
                              'createdAt': fields.Integer(attribute=lambda x: int(x.created_at.timestamp()), description='UTC timestamp of the subtask\'s creation.'),
                              'completedAt': fields.Integer(attribute=lambda x: int(x.created_at.timestamp()), description='UTC timestamp of the subtask\'s completion, will be null if it isn\'t completed.'),
-                             'assignedTo': fields.List(fields.Nested(user_model_without_group), attribute='assigned_to')})
+                             'assignedTo': fields.List(fields.Nested(user_model_without_group), description='Users assigned to, can be empty.', attribute='assigned_to')})
 
 task_comment_model = api.model('Task Comment',
                             {'id': fields.Integer(description='ID of the comment.'),
@@ -229,7 +228,7 @@ task_model_with_incident = api.model('Task With Incident',
                          'assignedTo': fields.List(fields.Nested(user_model_without_group), attribute='assigned_to', description='User\'s the task is assigned to, can be empty.'),
                          'subtasks': fields.List(fields.Nested(subtask_model), description='Tasks within the task, can be empty.'),
                          'comments': fields.List(fields.Nested(task_comment_model), description='Comments in the task, can be empty.'),
-                         'activity': fields.List(fields.Nested(task_activity_model), attribute='task_actions', description='Actions the occured in the task.')}) ##TODO Change to actions
+                         'activity': fields.List(fields.Nested(task_activity_model), attribute='task_actions', description='Actions the occured in the task.')})
 
 
 incident_model_name = api.model('Incident Name',
@@ -281,6 +280,8 @@ status_model = api.model('Status', {'open': fields.Boolean(attribute='open_statu
 
 completion_model = api.model('Completion', {'completed': fields.Boolean(description='Completed status.', required=True)})
 
+name_model = api.model('Name', {'name': fields.String(description='Task name.', required=True)})
+
 priority_model = api.model('Priority', {'priority': fields.String(description='Priority level of the incident.', required=True)})
 
 public_model = api.model('Public', {'public': fields.Boolean(description='If an incident is viewable by the public or not.', required=True),
@@ -293,11 +294,10 @@ comment_edited_model = api.model('Commented Edited', {'text': fields.String(desc
                                                       'editedAt': fields.Integer(attribute=lambda x: int(x.edited_at.timestamp()), description='UTC timestamp of when the update was last edited at.')})
 
 new_subtask_model = api.model('New Subtask',
-                            {'name': fields.String(required=True),
+                            {'name': fields.String(description='Name of subtask.', required=True),
                              'assignedTo': fields.List(fields.Integer(), description='Optional IDs of the assigned users.')})
 
-tags_model = api.model('Tags',
-                             {'tags': fields.List(fields.String, attribute=lambda x: x.tags if x.tags else [], required=True, description='Tags given to a task, can be an empty.')})
+tags_model = api.model('Tags', {'tags': fields.List(fields.String, attribute=lambda x: x.tags if x.tags else [], required=True, description='Tags given to a task, can be an empty.')})
 
 email_model = api.model('Email', {'email': fields.String(description='Email address.', required=True)})
 
@@ -324,18 +324,18 @@ updated_user_details_model = api.model('Updated User Details', {'firstname': fie
 
 
 change_location_model = api.model('Change location',
-                            {'address': fields.String(required=True),
-                             'longitude': fields.Float(required=True),
-                             'latitude': fields.Float(required=True)})
+                                {'address': fields.String(required=True),
+                                 'longitude': fields.Float(required=True),
+                                 'latitude': fields.Float(required=True)})
 
 
 action_required_model = api.model('Actions Required',
-                                     {'id': fields.Integer(description='ID of the requested action.'),
-                                      'incident': fields.Nested(incident_model_name, attribute='incident'),
-                                      'requestedBy': fields.Nested(user_model_without_group, attribute='requested_by'),
-                                      'type': fields.String(attribute='action_type'),
-                                      'reason': fields.String(),
-                                      'requestedAt': fields.Integer(attribute=lambda x: int(x.requested_at.timestamp()))})
+                                 {'id': fields.Integer(description='ID of the requested action.'),
+                                  'incident': fields.Nested(incident_model_name, attribute='incident'),
+                                  'requestedBy': fields.Nested(user_model_without_group, attribute='requested_by'),
+                                  'type': fields.String(attribute='action_type'),
+                                  'reason': fields.String(),
+                                  'requestedAt': fields.Integer(attribute=lambda x: int(x.requested_at.timestamp()))})
 
 mark_dealt_with_model = api.model('Mark Dealt With', {'carryOutAction': fields.Boolean(description='Optional carrying out of action if it\'s changing the incident\'s status.')})
 
@@ -350,10 +350,7 @@ public_deployment_model = api.model('Public Deployment',
                              'name': fields.String(description='Name of the deployment.'),
                              'description': fields.String(description='Description of the deployment.')})
 
-user_status_model = api.model('User Status', {'status': fields.Integer(description='Status of the user. -1 = Disabled account, 0 = Sent email, 1 = Active account.', required=True)})
+user_status_model = api.model('User Status', {'status': fields.Integer(description='Status of the user. -1 = Disabled account, 0 = Sent email, 1 = Active account and 2 = Superuser.', required=True)})
 
 avatar_model = api.model('Avatar',
                         {'avatarUrl': fields.String(attribute=lambda x: x.get_avatar() if x else '', description='URL for the user\'s avatar.')})
-
-new_avatar_model = api.model('New Avatar',
-                        {'avatar': fields.String(description='Base64 image.')})

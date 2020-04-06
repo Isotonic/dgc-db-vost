@@ -13,21 +13,17 @@ const getters = {
 const actions = {
   checkConnected ({ state, commit, dispatch }, deploymentId) {
     if (!state.isConnected) {
-      console.log(1)
       commit('setDeploymentId', deploymentId)
       dispatch('connect')
     } else if (state.deploymentId !== deploymentId) {
-      console.log(`Leaving deployment ${state.deploymentId} websocket`)
       this._vm.$socket.client.emit('leave', { deploymentId: state.deploymentId })
       commit('setDeploymentId', deploymentId)
       if (state.deploymentId !== null) {
-        console.log(`Joining deployment ${state.deploymentId} websocket`)
         this._vm.$socket.client.emit('join_deployment', { deploymentId: state.deploymentId })
       }
     }
   },
   connect ({ state, rootGetters }) {
-    console.log(2)
     this._vm.$socket.client.emit('join', { accessToken: rootGetters['user/getAccessToken'], deploymentId: state.deploymentId })
   },
   socket_connected ({ state, commit, dispatch }) {
@@ -41,13 +37,11 @@ const actions = {
   },
   socket_reconnect ({ commit, dispatch }) {
     commit('setConnected', false)
-    console.log('Reconnecting')
     commit('setNeedsRefetching', true)
     dispatch('connect')
   },
   // eslint-disable-next-line no-empty-pattern
   socket_ignoringRoom ({}, data) {
-    console.log('Recieved closing room event')
     this._vm.$socket.client.emit('unignore_room', { room: data.room })
   },
   storeDestroy ({ commit }) {
@@ -66,7 +60,6 @@ const mutations = {
     state.deploymentId = value
   },
   SOCKET_CONNECTED (state) {
-    console.log('Connected to websocket')
     state.isConnected = true
   },
   destroy (state) {

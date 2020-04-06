@@ -412,7 +412,6 @@ export default {
   },
   sockets: {
     viewing_incident: function (data) {
-      console.log('Recieved viewing incident event')
       this.viewingIncident = data.users
       if (this.getUser !== null && !this.viewingIncident.filter(user => user.id === this.getUser.id).length) {
         this.$socket.client.emit('viewing_incident', { incidentId: this.incidentId, sendChangesOnly: false })

@@ -183,9 +183,6 @@ export default {
     ...mapGetters('incidents', {
       incidents: 'getIncidents'
     })
-  },
-  created () {
-    console.log(this.incident.linkedIncidents)
   }
 }
 </script>

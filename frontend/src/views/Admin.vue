@@ -237,29 +237,24 @@ export default {
   },
   sockets: {
     new_user: function (data) {
-      console.log('Recieved new user event')
       this.users.push(data.user)
     },
     new_group: function (data) {
-      console.log('Recieved new group event')
       this.groups.push(data.group)
     },
     change_user_group: function (data) {
-      console.log('Recieved change user group event')
       const user = this.users.find(user => user.id === data.id)
       if (user) {
         user.group = data.group
       }
     },
     change_user_status: function (data) {
-      console.log('Recieved change user status event')
       const user = this.users.find(user => user.id === data.id)
       if (user) {
         user.status = data.status
       }
     },
     edit_group: function (data) {
-      console.log('Recieved group edit event')
       const group = this.groups.find(group => group.id === data.id)
       if (group) {
         group.name = data.name
@@ -267,11 +262,9 @@ export default {
       }
     },
     delete_user: function (data) {
-      console.log('Recieved delete user event')
       this.users = this.users.filter(user => user.id !== data.id)
     },
     delete_group: function (data) {
-      console.log('Recieved delete group event')
       this.groups = this.groups.filter(group => group.id !== data.id)
     }
   },
@@ -331,9 +324,6 @@ export default {
         .then(users => {
           this.users = users
         })
-        .catch((error) => {
-          console.log(error)
-        })
     },
     getGroups () {
       Vue.prototype.$api
@@ -341,9 +331,6 @@ export default {
         .then(r => r.data)
         .then(groups => {
           this.groups = groups
-        })
-        .catch((error) => {
-          console.log(error)
         })
     },
     ...mapActions('sockets', {

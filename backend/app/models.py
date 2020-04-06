@@ -124,7 +124,7 @@ class User(db.Model, UserMixin):
                 if os.path.exists(f'./app{avatar_path}.{x}'):
                     return f'{avatar_path}.{x}'
             self.create_avatar()
-            return avatar_path
+            return f'{avatar_path}.png'
         except:
             return f'https://eu.ui-avatars.com/api/?name={self.firstname}+{self.surname}&background={avatar_colours[self.id % len(avatar_colours)][1:]}&color=fff&font-size=0.5'
 
@@ -467,7 +467,7 @@ class IncidentLog(db.Model):
                      'unassigned_user_task': 15, 'marked_public': 16, 'marked_not_public': 17, 'complete_subtask': 18, 'incomplete_subtask': 19, 'create_subtask': 20, 'add_task_comment': 21,
                      'marked_comment_public': 22, 'marked_comment_not_public': 23, 'edit_comment': 24, 'edit_subtask': 25, 'flag_user': 26, 'changed_task_tags': 27, 'edit_task_comment': 28,
                      'delete_task_comment': 29, 'delete_subtask': 30, 'change_incident_location': 31, 'flag_supervisor': 32, 'request_mark_closed': 33, 'request_mark_open': 34, 'edit_incident_name': 35,
-                     'edit_incident_description': 36, 'edit_incident_type': 37, 'edit_incident_reported_via': 38, 'edit_incident_linked': 39, 'edit_incident_unlinked': 40, 'edit_incident_reference': 41}
+                     'edit_incident_description': 36, 'edit_incident_type': 37, 'edit_incident_reported_via': 38, 'edit_incident_linked': 39, 'edit_incident_unlinked': 40, 'edit_incident_reference': 41, 'changed_task_name': 42}
 
 
     id = db.Column(db.Integer, primary_key=True)
@@ -493,7 +493,7 @@ class IncidentLog(db.Model):
 
 class TaskLog(db.Model):
     action_values = {'create_subtask': 1, 'complete_subtask': 2, 'delete_subtask': 3, 'changed_description': 4,
-                     'assigned_user': 5, 'unassigned_user': 6, 'incomplete_subtask': 7, 'add_comment': 8, 'edit_subtask': 9, 'changed_tags': 10, 'edit_task_comment': 11, 'delete_task_comment': 12, 'complete_task': 13, 'incomplete_task': 14}  ##TODO RE-ORDER ONCE DONE
+                     'assigned_user': 5, 'unassigned_user': 6, 'incomplete_subtask': 7, 'add_comment': 8, 'edit_subtask': 9, 'changed_tags': 10, 'edit_task_comment': 11, 'delete_task_comment': 12, 'complete_task': 13, 'incomplete_task': 14, 'changed_task_name': 15}
 
 
     id = db.Column(db.Integer, primary_key=True)

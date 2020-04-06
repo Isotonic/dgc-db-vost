@@ -32,7 +32,6 @@ const interceptor = (axiosInstance) => (error) => {
           return Promise.reject(err)
         })
     }
-    console.log(2)
     originalRequest._retry = true
     isRefreshing = true
     return new Promise((resolve, reject) => {

@@ -5,8 +5,8 @@ from .utils.namespace import Namespace
 from ..models import User, IncidentTask
 from ..utils.create import create_task_comment, create_subtask
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from ..utils.change import change_task_status, change_task_description, change_task_tags, change_task_assigned
-from .utils.models import id_model, task_model, completion_model, user_model, task_comment_model, text_model, tags_model, new_subtask_model, subtask_model
+from ..utils.change import change_task_status, change_task_name, change_task_description, change_task_tags, change_task_assigned
+from .utils.models import id_model, task_model, completion_model, name_model, user_model, task_comment_model, text_model, tags_model, new_subtask_model, subtask_model
 
 ns_task = Namespace('Task', description='Used to carry out actions related to tasks.', path='/tasks', decorators=[jwt_required])
 
@@ -79,6 +79,45 @@ class StatusEndpoint(Resource):
         if change_task_status(task, api.payload['completed'], current_user) is False:
             ns_task.abort(400, 'Task already has this status')
         return task, 200
+
+
+@ns_task.route('/<int:id>/name')
+@ns_task.doc(params={'id': 'Task ID.'})
+@ns_task.resolve_object('task', lambda kwargs: IncidentTask.query.get_or_error(kwargs.pop('id')))
+class NameEndpoint(Resource):
+    @ns_task.doc(security='access_token')
+    @ns_task.response(200, 'Success', name_model)
+    @ns_task.response(401, 'Incorrect credentials')
+    @ns_task.response(403, 'Missing incident access')
+    @ns_task.response(404, 'Task doesn\'t exist')
+    @api.marshal_with(name_model)
+    def get(self, task):
+        """
+                Returns task's name.
+        """
+        current_user = User.query.filter_by(id=get_jwt_identity()).first()
+        ns_task.has_incident_access(current_user, task.incident)
+        return task, 200
+
+
+    @ns_task.doc(security='access_token')
+    @ns_task.expect(name_model, validate=True)
+    @ns_task.response(200, 'Success', name_model)
+    @ns_task.response(400, 'Task already has this name')
+    @ns_task.response(401, 'Incorrect credentials')
+    @ns_task.response(403, 'Missing incident access')
+    @ns_task.response(404, 'Task doesn\'t exist')
+    @api.marshal_with(name_model)
+    def put(self, task):
+        """
+                Changes a task's name.
+        """
+        current_user = User.query.filter_by(id=get_jwt_identity()).first()
+        ns_task.has_incident_access(current_user, task.incident)
+        if change_task_name(task, api.payload['name'], current_user) is False:
+            ns_task.abort(400, 'Task already has this name')
+        return task, 200
+
 
 
 @ns_task.route('/<int:id>/description')

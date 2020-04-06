@@ -34,6 +34,7 @@ const actionStrings = {
   'incomplete_subtask': 'marked ${subtask} as incomplete',
   'add_comment': 'added comment to task',
   'edit_subtask': 'edited subtask ${subtask}',
+  'changed_task_name': 'changed task name from ${extra}',
   'changed_tags': 'changed the task\'s tags',
   'edit_task_comment': 'edited task comment',
   'delete_task_comment': 'deleted task comment',

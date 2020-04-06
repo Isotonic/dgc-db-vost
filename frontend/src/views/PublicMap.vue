@@ -23,7 +23,7 @@
             <div class="card">
               <div class="card-header d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 font-weight-bold text-primary">Map</h6>
-                  <div class="d-flex">
+                  <div>
                   <select v-model="showingStatus" class="custom-select custom-select-sm text-primary font-weight-bold ml-2">
                     <option value="open">Open Only</option>
                     <option value="closed">Closed Only</option>
@@ -63,7 +63,7 @@
                     </div>
                   </ul>
                 </div>
-                <div class="col-xl-9 col-lg-9 pl-0">
+                <div class="col-lg-9 pl-0">
                   <l-map :zoom="mapSettings.zoom" class="map-container" @click="showBeacon = false" ref="map">
                     <l-tile-layer :url="mapSettings.url" :attribution="mapSettings.attribution"></l-tile-layer>
                     <leaflet-heatmap v-if="heatmap"  @ready="geoMapCenter" :lat-lng="geoToArray" :radius="25" :blur="15" :max="0.01" :key="heatmapKey" />
@@ -214,9 +214,6 @@ export default {
         .then(deployments => {
           this.deploymentsData = deployments
         })
-        .catch(error => {
-          console.log(error.response.data.message)
-        })
     },
     getIncidentsData: function () {
       Vue.prototype.$api
@@ -224,9 +221,6 @@ export default {
         .then(r => r.data)
         .then(incidents => {
           this.incidentsData = incidents
-        })
-        .catch(error => {
-          console.log(error.response.data.message)
         })
     },
     ...mapActions('user', {

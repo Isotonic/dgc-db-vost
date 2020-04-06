@@ -93,8 +93,7 @@ export default {
         .then(incident => {
           this.incidentData = incident
         })
-        .catch(error => {
-          console.log(error)
+        .catch(_ => {
           router.push({ name: 'pageNotFound' })
         })
     },

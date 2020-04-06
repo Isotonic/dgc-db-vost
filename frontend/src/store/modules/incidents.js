@@ -48,7 +48,6 @@ const actions = {
     }
   },
   fetchAll ({ commit }, deploymentId) {
-    console.log(Vue.prototype.$api.defaults.headers['Authorization'])
     Vue.prototype.$api
       .get(`deployments/${deploymentId}/incidents`)
       .then(r => r.data)
@@ -56,8 +55,7 @@ const actions = {
         commit('setIncidents', incidents)
         commit('setLoaded', true)
       })
-      .catch(error => {
-        console.log(error.response.data.message)
+      .catch(_ => {
         router.push({ name: 'pageNotFound' })
       })
   },
@@ -70,9 +68,6 @@ const actions = {
           commit('setActionsRequired', actionsRequired)
           commit('setActionsRequiredLoaded', true)
         })
-        .catch(error => {
-          console.log(error.response.data.message)
-        })
     }
   },
   refetch ({ state, commit, rootGetters }) {
@@ -81,10 +76,6 @@ const actions = {
       .then(r => r.data)
       .then(incidents => {
         commit('setIncidents', incidents)
-        console.log('Refected incidents')
-      })
-      .catch(error => {
-        console.log(error.response.data.message)
       })
     if (rootGetters['user/hasPermission']('supervisor')) {
       Vue.prototype.$api
@@ -92,10 +83,6 @@ const actions = {
         .then(r => r.data)
         .then(actionsRequired => {
           commit('setActionsRequired', actionsRequired)
-          console.log('Refected required actions')
-        })
-        .catch(error => {
-          console.log(error.response.data.message)
         })
     }
   },
@@ -121,14 +108,12 @@ const mutations = {
     state.actionsRequired = actionsRequired
   },
   SOCKET_INCIDENT_ACTIVITY (state, data) {
-    console.log('Recieved incident activity event')
     const incident = state.incidents.find(incident => incident.id === data.id)
     if (incident) {
       incident.activity.push(data.activity)
     }
   },
   SOCKET_TASK_ACTIVITY (state, data) {
-    console.log('Recieved task activity event')
     const incident = state.incidents.find(incident => incident.id === data.incidentId)
     if (incident) {
       const task = incident.tasks.find(task => task.id === data.id)
@@ -138,25 +123,21 @@ const mutations = {
     }
   },
   SOCKET_NEW_INCIDENT (state, data) {
-    console.log('Recieved incident event')
     state.incidents.push(data.incident)
   },
   SOCKET_NEW_COMMENT (state, data) {
-    console.log('Recieved comment event')
     const incident = state.incidents.find(incident => incident.id === data.id)
     if (incident) {
       incident.comments.push(data.comment)
     }
   },
   SOCKET_NEW_TASK (state, data) {
-    console.log('Recieved task event')
     const incident = state.incidents.find(incident => incident.id === data.id)
     if (incident) {
       incident.tasks.push(data.task)
     }
   },
   SOCKET_NEW_TASK_COMMENT (state, data) {
-    console.log('Recieved task comment event')
     const incident = state.incidents.find(incident => incident.id === data.incidentId)
     if (incident) {
       const task = incident.tasks.find(task => task.id === data.id)
@@ -166,7 +147,6 @@ const mutations = {
     }
   },
   SOCKET_NEW_SUBTASK (state, data) {
-    console.log('Recieved subtask event')
     const incident = state.incidents.find(incident => incident.id === data.incidentId)
     if (incident) {
       const task = incident.tasks.find(task => task.id === data.id)
@@ -176,18 +156,15 @@ const mutations = {
     }
   },
   SOCKET_NEW_ACTION_REQUIRED (state, data) {
-    console.log('Recieved action required event')
     state.actionsRequired.push(data.action)
   },
   SOCKET_CHANGE_PIN (state, data) {
-    console.log('Recieved pin event')
     const incident = state.incidents.find(incident => incident.id === data.id)
     if (incident) {
       incident.pinned = data.pinned
     }
   },
   SOCKET_CHANGE_INCIDENT_DETAILS (state, data) {
-    console.log('Recieved details event')
     const incident = state.incidents.find(incident => incident.id === data.id)
     if (incident) {
       incident.name = data.name
@@ -200,14 +177,12 @@ const mutations = {
     }
   },
   SOCKET_CHANGE_INCIDENT_STATUS (state, data) {
-    console.log('Recieved status event')
     const incident = state.incidents.find(incident => incident.id === data.id)
     if (incident) {
       incident.open = data.open
     }
   },
   SOCKET_CHANGE_INCIDENT_ALLOCATION (state, data) {
-    console.log('Recieved allocated to event')
     const incident = state.incidents.find(incident => incident.id === data.id)
     if (incident) {
       incident.assignedTo = data.assignedTo
@@ -216,14 +191,12 @@ const mutations = {
     }
   },
   SOCKET_CHANGE_INCIDENT_PRIORITY (state, data) {
-    console.log('Recieved priority event')
     const incident = state.incidents.find(incident => incident.id === data.id)
     if (incident) {
       incident.priority = data.priority
     }
   },
   SOCKET_CHANGE_INCIDENT_PUBLIC (state, data) {
-    console.log('Recieved public event')
     const incident = state.incidents.find(incident => incident.id === data.id)
     if (incident) {
       incident.public = data.public
@@ -232,14 +205,12 @@ const mutations = {
     }
   },
   SOCKET_CHANGE_INCIDENT_LOCATION (state, data) {
-    console.log('Recieved location event')
     const incident = state.incidents.find(incident => incident.id === data.id)
     if (incident) {
       incident.location = data.location
     }
   },
   SOCKET_CHANGE_COMMENT_PUBLIC (state, data) {
-    console.log('Recieved comment public event')
     const incident = state.incidents.find(incident => incident.id === data.incidentId)
     if (incident) {
       const comment = incident.comments.find(comment => comment.id === data.id)
@@ -249,7 +220,6 @@ const mutations = {
     }
   },
   SOCKET_CHANGE_COMMENT_TEXT (state, data) {
-    console.log('Recieved comment text event')
     const incident = state.incidents.find(incident => incident.id === data.incidentId)
     if (incident) {
       const comment = incident.comments.find(comment => comment.id === data.id)
@@ -260,7 +230,6 @@ const mutations = {
     }
   },
   SOCKET_CHANGE_TASK_STATUS (state, data) {
-    console.log('Recieved task status event')
     const incident = state.incidents.find(incident => incident.id === data.incidentId)
     if (incident) {
       const task = incident.tasks.find(task => task.id === data.id)
@@ -270,8 +239,16 @@ const mutations = {
       }
     }
   },
+  SOCKET_CHANGE_TASK_NAME (state, data) {
+    const incident = state.incidents.find(incident => incident.id === data.incidentId)
+    if (incident) {
+      const task = incident.tasks.find(task => task.id === data.id)
+      if (task) {
+        task.name = data.name
+      }
+    }
+  },
   SOCKET_CHANGE_TASK_DESCRIPTION (state, data) {
-    console.log('Recieved task description event')
     const incident = state.incidents.find(incident => incident.id === data.incidentId)
     if (incident) {
       const task = incident.tasks.find(task => task.id === data.id)
@@ -281,7 +258,6 @@ const mutations = {
     }
   },
   SOCKET_CHANGE_TASK_TAGS (state, data) {
-    console.log('Recieved task tags event')
     const incident = state.incidents.find(incident => incident.id === data.incidentId)
     if (incident) {
       const task = incident.tasks.find(task => task.id === data.id)
@@ -291,7 +267,6 @@ const mutations = {
     }
   },
   SOCKET_CHANGE_TASK_ASSIGNED (state, data) {
-    console.log('Recieved task assigned event')
     const incident = state.incidents.find(incident => incident.id === data.incidentId)
     if (incident) {
       const task = incident.tasks.find(task => task.id === data.id)
@@ -301,7 +276,6 @@ const mutations = {
     }
   },
   SOCKET_CHANGE_TASK_COMMENT_TEXT (state, data) {
-    console.log('Recieved task comment event')
     const incident = state.incidents.find(incident => incident.id === data.incidentId)
     if (incident) {
       const task = incident.tasks.find(task => task.id === data.taskId)
@@ -315,7 +289,6 @@ const mutations = {
     }
   },
   SOCKET_CHANGE_SUBTASK_STATUS (state, data) {
-    console.log('Recieved subtask status event')
     const incident = state.incidents.find(incident => incident.id === data.incidentId)
     if (incident) {
       const task = incident.tasks.find(task => task.id === data.taskId)
@@ -329,16 +302,12 @@ const mutations = {
     }
   },
   SOCKET_CHANGE_SUBTASK_EDIT (state, data) {
-    console.log('Recieved task edit event')
     const incident = state.incidents.find(incident => incident.id === data.incidentId)
     if (incident) {
-      console.log(543)
       const task = incident.tasks.find(task => task.id === data.taskId)
       if (task) {
-        console.log(45365)
         const subtask = task.subtasks.find(subtask => subtask.id === data.id)
         if (subtask) {
-          console.log(435)
           subtask.name = data.name
           subtask.assignedTo = data.assignedTo
         }
@@ -346,25 +315,21 @@ const mutations = {
     }
   },
   SOCKET_REMOVE_INCIDENT (state, data) {
-    console.log('Recieved remove incident event')
     state.incidents = state.incidents.filter(incident => incident.id !== data.id)
   },
   SOCKET_DELETE_COMMENT (state, data) {
-    console.log('Recieved comment delete event')
     const incident = state.incidents.find(incident => incident.id === data.incidentId)
     if (incident) {
       incident.comments = incident.comments.filter(comment => comment.id !== data.id)
     }
   },
   SOCKET_DELETE_TASK (state, data) {
-    console.log('Recieved task delete event')
     const incident = state.incidents.find(incident => incident.id === data.incidentId)
     if (incident) {
       incident.tasks = incident.tasks.filter(task => task.id !== data.id)
     }
   },
   SOCKET_DELETE_TASK_COMMENT (state, data) {
-    console.log('Recieved task comment delete event')
     const incident = state.incidents.find(incident => incident.id === data.incidentId)
     if (incident) {
       const task = incident.tasks.find(task => task.id === data.taskId)
@@ -374,7 +339,6 @@ const mutations = {
     }
   },
   SOCKET_DELETE_SUBTASK (state, data) {
-    console.log('Recieved subtask delete event')
     const incident = state.incidents.find(incident => incident.id === data.incidentId)
     if (incident) {
       const task = incident.tasks.find(task => task.id === data.taskId)
@@ -384,7 +348,6 @@ const mutations = {
     }
   },
   SOCKET_DELETE_ACTION_REQUIRED (state, data) {
-    console.log('Recieved action delete event')
     state.actionsRequired = state.actionsRequired.filter(action => action.id !== data.id)
   },
   destroy (state) {

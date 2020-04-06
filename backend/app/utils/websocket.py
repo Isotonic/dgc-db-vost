@@ -1,7 +1,6 @@
 from flask_socketio import emit
 from ..websockets import assigned_rooms
 
-
 def emit_incident(name, data, incident):
     deployment_id = incident.deployment_id
     emit(name, data, namespace='/', room=f'{deployment_id}-all')

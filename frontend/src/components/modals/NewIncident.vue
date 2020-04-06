@@ -6,7 +6,7 @@
       </div>
       <textarea-autosize v-model="description" class="form-control" rows="3" placeholder="Description" required/>
       <div class="form-group my-3">
-        <select v-model="type" class="custom-select custom-select-sm full-length">
+        <select v-model="type" class="custom-select custom-select-sm full-length" required>
           <option :value="null" disabled>Select the type of incident</option>
           <optgroup label="Transport Disruption">
             <option value="Road Incident"><i class="fas fa-car"></i> Road Obstruction / Closure / Disruption</option>
@@ -155,7 +155,6 @@ export default {
         this.locationNotSet = true
         return
       }
-      console.log(this.location)
       Vue.prototype.$api
         .post(`deployments/${this.deploymentId}`, { name: this.name, description: this.description, type: this.type, reportedVia: this.reportedVia, reference: this.reference, address: this.address, longitude: this.location[0], latitude: this.location[1] })
         .then(r => r.data)

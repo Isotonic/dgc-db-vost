@@ -35,7 +35,6 @@
 </template>
 
 <script>
-// TODO Fix clicking avatars firing
 import TextHighlight from 'vue-text-highlight'
 
 import UserModal from '@/components/modals/User'

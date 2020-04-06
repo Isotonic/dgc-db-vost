@@ -7,6 +7,17 @@
             <i class="fas fa-align-left mr-2"></i>
             <span class="font-weight-bold"> Description</span>
             <div class="float-right">
+              <b-dropdown id="ChangeTaskNameDropdown" size="xs" right menu-class="mt-3 width-15" variant="link" toggle-tag="div" offset="100" @shown="openedTaskNameDropdown" @hidden="closedTaskNameDropdown">
+                <template slot="button-content">
+                  <a class="fas fa-edit mr-3 text-black hover-primary" aria-haspopup="true" v-tooltip="'Change Task Name'"></a>
+                </template>
+                <h6 class="text-primary text-center font-weight-bold">Change Task Name</h6>
+                <b-dropdown-divider />
+                <div class="pl-1 pr-1">
+                  <input v-model="changeTaskName" class="form-control mb-2 mt-3" placeholder="Task name" type="text" required>
+                  <i v-if="changeTaskName !== task.name" id="reset-task-name" class="fa fa-times" @click="changeTaskName = task.name"/>
+                </div>
+              </b-dropdown>
               <b-dropdown id="ChangeAssignedDropdown" size="xs" right menu-class="mt-3 width-15" variant="link" toggle-tag="div" offset="100" @shown="openedAssignedDropdown" @hidden="closedAssignedDropdown">
                 <template slot="button-content">
                   <a class="fas fa-users-cog mr-3 text-black hover-primary" aria-haspopup="true" v-tooltip="'Change Assigned'"></a>
@@ -147,6 +158,7 @@ export default {
       isSelectLoading: false,
       isHandlingAssigned: false,
       isHandlingTags: false,
+      changeTaskName: '',
       newDescription: '',
       newComment: '',
       tagsSelected: [],
@@ -181,6 +193,14 @@ export default {
           .catch(() => { this.isHandlingAssigned = false })
       } else {
         this.isHandlingAssigned = false
+      }
+    },
+    openedTaskNameDropdown () {
+      this.changeTaskName = this.task.name
+    },
+    closedTaskNameDropdown () {
+      if (this.changeTaskName !== this.task.name) {
+        this.ApiPut(`tasks/${this.task.id}/name`, { name: this.changeTaskName })
       }
     },
     addTag (newTag) {

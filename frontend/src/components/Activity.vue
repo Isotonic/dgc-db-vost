@@ -51,6 +51,7 @@ const actionStrings = {
   'edit_comment': 'edited update',
   'edit_subtask': 'edited subtask ${extra}',
   'flag_user': 'flagged to ${targetUsers} with reason "${extra}"',
+  'changed_task_name': 'changed task name from ${extra}',
   'changed_task_tags': 'changed tags for ${task}',
   'edit_task_comment': 'edited comment in ${task}',
   'delete_task_comment': 'deleted comment in ${task}',

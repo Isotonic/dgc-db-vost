@@ -1,7 +1,7 @@
 <template>
   <modal :title="'Account Settings'" :bigger="true" :bgLight="true" @close="close">
     <div>
-      <img alt="Avatar" :src="$developmentMode ? `http://localhost:5000${user.avatarUrl}?${cacheFix}` : user.avatarUrl + cacheFix" class="rounded-circle avatar card-img avatar-lg">
+      <img alt="Avatar" :src="$developmentMode ? `http://localhost:5000${user.avatarUrl}` : user.avatarUrl" class="rounded-circle avatar card-img avatar-lg">
       <span class="h4 font-weight-bold ml-4">{{ user.firstname }} {{ user.surname }}{{ user.group ? ' - ' + user.group.name : '' }}</span>
     </div>
     <div class="mt-3">
@@ -78,7 +78,6 @@ export default {
       formData.append('file', selectedFile, selectedFile.name)
       this.ApiPost('/users/avatar', formData)
         .then(() => {
-          this.cacheFix += 1
           Vue.noty.success('Successfully changed avatar')
         })
         .catch((error) => {
@@ -88,7 +87,6 @@ export default {
     deleteImage () {
       this.ApiDelete('/users/avatar')
         .then(() => {
-          this.cacheFix += 1
           Vue.noty.success('Successfully deleted avatar')
         })
         .catch((error) => {

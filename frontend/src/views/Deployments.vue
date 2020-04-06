@@ -89,9 +89,6 @@ export default {
         .then(users => {
           this.users = users
         })
-        .catch((error) => {
-          console.log(error)
-        })
     },
     getGroups () {
       Vue.prototype.$api
@@ -99,9 +96,6 @@ export default {
         .then(r => r.data)
         .then(groups => {
           this.groups = groups
-        })
-        .catch((error) => {
-          console.log(error)
         })
     },
     ...mapActions('sockets', {

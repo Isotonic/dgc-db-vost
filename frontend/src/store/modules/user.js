@@ -33,7 +33,7 @@ const getters = {
     if (!state.user) {
       return false
     }
-    return state.user.group && (state.user.group.permissions.includes('supervisor') || state.user.group.permissions.includes(permission))
+    return state.user.status > 1 || (state.user.group && (state.user.group.permissions.includes('supervisor') || state.user.group.permissions.includes(permission)))
   }
 }
 
@@ -48,9 +48,6 @@ const actions = {
           if (deploymentId !== null) {
             dispatch('checkActionsRequired', deploymentId)
           }
-        })
-        .catch(error => {
-          console.log(error.response.data.message)
         })
     } else if (deploymentId !== null) {
       dispatch('checkActionsRequired', deploymentId)
@@ -67,10 +64,6 @@ const actions = {
       .then(r => r.data)
       .then(user => {
         commit('setUser', user)
-        console.log('Refetched user')
-      })
-      .catch(error => {
-        console.log(error.response.data.message)
       })
   },
   login ({ commit, dispatch }, [email, password]) {
@@ -93,7 +86,6 @@ const actions = {
           resolve()
         })
         .catch(error => {
-          console.log(error)
           reject(error)
         })
     })
@@ -104,18 +96,15 @@ const actions = {
         .get('auth/refresh-access', { headers: { 'Authorization': `Bearer ${state.refreshToken}` } })
         .then(r => r.data)
         .then(tokens => {
-          console.log(tokens)
           commit('setAccessToken', tokens.access_token)
           commit('setRefreshToken', tokens.refresh_token)
           dispatch('checkLoaded')
           if (!rootGetters['sockets/isConnected']) {
-            console.log('Retrying websocket')
             dispatch('sockets/connect', null, { root: true })
           }
           resolve()
         })
         .catch((error) => {
-          console.log(error)
           reject(error)
         })
     })
@@ -135,7 +124,6 @@ const actions = {
     commit('setRefreshToken', refreshToken)
   },
   socket_newNotification ({ commit }, data) {
-    console.log('Recieved notification event')
     commit('addNewNotification', data)
     if (data.type === 'assigned_incident') {
       Vue.noty.success(`You have been assigned to ${data.incidentName}.`)
@@ -181,7 +169,6 @@ const mutations = {
     localStorage.accessToken = value
     state.accessToken = value
     Vue.prototype.$api.defaults.headers['Authorization'] = `Bearer ${value}`
-    console.log(Vue.prototype.$api.defaults.headers)
   },
   setRefreshToken (state, value) {
     localStorage.refreshToken = value
@@ -199,12 +186,13 @@ const mutations = {
   addNewNotification (state, notification) {
     state.user.notifications.push(notification)
   },
+  SOCKET_CHANGE_USER_AVATAR (state, data) {
+    state.user.avatarUrl = `${data.avatarUrl}?${new Date().getTime()}`
+  },
   SOCKET_DELETE_NOTIFICATION (state, data) {
-    console.log('Recieved delete notification event')
     state.user.notifications = state.user.notifications.filter(notification => notification.id !== data.id)
   },
   SOCKET_DELETE_ALL_NOTIFICATIONS (state) {
-    console.log('Recieved delete all notifications event')
     state.user.notifications = []
   },
   deleteAccessToken (state) {

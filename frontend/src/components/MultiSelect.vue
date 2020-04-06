@@ -48,13 +48,12 @@ export default {
       .then(data => {
         this.selectOptions = data
         const noGroupUsers = this.getDeploymentUsers.filter(user => !user.group)
-        if (noGroupUsers) { // TODO Test
+        if (noGroupUsers) {
           this.selectOptions.push({ name: 'No Group', users: [noGroupUsers] })
         }
       })
       .catch(error => {
-        console.log(error.response.data.message)
-        // Vue.noty.error(error.response.data.message)
+        Vue.noty.error(error.response.data.message)
       })
     this.isSelectLoading = false
   }

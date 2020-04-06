@@ -31,9 +31,6 @@ const actions = {
       .then(deployments => {
         commit('setDeployments', deployments)
       })
-      .catch(error => {
-        console.log(error.response.data.message)
-      })
   },
   refetch ({ commit }) {
     Vue.prototype.$api
@@ -41,10 +38,6 @@ const actions = {
       .then(r => r.data)
       .then(deployments => {
         commit('setDeployments', deployments)
-        console.log('Refetched deployments')
-      })
-      .catch(error => {
-        console.log(error.response.data.message)
       })
   },
   storeDestroy ({ commit }) {
@@ -60,11 +53,9 @@ const mutations = {
     state.deployments = deployments
   },
   SOCKET_NEW_DEPLOYMENT (state, data) {
-    console.log('Recieved deployment event')
     state.deployments.push(data.deployment)
   },
   SOCKET_CHANGE_DEPLOYMENT_EDIT (state, data) {
-    console.log('Recieved deployment edit event')
     const deployment = state.deployments.find(deployment => deployment.id === data.id)
     if (deployment) {
       deployment.name = data.name

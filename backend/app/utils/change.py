@@ -251,6 +251,17 @@ def change_task_status(task, status, changed_by):
                     incident=task.incident, task=task, extra=task.name)
 
 
+def change_task_name(task, name, changed_by):
+    if task.name == name:
+        return False
+    old_name = task.name
+    task.name = name
+    emit_incident('CHANGE_TASK_NAME', {'id': task.id, 'incidentId': task.incident.id, 'name': task.name, 'code': 200}, task.incident)
+    task_action(user=changed_by, action_type=TaskLog.action_values['changed_task_name'], task=task, extra=f'"{old_name}" to "{name}"')
+    incident_action(user=changed_by, action_type=IncidentLog.action_values['changed_task_name'],
+                    incident=task.incident, task=task, extra=f'"{old_name}" to "{name}"')
+
+
 def change_task_description(task, description, changed_by):
     if task.description == description:
         return False

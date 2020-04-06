@@ -48,7 +48,6 @@ const actions = {
             resolve()
           })
           .catch((error) => {
-            console.log(error)
             reject(error)
           })
       } else {
@@ -63,10 +62,6 @@ const actions = {
         .then(r => r.data)
         .then(users => {
           commit('setUsers', users)
-          console.log('Refetched users')
-        })
-        .catch((error) => {
-          console.log(error)
         })
     }
   },

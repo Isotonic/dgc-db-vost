@@ -12,7 +12,7 @@
             <div class="card">
               <div class="card-header d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 font-weight-bold text-primary">Map</h6>
-                <div class="d-flex">
+                <div>
                   <select v-if="hasPermission('view_all_incidents')" v-model="showingIncidents" class="custom-select custom-select-sm text-primary font-weight-bold">
                     <option value="all">All Incidents</option>
                     <option value="assigned">Assigned Incidents</option>
@@ -61,7 +61,7 @@
                     </div>
                   </ul>
                 </div>
-                <div v-if="hasLoaded" class="col-xl-9 col-lg-9 pl-0">
+                <div v-if="hasLoaded" class="col-lg-9 pl-0">
                   <l-map :zoom="mapSettings.zoom" class="map-container" @click="showBeacon = false" ref="map">
                     <l-tile-layer :url="mapSettings.url" :attribution="mapSettings.attribution"></l-tile-layer>
                     <leaflet-heatmap v-if="heatmap"  @ready="geoMapCenter" :lat-lng="geoToArray" :radius="25" :blur="15" :max="0.01" :key="heatmapKey" />

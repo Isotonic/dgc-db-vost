@@ -1,6 +1,7 @@
 from ..api import api
 from os import SEEK_END
 from sqlalchemy import func
+from flask_socketio import emit
 from flask_restx import reqparse
 from .utils.resource import Resource
 from .utils.namespace import Namespace
@@ -469,6 +470,7 @@ class UserTasksEndpoint(Resource):
             ns_user.abort(401, 'Image too big, must be less than 10MB')
 
         current_user.save_avatar(image)
+        emit('change_user_avatar', {'avatarUrl': current_user.get_avatar(), 'code': 200}, namespace='/', room=f'{current_user.id}')
         return current_user, 200
 
 
@@ -483,6 +485,7 @@ class UserTasksEndpoint(Resource):
         """
         current_user = User.query.filter_by(id=get_jwt_identity()).first()
         current_user.delete_avatar()
+        emit('change_user_avatar', {'avatarUrl': current_user.get_avatar(), 'code': 200}, namespace='/', room=f'{current_user.id}')
         return current_user, 200
 
 
