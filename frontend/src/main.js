@@ -30,7 +30,8 @@ Vue.use(DropdownPlugin)
 Vue.use(ClientTable)
 Vue.use(SocialSharing)
 
-const socket = io(process.env.NODE_ENV === 'development' ? 'http://localhost:5000/' : '')
+Vue.prototype.$developmentMode = process.env.NODE_ENV === 'development'
+const socket = io(Vue.prototype.$developmentMode ? 'http://localhost:5000/' : '')
 
 Vue.use(VueSocketIOExt, socket, { debug: true, store })
 
@@ -55,7 +56,7 @@ Vue.filter('formatSize', function (size) {
 
 Vue.mixin(ApiMixin)
 
-Vue.prototype.$http.defaults.baseURL = process.env.NODE_ENV === 'development' ? 'http://localhost:5000/api/' : '/api/'
+Vue.prototype.$http.defaults.baseURL = Vue.prototype.$developmentMode ? 'http://localhost:5000/api/' : '/api/'
 
 Vue.prototype.$api = Vue.prototype.$http.create({
   withCredentials: false,

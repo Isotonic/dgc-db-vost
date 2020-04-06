@@ -115,7 +115,7 @@
                 <div slot="assignedTo" slot-scope="{row}">
                   <div v-if="row.assignedTo.length" class="avatar-group">
                     <i v-for="user in row.assignedTo" :key="user.id" class="avatar avatar-sm" v-tooltip="`${user.firstname} ${user.surname}`">
-                      <img alt="Avatar" :src="user.avatarUrl" class="rounded-circle avatar-sm hover" @click="openUserModal(user)" />
+                      <img alt="Avatar" :src="$developmentMode ? `http://localhost:5000${user.avatarUrl}` : user.avatarUrl" class="rounded-circle avatar-sm hover" @click="openUserModal(user)" />
                     </i>
                   </div>
                   <div v-else>

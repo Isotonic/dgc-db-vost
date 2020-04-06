@@ -14,7 +14,7 @@
               <span class="font-weight-bold">Currently viewing: </span>
               <div class="avatar-group mr-2">
                 <i v-for="user in viewingIncident" :key="user.name" class="avatar avatar-sm" v-tooltip="`${user.firstname} ${user.surname}`">
-                  <img alt="Avatar" :src="user.avatarUrl" class="rounded-circle avatar-sm hover" @click="openUserModal(user)" />
+                  <img alt="Avatar" :src="$developmentMode ? `http://localhost:5000${user.avatarUrl}` : user.avatarUrl" class="rounded-circle avatar-sm hover" @click="openUserModal(user)" />
                 </i>
               </div>
             </div>
@@ -92,7 +92,7 @@
                     <div class="text-s font-weight-bold text-primary text-uppercase mb-1">Assigned To</div>
                     <div class="avatar-group">
                       <i v-for="user in incident.assignedTo" :key="user.name" class="avatar avatar-sm" v-tooltip="`${user.firstname} ${user.surname}`">
-                        <img alt="Avatar" :src="user.avatarUrl" class="rounded-circle avatar-sm hover" @click="openUserModal(user)" />
+                        <img alt="Avatar" :src="$developmentMode ? `http://localhost:5000${user.avatarUrl}` : user.avatarUrl" class="rounded-circle avatar-sm hover" @click="openUserModal(user)" />
                       </i>
                     </div>
                     <div v-if="!incident.assignedTo.length" class="h5 mb-0 font-weight-bold text-gray-800">Unassigned</div>
@@ -200,7 +200,7 @@
                 <p class="card-text"><b>Description:</b> {{ incident.description }}</p>
                 <p class="card-text"><b>Location:</b> {{ incident.location.properties.address }}</p>
                 <p class="card-text"><b>Reported Via:</b> {{ incident.reportedVia ? incident.reportedVia : 'N/A' }}</p>
-                <p class="card-text"><b>Logged by:</b> <span class="text-primary">{{ incident.loggedBy.firstname }} {{ incident.loggedBy.surname }}</span></p>
+                <p class="card-text"><b>Logged by:</b> <span class="text-primary hover" @click="openUserModal(incident.loggedBy)">{{ incident.loggedBy.firstname }} {{ incident.loggedBy.surname }}</span></p>
                 <p v-if="incident.linkedIncidents.length" class="card-text"><b>Linked Incidents: </b>
                   <span v-for="(linkedIncident, index) in incident.linkedIncidents" :key="linkedIncident.id">
                     <span v-if="incident.linkedIncidents.length > 1 && index === incident.linkedIncidents.length-1"> and </span>
@@ -265,7 +265,7 @@
                 <vcl-bullet-list v-if="!incident" :rows="3" />
                 <p v-else-if="incident && !incident.comments.length" class="card-text font-weight-bold text-center mb-3">No updates currently.</p>
                 <ul v-else class="list-unstyled">
-                  <comment v-for="comment in orderBy(incident.comments, 'sentAt')" :key="comment.id" :comment="comment" :incident="incident" @showCommentBox="showCommentBox"></comment>
+                  <comment v-for="comment in orderBy(incident.comments, 'sentAt')" :key="comment.id" :comment="comment" :incident="incident" :deploymentName="deploymentName" :deploymentId="deploymentId" @showCommentBox="showCommentBox" />
                 </ul>
                 <comment-box v-if="incident" v-show="commentBoxVisible" @submitComment="submitComment" ref="commentBox" />
               </div>

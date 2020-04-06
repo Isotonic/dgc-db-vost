@@ -2,6 +2,7 @@ from flask import Flask
 from config import Config
 from flask_mail import Mail
 from flask_cors import CORS
+from os import path, makedirs
 from flask_restx import abort
 from flask_argon2 import Argon2
 from flask_migrate import Migrate
@@ -37,5 +38,14 @@ argon2 = Argon2(app)
 from .api import api_blueprint
 app.register_blueprint(api_blueprint, url_prefix='/api')
 
+try:
+    if not path.exists(f'./app/static'):
+        makedirs(f'./app/static')
+    if not path.exists(f'./app/static/img'):
+        makedirs(f'./app/static/img')
+    if not path.exists(f'./app/static/img/avatars'):
+        makedirs(f'./app/static/img/avatars')
+except:
+    pass
+
 from app import websockets, models
-login.login_view = 'login'

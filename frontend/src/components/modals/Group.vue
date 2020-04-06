@@ -8,7 +8,6 @@
         <span class="font-weight-bold text-primary">Permissions:</span>
         <checkbox class="mt-2" v-model="supervisor" :text="'Supervisor'" :extra="'Admin access with full control, inherits all other permissions.'" />
         <checkbox v-model="create_deployment" :text="'Create Deployments'" :extra="'Create new deployments and edit existing ones.'" />
-        <checkbox v-model="decision_making_log" :text="'Decision-Making Log'" :extra="'Add new entries to the decision-making log.'" />
         <checkbox v-model="view_all_incidents" :text="'View All Incidents'" :extra="'View incidents even if not assigned.'" />
         <checkbox v-model="change_priority" :text="'Change Priority'" :extra="'Change an incident\'s priority.'" />
         <checkbox v-model="change_status" :text="'Change Status'" :extra="'Change an incident\'s open status.'" />
@@ -48,7 +47,6 @@ export default {
       name: '',
       supervisor: false,
       create_deployment: false,
-      decision_making_log: false,
       view_all_incidents: false,
       change_priority: false,
       change_status: false,
@@ -71,7 +69,6 @@ export default {
             this.$emit('close')
             this.supervisor = false
             this.create_deployment = false
-            this.decision_making_log = false
             this.view_all_incidents = false
             this.change_priority = false
             this.change_status = false
@@ -98,7 +95,6 @@ export default {
       return !(this.name === this.group.name &&
       this.supervisor === this.group.permissions.includes('supervisor') &&
       this.create_deployment === this.group.permissions.includes('create_deployment') &&
-      this.decision_making_log === this.group.permissions.includes('decision_making_log') &&
       this.view_all_incidents === this.group.permissions.includes('view_all_incidents') &&
       this.change_priority === this.group.permissions.includes('change_priority') &&
       this.change_status === this.group.permissions.includes('change_status') &&
@@ -109,7 +105,6 @@ export default {
       return { name: this.name,
         supervisor: this.supervisor,
         create_deployment: this.create_deployment,
-        decision_making_log: this.decision_making_log,
         view_all_incidents: this.view_all_incidents,
         change_priority: this.change_priority,
         change_status: this.change_status,
@@ -123,7 +118,6 @@ export default {
       this.name = this.group.name
       this.supervisor = this.group.permissions.includes('supervisor')
       this.create_deployment = this.group.permissions.includes('create_deployment')
-      this.decision_making_log = this.group.permissions.includes('decision_making_log')
       this.view_all_incidents = this.group.permissions.includes('view_all_incidents')
       this.change_priority = this.group.permissions.includes('change_priority')
       this.change_status = this.group.permissions.includes('change_status')

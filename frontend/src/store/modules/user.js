@@ -141,6 +141,14 @@ const actions = {
       Vue.noty.success(`You have been assigned to ${data.incidentName}.`)
     } else if (data.type === 'unassigned_incident') {
       Vue.noty.error(`You have been unassigned from ${data.incidentName}.`)
+    } else if (data.type === 'assigned_task') {
+      Vue.noty.success(`You have been assigned to task ${data.taskName}.`)
+    } else if (data.type === 'unassigned_task') {
+      Vue.noty.error(`You have been unassigned from task ${data.taskName}.`)
+    } else if (data.type === 'assigned_subtask') {
+      Vue.noty.success(`You have been assigned to subtask ${data.subtaskName}.`)
+    } else if (data.type === 'unassigned_subtask') {
+      Vue.noty.error(`You have been unassigned from subtask ${data.subtaskName}.`)
     } else if (data.type === 'flagged_incident') {
       Vue.noty.error(`${data.triggeredBy.firstname} ${data.triggeredBy.surname} has flagged ${data.incidentName} with reason: ${data.reason}.`)
     }

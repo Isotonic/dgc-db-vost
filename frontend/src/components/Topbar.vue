@@ -47,7 +47,7 @@
           </span>
           <a v-for="notification in orderBy(user.notifications, 'occurredAt', -1)" :key="notification.id" class="dropdown-item d-flex align-items-center" @click="goToNotification(notification)">
             <div class="mr-3">
-              <img alt="Avatar" :src="notification.triggeredBy.avatarUrl" class="rounded-circle avatar-md hover" />
+              <img alt="Avatar" :src="$developmentMode ? `http://localhost:5000${notification.triggeredBy.avatarUrl}` : notification.triggeredBy.avatarUrl" class="rounded-circle avatar-md hover" />
             </div>
             <div>
               <div class="small text-gray-500">{{ notification.occurredAt | moment("from", "now") }}</div>
@@ -55,7 +55,7 @@
                 <span class="font-weight-bold">{{ notification.triggeredBy.firstname }} {{ notification.triggeredBy.surname }}</span> has flagged <span class="font-weight-bold">{{ notification.incidentName }} with reason:</span><span> {{ notification.reason }}</span>
               </div>
               <div v-else>
-                <span class="font-weight-bold">{{ notification.triggeredBy.firstname }} {{ notification.triggeredBy.surname }}</span> {{ notificationType(notification.type) }} <span class="font-weight-bold">{{ notification.incidentName }}.</span>
+                <span class="font-weight-bold">{{ notification.triggeredBy.firstname }} {{ notification.triggeredBy.surname }}</span> {{ notificationType(notification.type) }} <span class="font-weight-bold">{{ nameType(notification) }}.</span>
               </div>
             </div>
           </a>
@@ -67,7 +67,7 @@
         <template slot="button-content">
             <a class="nav-link">
               <span class="mr-2 d-none d-lg-inline text-gray-600 small">{{ name }}</span>
-              <img class="img-profile rounded-circle" :src="avatarUrl">
+              <img class="img-profile rounded-circle" :src="$developmentMode ? `http://localhost:5000${avatarUrl}` : avatarUrl">
             </a>
         </template>
         <b-dropdown-item @click="isAccountSettingsModalVisible = true"><i class="fas fa-cogs fa-sm fa-fw mr-2 text-gray-400"></i>Account</b-dropdown-item>
@@ -92,8 +92,12 @@ import IncidentCard from '@/components/IncidentCard'
 import AccountSettingsModal from '@/components/modals/AccountSettings'
 
 const typeStrings = {
+  'assigned_incident': 'has assigned you to',
   'unassigned_incident': 'has unassigned you from',
-  'assigned_incident': 'has assigned you to'
+  'assigned_task': 'has assigned you to task',
+  'unassigned_task': 'has unassigned you from task',
+  'assigned_subtask': 'has assigned you to subtask',
+  'unassigned_subtask': 'has unassigned you from subtask'
 }
 
 export default {
@@ -161,6 +165,15 @@ export default {
     },
     notificationType: function (type) {
       return typeStrings[type]
+    },
+    nameType: function (notification) {
+      if (notification.subtaskName !== null) {
+        return notification.subtaskName
+      } else if (notification.taskName !== null) {
+        return notification.taskName
+      } else {
+        return notification.incidentName
+      }
     },
     logout: function () {
       this.$store.dispatch('user/logout')

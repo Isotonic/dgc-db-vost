@@ -16,7 +16,7 @@ class LoginEndpoint(Resource):
     def post(self):
         """
                 Returns an access and refresh token, as well as their expiry dates, the tokens are JWT so can be decoded for more info
-                'access_token' is needed for all other endpoints and has a lifetime of 20 mins.
+                'access_token' is needed for all other endpoints and has a lifetime of 30 mins.
                 'refresh_token' is needed to refresh your access token once it has expired, it has a lifetime of 2 days.
         """
         user = User.query.filter(func.lower(User.email) == func.lower(api.payload['email'])).first()

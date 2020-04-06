@@ -4,9 +4,9 @@ from flask_restx import marshal
 from flask_socketio import emit
 from .websocket import emit_incident
 from .supervisor import new_incident
-from .change import change_task_status
 from .notification import new_notification
 from .actions import audit_action, incident_action, task_action
+from .change import change_task_status, change_incident_allocation, change_task_assigned
 from ..api.utils.models import user_admin_panel_model, group_model, deployment_model, comment_model, task_model, task_comment_model, subtask_model
 from app.models import User, Group, Deployment, Incident, IncidentTask, IncidentSubTask, TaskComment, IncidentComment, EmailLink, AuditLog, IncidentLog, TaskLog
 
@@ -95,9 +95,12 @@ def create_task(name, users, description, incident, created_by):
     db.session.add(task)
     db.session.commit()
     task_marshalled = marshal(task, task_model)
+    if any([m for m in users if m not in incident.assigned_to]):
+        change_incident_allocation(incident, users + incident.assigned_to, created_by, False)
     emit_incident('NEW_TASK', {'id': incident.id, 'task': task_marshalled, 'code': 200}, incident)
     incident_action(user=created_by, action_type=IncidentLog.action_values['create_task'],
                    incident=incident, task=task, target_users=users)
+    new_notification(users, None, 'assigned_task', incident, task, None, created_by)
     return task
 
 
@@ -108,11 +111,16 @@ def create_subtask(name, users, task, created_by):
     db.session.add(task)
     db.session.commit()
     subtask_marshalled = marshal(subtask, subtask_model)
+    if any([m for m in users if m not in task.incident.assigned_to]):
+        change_incident_allocation(task.incident, users + task.incident.assigned_to, created_by, False)
+    if any([m for m in users if m not in task.assigned_to]):
+        change_task_assigned(task, users + task.assigned_to, created_by, False)
     emit_incident('NEW_SUBTASK', {'id': task.id, 'incidentId': task.incident.id, 'subtask': subtask_marshalled, 'code': 200}, task.incident)
     task_action(user=created_by, action_type=TaskLog.action_values['create_subtask'], task=task, subtask=subtask, target_users=users)
     incident_action(user=created_by, action_type=IncidentLog.action_values['create_subtask'], incident=task.incident, task=task, extra=subtask.name)
-    if len([m for m in task.subtasks if m.completed]) != len(task.subtasks) and  task.completed:
+    if len([m for m in task.subtasks if m.completed]) != len(task.subtasks) and task.completed:
         change_task_status(task, False, created_by)
+    new_notification(users, None, 'assigned_subtask', task.incident, task, subtask, created_by)
     return task
 
 
@@ -131,5 +139,5 @@ def create_task_comment(text, task, added_by):
 
 
 def flag_to_user(incident, user, reason, flagged_by):
-    new_notification([user], reason, 'flagged_incident', incident, flagged_by)
+    new_notification([user], reason, 'flagged_incident', incident, None, None, flagged_by)
     incident_action(user=flagged_by, action_type=IncidentLog.action_values['flag_user'], target_users=[user], incident=incident, extra=reason)

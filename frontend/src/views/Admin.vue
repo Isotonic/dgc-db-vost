@@ -18,7 +18,7 @@
           <div class="col-xl-12 col-lg-10">
             <div class="card shadow mb-4">
               <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                <h6 class="m-0 font-weight-bold text-primary">Incidents</h6>
+                <h6 class="m-0 font-weight-bold text-primary">Admin</h6>
                 <select v-model="showingUsers" class="custom-select custom-select-sm text-primary font-weight-bold">
                   <option :value="true">Users</option>
                   <option :value="false">Groups</option>

@@ -1031,6 +1031,7 @@ a.btn.disabled, fieldset:disabled a.btn {
   border-color: #0061f2
 }
 
+.upload-btn-wrapper:hover >.btn-primary,
 .btn-primary:hover {
   color: #fff;
   background-color: #2e59d9;
@@ -1277,7 +1278,7 @@ a.btn.disabled, fieldset:disabled a.btn {
 .btn-m, .btn-sm {
   font-size: .875rem;
   line-height: 1.5;
-  border-radius: .2rem
+  border-radius: .35rem
 }
 
 .btn-m {
@@ -3973,6 +3974,13 @@ form.user .btn-user {
   display: inline-block
 }
 
+.avatar-lg {
+  width: 96px;
+  height: 96px;
+  font-size: .875rem;
+  display: inline-block
+}
+
 .avatar-group .avatar {
   position: relative;
   z-index: 2
@@ -5323,4 +5331,22 @@ div .marker {
 .notifications {
   overflow-y: scroll;
   max-height: 300px;
+}
+
+.p-absolute {
+  position: absolute;
+}
+
+.upload-btn-wrapper {
+  position: relative;
+  overflow: hidden;
+  display: inline-block;
+}
+
+.upload-btn-wrapper input[type=file] {
+  font-size: 100px;
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0;
 }

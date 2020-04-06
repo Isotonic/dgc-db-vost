@@ -4,7 +4,7 @@
       <div class="media">
         <div>
           <i>
-            <img class="media-object rounded-circle hover" :src="action.user.avatarUrl" alt="Avatar" @click="openUserModal(action.user.id)" />
+            <img class="media-object rounded-circle hover" :src="$developmentMode ? `http://localhost:5000${action.user.avatarUrl}` : action.user.avatarUrl" alt="Avatar" @click="openUserModal(action.user.id)" />
           </i>
         </div>
         <div class="media-body">
@@ -30,7 +30,7 @@ const actionStrings = {
   'delete_subtask': 'deleted ${extra}',
   'changed_description': 'changed task description from ${extra}',
   'assigned_user': 'added ${targetUsers} to task',
-  'removed_user': 'removed ${targetUsers} from task',
+  'unassigned_user': 'removed ${targetUsers} from task',
   'incomplete_subtask': 'marked ${subtask} as incomplete',
   'add_comment': 'added comment to task',
   'edit_subtask': 'edited subtask ${subtask}',

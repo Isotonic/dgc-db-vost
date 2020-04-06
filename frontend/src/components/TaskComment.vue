@@ -1,9 +1,9 @@
 <template>
   <comment-box v-if="this.editor.options.editable" :editing="true" :existingContent="parseText" @cancelEdit="cancelEdit" @editComment="editComment" />
   <li v-else :class="['update-log', comment.editedAt ? 'update-edited-margin' : 'update-margin']">
-    <div class="update-log-avatar">
+    <div class="update-log-avatar hover" @click="openUserModal(comment.user.id)">
       <i>
-        <img class="media-object rounded-circle" :src="comment.user.avatarUrl" alt="Avatar">
+        <img class="media-object rounded-circle" :src="$developmentMode ? `http://localhost:5000${comment.user.avatarUrl}` : comment.user.avatarUrl" alt="Avatar">
       </i>
       <div class="update-log-name text-muted">{{ comment.user.firstname }} {{ comment.user.surname }}</div>
     </div>
@@ -31,12 +31,14 @@
         <div class="editor__content comment-public-text mt-3" v-html="editor.getHTML()" />
       </template>
     </question-modal>
+    <user-modal v-if="isUserModalVisible" v-show="isUserModalVisible" :visible="isUserModalVisible" :deploymentName="deploymentName" :deploymentId="deploymentId" :currentIncidentId="incidentId" :userProp="comment.user" @close="handleUserModalClose" />
   </li>
 </template>
 
 <script>
 import CommentBox from './CommentBox'
 import QuestionModal from './modals/Question'
+import UserModal from './modals/User'
 
 import { Editor, EditorContent } from 'tiptap'
 import {
@@ -63,10 +65,14 @@ export default {
   components: {
     CommentBox,
     QuestionModal,
-    EditorContent
+    EditorContent,
+    UserModal
   },
   props: {
-    comment: Object
+    comment: Object,
+    incidentId: Number,
+    deploymentName: String,
+    deploymentId: Number
   },
   data () {
     return {
@@ -92,7 +98,8 @@ export default {
         editable: false,
         content: ''
       }),
-      isCommentQuestionModalVisible: false
+      isCommentQuestionModalVisible: false,
+      isUserModalVisible: false
     }
   },
   methods: {
@@ -121,6 +128,15 @@ export default {
       if (modalAnswer) {
         this.ApiDelete(`task-comments/${this.comment.id}`)
       }
+    },
+    openUserModal (userId) {
+      this.isUserModalVisible = true
+    },
+    handleUserModalClose () {
+      this.isUserModalVisible = false
+      this.$nextTick(() => {
+        document.body.classList.add('modal-open')
+      })
     }
   },
   computed: {

@@ -94,7 +94,7 @@
           <span class="font-weight-bold"> Comments</span>
         </h5>
         <ul class="list-unstyled">
-          <task-comment v-for="comment in task.comments" :key="comment.id" :comment="comment" />
+          <task-comment v-for="comment in task.comments" :key="comment.id" :comment="comment" :deploymentName="deploymentName" :deploymentId="deploymentId" :incidentId="incidentId" />
         </ul>
         <comment-box :placeholder="'Add a comment...'" @submitComment="submitComment" ref="commentBox" />
       </div>
@@ -104,7 +104,7 @@
           <span class="font-weight-bold"> Activity</span>
         </h5>
         <ul class="activity">
-          <task-activity v-for="action in orderBy(task.activity, 'occurredAt', -1)" :key="action.id" :action="action" :deploymentName="deploymentName" :deploymentId="deploymentId" />
+          <task-activity v-for="action in orderBy(task.activity, 'occurredAt', -1)" :key="action.id" :action="action" :deploymentName="deploymentName" :deploymentId="deploymentId" :incidentId="incidentId" />
         </ul>
       </div>
     </div>

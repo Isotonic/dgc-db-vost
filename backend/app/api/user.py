@@ -1,15 +1,35 @@
 from ..api import api
+from os import SEEK_END
 from sqlalchemy import func
+from flask_restx import reqparse
 from .utils.resource import Resource
 from .utils.namespace import Namespace
 from ..utils.delete import delete_user
 from ..models import User, Group, EmailLink
+from werkzeug.datastructures import FileStorage
 from ..utils.create import create_user, create_password_reset_email
 from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_jwt_identity
 from ..utils.change import change_user_group, edit_user_details, complete_registration, change_user_password, change_user_status
-from .utils.models import id_model, create_user_modal, user_model, user_admin_panel_model, user_full_details_model, group_model, email_model, registration_model, password_reset_model, task_model_with_incident, user_status_model, edit_user_details_model, updated_user_details_model
+from .utils.models import id_model, create_user_modal, user_model, user_admin_panel_model, user_full_details_model, group_model, email_model, registration_model, password_reset_model, task_model_with_incident, user_status_model, edit_user_details_model, updated_user_details_model, avatar_model
 
 ns_user = Namespace('User', description='Used to carry out actions related to users.', path='/users')
+
+upload_parser = reqparse.RequestParser()
+upload_parser.add_argument('file', location='files', type=FileStorage, required=True)
+
+
+def validateFileSize(file):
+    file.seek(0, SEEK_END)
+    size = file.tell()
+    if size > 10485760:
+        return False
+    file.seek(0)
+    return True
+
+
+def validateExtension(filename):
+    return '.' in filename and filename.split('.')[-1] in ['jpg', 'jpeg', 'png']
+
 
 @ns_user.route('')
 class UsersEndpoint(Resource):
@@ -406,6 +426,64 @@ class UserGroupEndpoint(Resource):
         if change_user_group(user, group, current_user) is False:
             ns_user.abort(400, 'User already has this group')
         return user.group, 200
+
+
+@ns_user.route('/avatar')
+class UserTasksEndpoint(Resource):
+    @jwt_required
+    @ns_user.doc(security='access_token')
+    @ns_user.response(200, 'Success', [avatar_model])
+    @ns_user.response(401, 'Incorrect credentials')
+    @api.marshal_with(avatar_model)
+    def get(self):
+        """
+                Returns user's avatar.
+        """
+        current_user = User.query.filter_by(id=get_jwt_identity()).first()
+        return current_user, 200
+
+
+    @jwt_required
+    @ns_user.doc(security='access_token')
+    @ns_user.response(200, 'Success', [avatar_model])
+    @ns_user.response(401, 'Incorrect credentials')
+    @ns_user.response(401, 'No file attached')
+    @ns_user.response(401, 'Invalid file type')
+    @ns_user.response(401, 'Image too big, must be less than 10MB')
+    @api.marshal_with(avatar_model)
+    def post(self):
+        """
+                Changes user's avatar, must be a PNG, JPEG or JPEG and less than 10MB.
+        """
+        data = upload_parser.parse_args()
+        current_user = User.query.filter_by(id=get_jwt_identity()).first()
+
+        if not 'file' in data.keys() or not data['file']:
+            ns_user.abort(401, 'No file attached')
+
+        image = data['file']
+
+        if not validateExtension(image.filename):
+            ns_user.abort(401, 'Invalid file type')
+        if not validateFileSize(image):
+            ns_user.abort(401, 'Image too big, must be less than 10MB')
+
+        current_user.save_avatar(image)
+        return current_user, 200
+
+
+    @jwt_required
+    @ns_user.doc(security='access_token')
+    @ns_user.response(200, 'Success', [avatar_model])
+    @ns_user.response(401, 'Incorrect credentials')
+    @api.marshal_with(avatar_model)
+    def delete(self):
+        """
+                Deletes user's avatar.
+        """
+        current_user = User.query.filter_by(id=get_jwt_identity()).first()
+        current_user.delete_avatar()
+        return current_user, 200
 
 
 @ns_user.route('/me/tasks')

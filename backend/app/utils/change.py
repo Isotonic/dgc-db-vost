@@ -55,7 +55,7 @@ def change_user_password(email, password):
     pattern = re.compile('(?=.*\d)(?=.*[a-z])(?=.*[A-Z])')
     if not pattern.match(password):
         return False
-    email.user.set_password(password, initial=True)
+    email.user.set_password(password)
     db.session.delete(email)
     db.session.commit()
 
@@ -151,7 +151,7 @@ def change_incident_status(incident, status, changed_by):
         supervisor.mark_request_complete(x, False, changed_by)
 
 
-def change_incident_allocation(incident, allocated_to, changed_by):
+def change_incident_allocation(incident, allocated_to, changed_by, added_notification=True):
     if set(allocated_to) == set(incident.assigned_to):
         return False
     added = list(set(allocated_to) - set(incident.assigned_to))
@@ -175,11 +175,12 @@ def change_incident_allocation(incident, allocated_to, changed_by):
         for x in removed:
             if not x.has_permission(incident):
                 emit('REMOVE_INCIDENT', {'id': incident.id, 'code': 200}, namespace='/', room=f'{incident.deployment_id}-{x.id}')
-        new_notification(removed, None, 'unassigned_incident', incident, changed_by)
+        new_notification(removed, None, 'unassigned_incident', incident, None, None, changed_by)
     if added:
         incident_action(user=changed_by, action_type=IncidentLog.action_values['assigned_user'],
                         incident=incident, target_users=added)
-        new_notification(added, None, 'assigned_incident', incident, changed_by)
+        if added_notification:
+            new_notification(added, None, 'assigned_incident', incident, None, None, changed_by)
 
 
 
@@ -272,25 +273,34 @@ def change_task_tags(task, tags, changed_by):
     incident_action(user=changed_by, action_type=IncidentLog.action_values['changed_task_tags'], incident=task.incident, task=task)
 
 
-def change_task_assigned(task, assigned_to, changed_by):
+def change_task_assigned(task, assigned_to, changed_by, added_notification=True):
     if set(assigned_to) == set(task.assigned_to):
         return False
     added = list(set(assigned_to) - set(task.assigned_to))
     removed = list(set(task.assigned_to) - set(assigned_to))
     task.assigned_to = assigned_to
     if any([m for m in assigned_to if m not in task.incident.assigned_to]):
-        change_incident_allocation(task.incident, assigned_to + task.incident.assigned_to, changed_by)
+        change_incident_allocation(task.incident, assigned_to + task.incident.assigned_to, changed_by, False)
     users_marshalled = marshal(task.assigned_to, user_model_without_group)
     emit_incident('CHANGE_TASK_ASSIGNED', {'id': task.id, 'incidentId': task.incident.id, 'assignedTo': users_marshalled, 'code': 200}, task.incident)
     if removed:
+        for subtask in task.subtasks:
+            subtask_remove = [m for m in subtask.assigned_to if m not in removed]
+            if len(subtask.assigned_to) != len(subtask_remove):
+                subtask.assigned_to = subtask_remove
+                users_marshalled = marshal(subtask.assigned_to, user_model_without_group)
+                emit_incident('CHANGE_SUBTASK_EDIT', {'id': subtask.id, 'taskId': task.id, 'incidentId': task.incident.id, 'name': subtask.name, 'assignedTo': users_marshalled, 'code': 200}, task.incident)
         task_action(user=changed_by, action_type=TaskLog.action_values['unassigned_user'], task=task,
                     target_users=removed)
         incident_action(user=changed_by, action_type=IncidentLog.action_values['unassigned_user_task'],
                         incident=task.incident, task=task, target_users=removed)
+        new_notification([m for m in removed if m in task.incident.assigned_to], None, 'unassigned_task', task.incident, task, None, changed_by)
     if added:
         task_action(user=changed_by, action_type=TaskLog.action_values['assigned_user'], task=task, target_users=added)
         incident_action(user=changed_by, action_type=IncidentLog.action_values['assigned_user_task'],
                         incident=task.incident, task=task, target_users=added)
+        if added_notification:
+            new_notification(added, None, 'assigned_task', task.incident, task, None, changed_by)
 
 
 def change_task_comment_text(task_comment, text, changed_by):
@@ -328,16 +338,21 @@ def change_subtask(subtask, name, assigned_to, changed_by):
     if subtask.name == name and set(assigned_to) == set(subtask.assigned_to):
         return False
     task = subtask.task
+    added = list(set(assigned_to) - set(subtask.assigned_to))
+    removed = list(set(subtask.assigned_to) - set(assigned_to))
     subtask.name = name
     subtask.assigned_to = assigned_to
     if any([m for m in assigned_to if m not in task.incident.assigned_to]):
-        change_incident_allocation(task.incident, assigned_to + task.incident.assigned_to, changed_by)
+        change_incident_allocation(task.incident, assigned_to + task.incident.assigned_to, changed_by, False)
     if any([m for m in assigned_to if m not in task.assigned_to]):
-        change_task_assigned(task, assigned_to + task.assigned_to, changed_by)
+        change_task_assigned(task, assigned_to + task.assigned_to, changed_by, False)
     users_marshalled = marshal(subtask.assigned_to, user_model_without_group)
-    emit_incident('CHANGE_SUBTASK_EDIT', {'id': subtask.id, 'taskId': task.id, 'incidentId': task.incident.id, 'name': name, 'assignedTo': users_marshalled, 'code': 200}, task.incident.deployment_id)
+    emit_incident('CHANGE_SUBTASK_EDIT', {'id': subtask.id, 'taskId': task.id, 'incidentId': task.incident.id, 'name': name, 'assignedTo': users_marshalled, 'code': 200}, task.incident)
     task_action(user=changed_by, action_type=TaskLog.action_values['edit_subtask'], task=task, subtask=subtask)
     incident_action(user=changed_by, action_type=IncidentLog.action_values['edit_subtask'], incident=task.incident, task=task,
                     extra=subtask.name)
-
+    if added:
+        new_notification(added, None, 'assigned_subtask', task.incident, task, subtask, changed_by)
+    if removed:
+        new_notification([m for m in removed if m in task.incident.assigned_to], None, 'unassigned_subtask', task.incident, task, subtask, changed_by)
 

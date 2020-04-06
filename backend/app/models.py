@@ -1,7 +1,7 @@
+import os
 import pyavagen
 from hashids import Hashids
 from threading import Thread
-from os import path, makedirs
 from datetime import datetime
 from flask_mail import Message
 from flask import render_template
@@ -102,17 +102,27 @@ class User(db.Model, UserMixin):
         return argon2.check_password_hash(self.password_hash, password)
 
     def create_avatar(self):
-        if not path.exists(f'./app/static/img/avatars'):  ##TODO Move this to the start-up.
-            makedirs(f'./app/static/img/avatars')
-        avatar = pyavagen.Avatar(pyavagen.CHAR_AVATAR, size=128, font_size=65,
-                                 string=f'{self.firstname} {self.surname}', color_list=avatar_colours)
+        avatar = pyavagen.Avatar(pyavagen.CHAR_AVATAR, size=128, font_size=65, string=f'{self.firstname} {self.surname}', color_list=avatar_colours)
         avatar.generate().save(f'./app/static/img/avatars/{hashids.encode(self.id)}.png')
+
+    def save_avatar(self, image):
+        self.delete_avatar()
+        image.save(f'./app/static/img/avatars/{hashids.encode(self.id)}.{image.filename.split(".")[-1]}')
+
+    def delete_avatar(self):
+        try:
+            for x in ['png', 'jpg', 'jpeg']:
+                if os.path.exists(f'./app/static/img/avatars/{hashids.encode(self.id)}.{x}'):
+                    os.remove(f'./app/static/img/avatars/{hashids.encode(self.id)}.{x}')
+        except:
+            pass
 
     def get_avatar(self):
         try:
-            avatar_path = f'/static/img/avatars/{hashids.encode(self.id)}.png'
-            if path.exists(f'./app{avatar_path}'):
-                return avatar_path
+            avatar_path = f'/static/img/avatars/{hashids.encode(self.id)}'
+            for x in ['png', 'jpg', 'jpeg']:
+                if os.path.exists(f'./app{avatar_path}.{x}'):
+                    return f'{avatar_path}.{x}'
             self.create_avatar()
             return avatar_path
         except:
@@ -196,7 +206,7 @@ def load_user(user_id):
 
 class Group(db.Model):
     permission_values = {'change_status': 1, 'change_allocation': 2, 'change_priority': 4, 'mark_as_public': 8,
-                         'view_all_incidents': 16, 'decision_making_log': 32, 'create_deployment': 64, 'supervisor': 128}
+                         'view_all_incidents': 16, 'create_deployment': 32, 'supervisor': 64}
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64), index=True, unique=True)
@@ -249,7 +259,6 @@ class Deployment(db.Model):
 
 class Incident(db.Model):
     priority_colours = {'Standard': 'yellow', 'Prompt': 'orange', 'Immediate': 'orange-dark'}
-    ##TODO Should really load these from a file.
     incident_types = {'Road Incident': 'car', 'Rail Incident': 'subway', 'Aviation Incident': 'plane',
                       'Maritane Incident': 'ship', 'Snow / Ice': 'snowflake',
                       'Severe Wind': 'wind', 'Rain / Flooding': 'cloud-showers-heavy', 'Industrial': 'industry',
@@ -408,6 +417,11 @@ class Notifications(db.Model):
     deployment_id = db.Column(db.Integer, db.ForeignKey('deployment.id'))
     deployment = db.relationship('Deployment')
     incident_id = db.Column(db.Integer, db.ForeignKey('incident.id'))
+    incident = db.relationship('IncidentTask')
+    task = db.relationship('IncidentTask')
+    task_id = db.Column(db.Integer, db.ForeignKey('incident_task.id'))
+    subtask = db.relationship('IncidentSubTask')
+    subtask_id = db.Column(db.Integer, db.ForeignKey('incident_sub_task.id'))
     incident = db.relationship('Incident')
     triggered_by_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     triggered_by = db.relationship('User', backref='notifcations_triggered', foreign_keys=[triggered_by_id])
@@ -453,7 +467,7 @@ class IncidentLog(db.Model):
                      'unassigned_user_task': 15, 'marked_public': 16, 'marked_not_public': 17, 'complete_subtask': 18, 'incomplete_subtask': 19, 'create_subtask': 20, 'add_task_comment': 21,
                      'marked_comment_public': 22, 'marked_comment_not_public': 23, 'edit_comment': 24, 'edit_subtask': 25, 'flag_user': 26, 'changed_task_tags': 27, 'edit_task_comment': 28,
                      'delete_task_comment': 29, 'delete_subtask': 30, 'change_incident_location': 31, 'flag_supervisor': 32, 'request_mark_closed': 33, 'request_mark_open': 34, 'edit_incident_name': 35,
-                     'edit_incident_description': 36, 'edit_incident_type': 37, 'edit_incident_reported_via': 38, 'edit_incident_linked': 39, 'edit_incident_unlinked': 40, 'edit_incident_reference': 41}  ##TODO RE-ORDER ONCE DONE
+                     'edit_incident_description': 36, 'edit_incident_type': 37, 'edit_incident_reported_via': 38, 'edit_incident_linked': 39, 'edit_incident_unlinked': 40, 'edit_incident_reference': 41}
 
 
     id = db.Column(db.Integer, primary_key=True)
@@ -469,6 +483,8 @@ class IncidentLog(db.Model):
     target_users = db.relationship('User', secondary=incidentlog_target_users_junction, lazy='selectin', backref='incident_log_target')
     action_type = db.Column(db.Integer())
     extra = db.Column(db.String())
+    extra_one = db.Column(db.String(64))
+    extra_two = db.Column(db.String(64))
     occurred_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def get_action_type(self):
@@ -477,7 +493,7 @@ class IncidentLog(db.Model):
 
 class TaskLog(db.Model):
     action_values = {'create_subtask': 1, 'complete_subtask': 2, 'delete_subtask': 3, 'changed_description': 4,
-                     'assigned_user': 5, 'removed_user': 6, 'incomplete_subtask': 7, 'add_comment': 8, 'edit_subtask': 9, 'changed_tags': 10, 'edit_task_comment': 11, 'delete_task_comment': 12, 'complete_task': 13, 'incomplete_task': 14}  ##TODO RE-ORDER ONCE DONE
+                     'assigned_user': 5, 'unassigned_user': 6, 'incomplete_subtask': 7, 'add_comment': 8, 'edit_subtask': 9, 'changed_tags': 10, 'edit_task_comment': 11, 'delete_task_comment': 12, 'complete_task': 13, 'incomplete_task': 14}  ##TODO RE-ORDER ONCE DONE
 
 
     id = db.Column(db.Integer, primary_key=True)

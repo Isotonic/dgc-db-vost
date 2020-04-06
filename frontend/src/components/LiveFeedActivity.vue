@@ -4,7 +4,7 @@
       <div class="media">
         <div>
           <i>
-            <img class="media-object rounded-circle hover" :src="action.user.avatarUrl" alt="Avatar" @click="openUserModal(action.user.id)" />
+            <img class="media-object rounded-circle hover" :src="$developmentMode ? `http://localhost:5000${action.user.avatarUrl}` : action.user.avatarUrl" alt="Avatar" @click="openUserModal(action.user.id)" />
           </i>
         </div>
         <div class="media-body">

@@ -25,7 +25,7 @@
       <ol v-if="!publicPage && incident.assignedTo.length" class="incident-card-assigned-to list-unstyled">
         <div class="avatar-group">
           <i v-for="user in incident.assignedTo" :key="user.name" class="avatar avatar-sm" v-tooltip="`${user.firstname} ${user.surname}`">
-            <img alt="Avatar" :src="user.avatarUrl" class="rounded-circle avatar-sm hover" @click="openUserModal(user)" />
+            <img alt="Avatar" :src="$developmentMode ? `http://localhost:5000${user.avatarUrl}` : user.avatarUrl" class="rounded-circle avatar-sm hover" @click="openUserModal(user)" />
           </i>
         </div>
         <user-modal v-if="isUserModalVisible" v-show="isUserModalVisible" :visible="isUserModalVisible" :deploymentName="deploymentName" :deploymentId="deploymentId" :userProp="userModal" @close="isUserModalVisible = false" />

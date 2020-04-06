@@ -17,7 +17,6 @@ new_group_model = api.model('New Group',
                                    {'name': fields.String(description='Name of the group', required=True),
                                     'supervisor': fields.Boolean(description='Admin access with full control, inherits all other permissions.', required=True),
                                     'create_deployment': fields.Boolean(description='Create new deployments and edit existing ones.', required=True),
-                                    'decision_making_log': fields.Boolean(description='Add new entries to the decision-making log.' ,required=True),
                                     'view_all_incidents': fields.Boolean(description='View incidents even if not assigned.', required=True),
                                     'change_priority': fields.Boolean(description='Change an incident\'s priority.', required=True),
                                     'change_status': fields.Boolean(description='Change an incident\'s open status.', required=True),
@@ -120,6 +119,10 @@ notification_model = api.model('Notification',
                          'deploymentName': fields.String(attribute=lambda x: x.deployment.name, description='Name of the deployment related to the notification.'),
                          'incidentId': fields.Integer(attribute='incident_id', description='ID of the incident related to the notification.'),
                          'incidentName': fields.String(attribute=lambda x: x.incident.name, description='Name of the incident related to the notification.'),
+                         'taskId': fields.Integer(attribute='task_id', description='ID of the task related to the notification, can be null if no task.'),
+                         'taskName': fields.String(attribute=lambda x: x.task.name if x.task else None, description='Name of the task related to the notification, can be null if no task.'),
+                         'subtaskId': fields.Integer(attribute='subtask_id', description='ID of the subtask related to the notification, can be null if no subtask.'),
+                         'subtaskName': fields.String(attribute=lambda x: x.subtask.name if x.subtask else None, description='Name of the subtask related to the notification, can be null if no subtask.'),
                          'type': fields.String(attribute='action_type', description='Type of notification'),
                          'triggeredBy': fields.Nested(user_model, attribute='triggered_by', description='User who triggered the notification.'),
                          'reason': fields.String(description='Reason as to why the user triggered the notification, can be null'),
@@ -348,3 +351,9 @@ public_deployment_model = api.model('Public Deployment',
                              'description': fields.String(description='Description of the deployment.')})
 
 user_status_model = api.model('User Status', {'status': fields.Integer(description='Status of the user. -1 = Disabled account, 0 = Sent email, 1 = Active account.', required=True)})
+
+avatar_model = api.model('Avatar',
+                        {'avatarUrl': fields.String(attribute=lambda x: x.get_avatar() if x else '', description='URL for the user\'s avatar.')})
+
+new_avatar_model = api.model('New Avatar',
+                        {'avatar': fields.String(description='Base64 image.')})

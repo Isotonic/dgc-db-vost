@@ -1,7 +1,7 @@
 <template>
   <modal :title="'User'" :bigger="true" :bgLight="true" @close="close">
     <div>
-      <img alt="Avatar" :src="user.avatarUrl" class="rounded-circle avatar">
+      <img alt="Avatar" :src="$developmentMode ? `http://localhost:5000${user.avatarUrl}` : user.avatarUrl" class="rounded-circle avatar avatar-lg">
       <span class="h4 font-weight-bold ml-4">{{ user.firstname }} {{ user.surname }}{{ user.group ? ' - ' + user.group.name : '' }}</span>
     </div>
     <hr />
